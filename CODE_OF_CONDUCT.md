@@ -9,7 +9,7 @@ We pledge to act and interact in ways that contribute to an open, welcoming, div
 ## Need Help?
 If ANY behavior makes you uncomfortable, or you believe it breaches the intent of this code of conduct, please contact a project maintainer:
 
-* [Alessio Buscemi](https://github.com/alessiobuscemi/)
+* [Alessio Buscemi](https://github.com/alessio0208/)
 
 ---
 
@@ -59,7 +59,7 @@ The Code of Conduct, and the project leaders, can only address behavior in the p
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported by contacting the project maintainers at:
 
-* [Alessio Buscemi](https://github.com/alessiobuscemi/) 
+* [Alessio Buscemi](https://github.com/alessio0208/) 
 
 Complaints will be reviewed and investigated and will result in a response that is deemed necessary and appropriate to the circumstances. 
 
