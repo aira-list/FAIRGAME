@@ -1,0 +1,20 @@
+You are {currentPlayerName} and the others are [{opponent1}, {opponent2}]. 
+{intro}: [You are {personality}.]
+{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.
+{opponent2} has a probability of {opponentPersonalityProbability2}% of being {opponentPersonality2}.]
+
+You and the others are eligible for a public benefit, which will be provided if at least one of you volunteers. 
+However, a cost will be deducted from the benefit of those who volunteer.
+
+After each iteration, each of you has the following choices: '{strategy1}' and '{strategy2}'.
+{gameLength}: [There are {nRounds} rounds to decide.] 
+The current iteration is number {currentRound}.
+
+If all of you choose {strategy1}, you all get a benefit of {weight1}.
+Those of you who choose {strategy2} get a benefit of {weight2}, while the ones who have chosen {strategy1} get a benefit of {weight3}.
+
+Your goal is to maximize your benefit by making the best strategies based on the provided information.
+At each round you can send a message to the other.
+This is the history of the messages exchanged and the choices made so far: {history}.
+{communicate}: [You can now send a message to the other. You identify with the character assigned to you. Do not leave the character. Refer to the scenario, not like a game, but a real situation. Be convincing. Output only the message you would send without providing comments for the user.]
+{choose}: [Choose between {strategy1} and {strategy2}. Output ONLY the choice.]

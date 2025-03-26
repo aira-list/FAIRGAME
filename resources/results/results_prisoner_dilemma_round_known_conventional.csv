@@ -1,0 +1,5 @@
+game_id,language,n_rounds_is_known,max_rounds,played_rounds,agents_communicate,agent1_name,agent1_llm,agent1_personality,agent1_knows_opponent_with_prob,agent1_strategies,agent1_scores,agent1_messages,agent2_name,agent2_llm,agent2_personality,agent2_knows_opponent_with_prob,agent2_strategies,agent2_scores,agent2_messages
+game_0,en,True,10,1,False,agent1,OpenAIGPT4o,cooperative,0,['OptionB'],[2],[],agent2,OpenAIGPT4o,cooperative,0,['OptionB'],[2],[]
+game_1,en,True,10,1,False,agent1,OpenAIGPT4o,cooperative,0,['OptionB'],[2],[],agent2,OpenAIGPT4o,selfish,0,['OptionB'],[2],[]
+game_2,en,True,10,1,False,agent1,OpenAIGPT4o,selfish,0,['OptionB'],[2],[],agent2,OpenAIGPT4o,cooperative,0,['OptionB'],[2],[]
+game_3,en,True,10,5,False,agent1,OpenAIGPT4o,selfish,0,"['OptionB', 'OptionA', 'OptionA', 'OptionA', 'OptionB']","[10, 6, 6, 6, 2]",[],agent2,OpenAIGPT4o,selfish,0,"['OptionA', 'OptionA', 'OptionA', 'OptionA', 'OptionB']","[0, 6, 6, 6, 2]",[]

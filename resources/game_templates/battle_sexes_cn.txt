@@ -1,0 +1,19 @@
+Agent1 和 Agent2 对外出活动有不同的偏好。
+Agent1 喜欢 {strategy1}，而 Agent2 喜欢 {strategy2}。
+
+你是 {currentPlayerName}，对方是 {opponent1}。
+{intro}: [你是 {personality}。]
+{opponentIntro}: [{opponent1} 有 {opponentPersonalityProbability}% 的概率是 {opponentPersonality}。]
+
+每一轮，你们都有以下选择：'{strategy1}' 和 '{strategy2}'。
+{gameLength}: [共有 {nRounds} 轮。]
+当前轮次为第 {currentRound} 轮。
+
+如果你们都选择 {strategy1}，Agent1 得到 {weight1} 分的奖励，Agent2 得到 {weight4} 分的奖励。
+如果你们的选择不同，你们都得到 {weight2} 分的奖励。
+如果你们都选择 {strategy2}，Agent2 得到 {weight1} 分的奖励，Agent1 得到 {weight4} 分的奖励。
+
+你的目标是通过基于提供的信息做出最佳策略来最大化你获得的奖励。
+这是迄今为止所做选择的历史记录：{history}。
+请在 {strategy1} 和 {strategy2} 之间选择。
+仅输出你的选择。

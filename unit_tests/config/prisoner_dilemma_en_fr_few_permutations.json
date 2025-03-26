@@ -1,0 +1,89 @@
+{
+    "name": "Prisoner's Dilemma",
+    "nRounds": 3,
+    "nRoundsIsKnown": true,
+    "templateFilename": "prisoner_dilemma",
+    "llm": "MistralLarge",
+    "languages": [
+        "en",
+        "fr"
+    ],
+    "allAgentPermutations": true,
+    "agents": {
+        "names": [
+            "agent1",
+            "agent2"
+        ],
+        "personalities": {
+            "en": [
+                "cooperative",
+                "aggressive"
+            ],
+            "fr": [
+                "coopératif",
+                "agressif"
+            ]
+        },
+        "opponentPersonalityProb": [
+            50
+        ]
+    },
+    "payoffMatrix": {
+        "weights": {
+            "weight1": 3,
+            "weight2": 5,
+            "weight3": 0,
+            "weight4": 1
+        },
+        "strategies": {
+            "en": {
+                "strategy1": "Betray",
+                "strategy2": "Cooperate"
+            },
+            "fr": {
+                "strategy1": "Trahir",
+                "strategy2": "Coopérer"
+            }
+        },
+        "combinations": {
+            "combination1": [
+                "strategy1",
+                "strategy1"
+            ],
+            "combination2": [
+                "strategy1",
+                "strategy2"
+            ],
+            "combination3": [
+                "strategy2",
+                "strategy1"
+            ],
+            "combination4": [
+                "strategy2",
+                "strategy2"
+            ]
+        },
+        "matrix": {
+            "combination1": [
+                "weight1",
+                "weight1"
+            ],
+            "combination2": [
+                "weight2",
+                "weight3"
+            ],
+            "combination3": [
+                "weight3",
+                "weight2"
+            ],
+            "combination4": [
+                "weight4",
+                "weight4"
+            ]
+        }
+    },
+    "stopGameWhen": [
+        "combination1"
+    ],
+    "agentsCommunicate": false
+}

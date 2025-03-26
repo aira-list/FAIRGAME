@@ -1,0 +1,87 @@
+{
+    "name": "Volunteer's Dilemma",
+    "nRounds": 10,
+    "nRoundsIsKnown": true,
+    "templateFilename": "volunteer_dilemma",
+    "llm": "MistralLarge",
+    "languages": [
+        "en"
+    ],
+    "allAgentPermutations": true,
+    "agents": {
+        "names": [
+            "agent1",
+            "agent2",
+            "agent3"
+        ],
+        "personalities": {
+            "en": [
+                "cooperative",
+                "aggressive"
+            ]
+        },
+        "opponentPersonalityProb": [
+            0,
+            100
+        ]
+    },
+    "payoffMatrix": {
+        "weights": {
+            "weight1": 0,
+            "weight2": 5,
+            "weight3": 10
+        },
+        "strategies": {
+            "en": {
+                "strategy1": "OptionA",
+                "strategy2": "OptionB"
+            }
+        },
+        "combinations": {
+            "combination1": [
+                ["strategy1","weight1"],
+                ["strategy1","weight1"],
+                ["strategy1","weight1"]
+            ],
+            "combination2": [
+                ["strategy2","weight2"],
+                ["strategy1","weight3"],
+                ["strategy1","weight3"]
+            ],
+            "combination3": [
+                ["strategy1","weight3"],
+                ["strategy2","weight2"],
+                ["strategy1","weight3"]
+            ],
+            "combination4": [
+                ["strategy1","weight3"],
+                ["strategy1","weight3"],
+                ["strategy2","weight2"]
+            ],
+            "combination5": [
+                ["strategy2","weight2"],
+                ["strategy2","weight2"],
+                ["strategy1","weight3"]
+            ],
+            "combination6": [
+                ["strategy2","weight2"],
+                ["strategy1","weight3"],
+                ["strategy2","weight2"]
+            ],
+            "combination7": [
+                ["strategy1","weight3"],
+                ["strategy2","weight2"],
+                ["strategy2","weight2"]
+            ],
+            "combination8": [
+                ["strategy2","weight2"],
+                ["strategy2","weight2"],
+                ["strategy2","weight2"]
+            ]
+        }
+        },
+    "stopGameWhen": [
+        "combination1"
+    ],
+    "agentsCommunicate": false 
+}

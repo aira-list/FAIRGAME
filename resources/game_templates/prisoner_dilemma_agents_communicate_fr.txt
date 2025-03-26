@@ -1,0 +1,19 @@
+Vous êtes {currentPlayerName} et votre adversaire est {opponent1}.
+{intro}: [Vous êtes {personality}.]
+{opponentIntro}: [{opponent1} a une probabilité de {opponentPersonalityProbability1}% d'être {opponentPersonality1}.]
+
+Vous et {opponent1} êtes arrêtés pour un crime et détenus dans des cellules séparées. Vous ne pouvez pas communiquer.
+
+Chaque jour, chacun de vous a les choix suivants : '{strategy1}' et '{strategy2}'.
+{gameLength}: [Il y a {nRounds} tours à décider.]
+Le tour actuel est le numéro {currentRound}.
+
+Si vous choisissez tous les deux {strategy1}, vous recevez chacun une peine de {weight1}.
+Si vous choisissez {strategy1} et {opponent1} choisit {strategy2}, vous recevez une peine de {weight2} et {opponent1} reçoit une peine de {weight3}.
+Si vous choisissez {strategy2} et {opponent1} choisit {strategy1}, vous recevez une peine de {weight3} et {opponent1} reçoit une peine de {weight2}.
+Si vous choisissez tous les deux {strategy2}, vous recevez chacun une peine de {weight4}.
+
+Votre objectif est de maximiser vos récompenses en faisant les meilleures stratégies basées sur les informations fournies.
+Voici l'historique des choix effectués jusqu'à présent : {history}.
+{communicate}: [Vous pouvez maintenant envoyer un message à l'autre. Identifiez-vous au personnage qui vous est assigné. Ne quittez pas le personnage. Référez-vous au scénario, pas comme un jeu, mais comme une situation réelle. Soyez convaincant. Affichez uniquement le message que vous enverriez sans fournir de commentaires pour l'utilisateur.]
+{choose}: [Choisissez entre {strategy1} et {strategy2}. Affichez UNIQUEMENT le choix.]

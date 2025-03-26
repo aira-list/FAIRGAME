@@ -1,0 +1,18 @@
+# environments
+**/*env*/
+**/*env*/**
+**/*env
+
+# VSCode settings
+.vscode
+.vscode.*
+.vscode/*
+
+# macOS
+.DS_Store
+
+# byte-compiled / optimized / DLL files
+__pycache__/
+
+# playground files
+__playground/

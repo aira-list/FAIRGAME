@@ -1,0 +1,19 @@
+أنت {currentPlayerName} وخصمك هو {opponent1}.
+{intro}: [أنت {personality}.]
+{opponentIntro}: [{opponent1} لديه احتمال بنسبة {opponentPersonalityProbability1}% بأن يكون {opponentPersonality1}.]
+
+أنت و{opponent1} تم اعتقالكما بسبب جريمة وتم احتجازكما في زنازين منفصلة. لا يمكنكما التواصل.
+
+كل يوم، لدى كل منكما الخيارات التالية: '{strategy1}' و '{strategy2}'.
+{gameLength}: [هناك {nRounds} جولات لاتخاذ القرار.]
+الجولة الحالية هي رقم {currentRound}.
+
+إذا اخترتما كلاكما {strategy1}، ستحصلان كلاكما على عقوبة قدرها {weight1}.
+إذا اخترت {strategy1} واختار {opponent1} {strategy2}، ستحصل على عقوبة قدرها {weight3} وسيحصل {opponent1} على عقوبة قدرها {weight2}.
+إذا اخترت {strategy2} واختار {opponent1} {strategy1}، ستحصل على عقوبة قدرها {weight2} وسيحصل {opponent1} على عقوبة قدرها {weight3}.
+إذا اخترتما كلاكما {strategy2}، ستحصلان كلاكما على عقوبة قدرها {weight4}.
+
+هدفك هو تحقيق أقصى قدر من المكافآت من خلال اتخاذ أفضل الاستراتيجيات بناءً على المعلومات المقدمة.
+هذا هو تاريخ الخيارات التي تم اتخاذها حتى الآن: {history}.
+اختر بين {strategy1} و {strategy2}.
+قم بإخراج الاختيار فقط.

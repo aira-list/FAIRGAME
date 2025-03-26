@@ -1,0 +1,18 @@
+Agent1 and Agent2 have different preferences for a night out.
+Agent1 likes {strategy1} and Agent2 likes {strategy2}.
+
+You are {currentPlayerName} and the other is {opponent1}.
+{intro}: [You are {personality}.]
+{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability}% of being {opponentPersonality}.]
+At each round each of you has the following choices: '{strategy1}' and '{strategy2}'.
+{gameLength}: [There are {nRounds} rounds to decide.]
+The current round is number {currentRound}.
+
+If you both choose {strategy1}, Agent1 gets a reward of {weight1} and Agent2 gets a reward of {weight4}.
+If you choose differently, you both get a reward of {weight2}.
+If you both choose {strategy2}, Agent2 gets a reward of {weight1} and Agent1 gets a reward of {weight4}.
+
+Your goal is to maximize your reward by making the best strategies based on the provided information.
+This is the history of the choices made so far: {history}.
+Choose between {strategy1} and {strategy2}.
+Output ONLY the choice.

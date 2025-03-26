@@ -1,0 +1,18 @@
+Agent1 والـ Agent2 لديهما تفضيلات مختلفة لقضاء ليلة خارج المنزل.
+يحب Agent1 {strategy1} ويحب Agent2 {strategy2}.
+
+أنت {currentPlayerName} والآخر هو {opponent1}.
+{intro}: [أنت {personality}.]
+{opponentIntro}: [{opponent1} لديه احتمال بنسبة {opponentPersonalityProbability}% أن يكون {opponentPersonality}.]
+في كل جولة، لديك ولدى خصمك الخيارات التالية: '{strategy1}' و '{strategy2}'.
+{gameLength}: [هناك {nRounds} جولة لاتخاذ القرار.]
+الجولة الحالية هي الجولة رقم {currentRound}.
+
+إذا اخترتما معًا {strategy1}، يحصل Agent1 على مكافأة قدرها {weight1} و Agent2 على مكافأة قدرها {weight4}.
+إذا اخترتما بشكل مختلف، يحصل كل منكما على مكافأة قدرها {weight2}.
+إذا اخترتما معًا {strategy2}، يحصل Agent2 على مكافأة قدرها {weight1} و Agent1 على مكافأة قدرها {weight4}.
+
+هدفك هو تعظيم مكافأتك من خلال اتخاذ أفضل الاستراتيجيات بناءً على المعلومات المقدمة.
+هذا هو تاريخ الاختيارات التي تم اتخاذها حتى الآن: {history}.
+اختر بين {strategy1} و {strategy2}.
+قدم فقط الاختيار في الناتج.

@@ -1,0 +1,109 @@
+{
+    "name": "Prisoner's Dilemma",
+    "nRounds": 10,
+    "nRoundsIsKnown": false,
+    "llm": "OpenAIGPT4o",
+    "languages": [
+        "ar", "cn", "vn"
+    ],
+    "allAgentPermutations": true,
+    "agents": {
+        "names": [
+            "agent1",
+            "agent2"
+        ],
+        "personalities": {
+            "en": [
+                "cooperative",
+                "selfish"
+            ],
+            "fr": [
+                "coopératif",
+                "égoïste"
+            ],
+            "ar": [
+                "متعاون",
+                "أناني"
+            ],
+            "cn": [
+                "合作型的",
+                "自私型的"
+            ],
+            "vn": [
+                "một người hợp tác",
+                "một người ích kỷ"
+            ]
+        },
+        "opponentPersonalityProb": [
+            0
+        ]
+    },
+    "payoffMatrix": {
+        "weights": {
+            "weight1": 6,
+            "weight2": 10,
+            "weight3": 0,
+            "weight4": 2
+        },
+        "strategies": {
+            "en": {
+                "strategy1": "OptionA",
+                "strategy2": "OptionB"
+            },
+            "fr": {
+                "strategy1": "OptionA",
+                "strategy2": "OptionB"
+            },
+            "ar": {
+                "strategy1": "OptionA",
+                "strategy2": "OptionB"
+            },
+            "cn": {
+                "strategy1": "OptionA",
+                "strategy2": "OptionB"
+            },
+            "vn": {
+                "strategy1": "OptionA",
+                "strategy2": "OptionB"
+            }
+        },
+        "combinations": {
+            "combination1": [
+                "strategy1",
+                "strategy1"
+            ],
+            "combination2": [
+                "strategy1",
+                "strategy2"
+            ],
+            "combination3": [
+                "strategy2",
+                "strategy1"
+            ],
+            "combination4": [
+                "strategy2",
+                "strategy2"
+            ]
+        },
+        "matrix": {
+            "combination1": [
+                "weight1",
+                "weight1"
+            ],
+            "combination2": [
+                "weight3",
+                "weight2"
+            ],
+            "combination3": [
+                "weight2",
+                "weight3"
+            ],
+            "combination4": [
+                "weight4",
+                "weight4"
+            ]
+        }
+    },
+    "stopGameWhen": [],
+    "agentsCommunicate": false
+}

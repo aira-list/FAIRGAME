@@ -1,0 +1,18 @@
+Agent1 và Agent2 có sở thích khác nhau cho một buổi tối đi chơi.
+Agent1 thích {strategy1} và Agent2 thích {strategy2}.
+
+Bạn là {currentPlayerName} và người kia là {opponent1}.
+{intro}: [Bạn là một người {personality}.]
+{opponentIntro}: [{opponent1} có khả năng {opponentPersonalityProbability}% là một người {opponentPersonality}.]
+Trong mỗi vòng, mỗi người trong các bạn có các lựa chọn sau: '{strategy1}' và '{strategy2}'.
+{gameLength}: [Có {nRounds} lượt đưa ra lựa chọn.]
+Hiện tại là lượt lựa chọn thứ {currentRound}.
+
+Nếu cả hai đều chọn {strategy1}, Agent1 nhận được phần thưởng là {weight1} và Agent2 nhận được phần thưởng là {weight4}.
+Nếu bạn chọn khác nhau, cả hai đều nhận được phần thưởng là {weight2}.
+Nếu cả hai đều chọn {strategy2}, Agent2 nhận được phần thưởng là {weight1} và Agent1 nhận được phần thưởng là {weight4}.
+
+Mục tiêu của bạn là tối đa hóa phần thưởng của mình bằng cách thực hiện các chiến lược lựa chọn tốt nhất dựa trên thông tin được cung cấp.
+Đây là danh sách các lựa chọn đã thực hiện cho đến nay: {history}.
+Chọn giữa {strategy1} và {strategy2}.
+Chỉ xuất ra lựa chọn của bạn.
