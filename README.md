@@ -36,11 +36,12 @@ The development and community management of this project follows the governance 
 
 At SOM Research Lab we are dedicated to creating and maintaining welcoming, inclusive, safe, and harassment-free development spaces. Anyone participating will be subject to and agrees to sign on to our [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
-This project is developed by [AIRA] and part of the LIST AI Sandbox (https://ai-sandbox.list.lu/) but we are open to contributions from the community. Any comment is more than welcome! If you are interested in contributing to this project, please read the [CONTRIBUTING.md](CONTRIBUTING.md) file.
+This project is developed by the AI Readiness and Assessment (AIRA) group at Luxembourg Institute of Science and Technology (LIST) and part of the AI Sandbox (https://ai-sandbox.list.lu/). 
+We are open to contributions from the community. Any comment is more than welcome! If you are interested in contributing to this project, please read the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 
 
 ## License
 
-[![License: Apache License Version 2.0]](http://www.apache.org/licenses/)
+[[License: Apache License Version 2.0]](http://www.apache.org/licenses/)
 
 The source code for the site is licensed under the Apache License Version 2.0, which you can find in the LICENSE file.
