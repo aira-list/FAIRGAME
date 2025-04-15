@@ -43,7 +43,7 @@ class TestTranslation(unittest.TestCase):
         In a more complete test suite, this output might be compared to a reference translation.
         """
         body_template = self._load_template(BODY_FILEPATH)
-        fr_translation = self.prompt_translator.translate(body_template, 'fr')
+        fr_translation = self.prompt_translator.translate(body_template, 'fr', cosine_threshold=0.6)
         print(fr_translation)
         # Additional assertions could be added here, e.g., self.assertIsInstance(fr_translation, str)
 
@@ -71,6 +71,18 @@ class TestTranslation(unittest.TestCase):
         
         # Verify that the correct translation with preserved placeholders passes.
         self.prompt_translator.check_all_placeholders_preserved(base_text, correct_text)
+
+    def test_cosine_similarity_failure(self) -> None:
+        """
+        Forces a ValueError by setting a very high cosine similarity threshold
+        so the translation will not meet it.
+        """
+        original_text = "Hello, world!"
+        # Attempting translation to French (or any language). 
+        # We set the threshold to 1.0 (perfect similarity) which is
+        # practically impossible for a translated text to meet.
+        with self.assertRaises(ValueError):
+            self.prompt_translator.translate(original_text, 'fr', cosine_threshold=1.0)
 
 
 if __name__ == '__main__':
