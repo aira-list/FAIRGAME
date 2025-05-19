@@ -8,7 +8,6 @@ LLM = 'OpenAIGPT4o'
 CONFIG_PATH = Path('unit_tests/game_templates')
 BODY_FILEPATH = CONFIG_PATH / 'prisoner_dilemma_en.txt'
 
-
 class TestTranslation(unittest.TestCase):
     """
     Unit tests for verifying the functionality of the PromptTemplateTranslator.

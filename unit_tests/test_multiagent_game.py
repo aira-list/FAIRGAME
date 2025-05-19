@@ -240,7 +240,7 @@ class TestMultiAgentConfigFile(unittest.TestCase):
 
         # Validate that the game engine's recorded scores match the calculated payoffs.
         self.assertEqual(scores, calculated_payoffs,
-                         msg="Recorded scores should match the calculated payoffs.")
+                        msg="Recorded scores should match the calculated payoffs.")
 
 
 if __name__ == '__main__':

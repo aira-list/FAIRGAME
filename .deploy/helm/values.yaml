@@ -1,0 +1,85 @@
+image:
+  repository: artefacts.list.lu/aida/ai-sandbox/fairgame
+  tag: dev
+  pullPolicy: Always
+  pullSecret: artefactory-secret
+
+service:
+  type: ClusterIP
+  port: 5003
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: public
+  rules:
+    - host: ai-sandbox-fairgame.isp-cap-n11.private.list.lu
+      http:
+        paths:
+          - backend:
+              service:
+                name: fairgame
+                port:
+                  name: http
+            path: /
+            pathType: Prefix
+    - host: ai-sandbox-fairgame.isp-cap-n13.private.list.lu
+      http:
+        paths:
+          - backend:
+              service:
+                name: fairgame
+                port:
+                  name: http
+            path: /
+            pathType: Prefix
+    - host: ai-sandbox-fairgame.isp-cap-n15.private.list.lu
+      http:
+        paths:
+          - backend:
+              service:
+                name: fairgame
+                port:
+                  name: http
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - ai-sandbox-fairgame.isp-cap-n11.private.list.lu
+      secretName: subdomains-tls-generic
+    - hosts:
+        - ai-sandbox-fairgame.isp-cap-n13.private.list.lu
+      secretName: subdomains-tls-generic
+    - hosts:
+        - ai-sandbox-fairgame.isp-cap-n15.private.list.lu
+      secretName: subdomains-tls-generic
+
+resources:
+  {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+application:
+  health: /health
+  env: |
+    - name: ENVIRONMENT
+      value: "production"
+    - name: LLM_FACTORY_URL
+      value: "http://llmfactory:5001"
+    - name: LLM_FACTORY_URL
+      value: "http://llmfactory:5001"
+      

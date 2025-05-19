@@ -1,124 +1,96 @@
-
+from typing import Dict, List, Optional
+from pydantic import BaseModel, ValidationError, model_validator
 from src.io_managers.payoff_matrix_transformer import PayoffMatrixTransformer
+
+
+class AgentsConfig(BaseModel):
+    names: List[str]
+    personalities: Dict[str, List[str]]
+    opponentPersonalityProb: Optional[List[float]] = None  # Make it optional here
+    allAgentPermutations: Optional[bool] = False  # Will be set later
+
+    @model_validator(mode="after")
+    def validate_agents(self) -> "AgentsConfig":
+        num_agents = len(self.names)
+
+        if num_agents < 2:
+            raise ValueError("There must be at least 2 agents.")
+
+        for agent_name, plist in self.personalities.items():
+            if len(plist) != num_agents:
+                raise ValueError(
+                    f"Personality list for agent '{agent_name}' must match number of agents ({num_agents})."
+                )
+
+        return self
+
+
+class ConfigModel(BaseModel):
+    name: str
+    nRounds: int
+    nRoundsIsKnown: bool
+    payoffMatrix: Dict
+    allAgentPermutations: bool
+    agents: AgentsConfig
+    llm: str
+    languages: List[str]
+    stopGameWhen: List[str]
+    agentsCommunicate: bool
+    promptTemplate: Optional[Dict[str, str]] = None
+    templateFilename: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_config(self) -> "ConfigModel":
+        if bool(self.promptTemplate) == bool(self.templateFilename):
+            raise ValueError("Exactly one of 'promptTemplate' or 'templateFilename' must be provided.")
+
+        # Inject allAgentPermutations into agents model
+        self.agents.allAgentPermutations = self.allAgentPermutations
+
+        # Validate opponentPersonalityProb only if needed
+        num_agents = len(self.agents.names)
+        if not self.allAgentPermutations:
+            if not self.agents.opponentPersonalityProb or len(self.agents.opponentPersonalityProb) != num_agents:
+                raise ValueError("opponentPersonalityProb must match number of agents.")
+
+        return self
+
 
 class ConfigValidator:
     """
-    Handles validation of top-level configuration data.
+    Handles validation of top-level configuration data using Pydantic v2.
     """
-
-    REQUIRED_KEYS = {
-        "name": str,
-        "nRounds": int,
-        "nRoundsIsKnown": bool,
-        "payoffMatrix": dict,
-        "allAgentPermutations": bool,
-        "agents": dict,
-        "llm": str,
-        "languages": list,
-        "stopGameWhen": list,
-        "agentsCommunicate": bool
-    }
-
-    FILENAME_KEY = 'templateFilename'
-    TEMPLATE_KEY = 'promptTemplate'
 
     def validate_config_structure(self, config_data: dict) -> dict:
         """
-        Validates that the JSON data contains all required keys with correct types.
-        Also checks if payoffMatrix is valid, and if not, tries to transform it.
+        Parses and validates config_data using Pydantic.
+        Attempts payoffMatrix transformation if initial validation fails.
         Raises:
-            KeyError: If required keys are missing.
-            TypeError: If any key is of the wrong type.
-            KeyError: If the prompt template is misconfigured.
+            TypeError: if fields are missing or invalid.
+            KeyError: if payoffMatrix is invalid even after transformation.
         """
-        # Validate top-level keys
-        self._check_keys(config_data, ConfigValidator.REQUIRED_KEYS)
+        print(config_data)  # Optional debug print
+        config_model = self._parse_and_validate(config_data)
 
-        # Validate payoffMatrix structure (transform if needed)
+        # Validate or transform payoffMatrix
         try:
-            PayoffMatrixTransformer.validate_payoff_matrix(config_data["payoffMatrix"])
+            PayoffMatrixTransformer.validate_payoff_matrix(config_model.payoffMatrix)
         except KeyError:
-            # Attempt to transform payoffMatrix if missing required structure
-            config_data = PayoffMatrixTransformer.transform_payoff_input(config_data)
-            # Validate again
-            PayoffMatrixTransformer.validate_payoff_matrix(config_data["payoffMatrix"])
+            try:
+                transformed_config = PayoffMatrixTransformer.transform_payoff_input(config_data)
+                config_model = self._parse_and_validate(transformed_config)
+                PayoffMatrixTransformer.validate_payoff_matrix(config_model.payoffMatrix)
+                config_data = config_model.model_dump()
+            except Exception as e:
+                raise KeyError(f"payoffMatrix validation failed after transformation: {e}")
 
-        # Check template presence
-        if not self._template_well_formed(config_data):
-            raise KeyError(
-                "Prompt template is not defined or is defined from different sources."
-            )
+        return config_model.model_dump()
 
-        # Validate agent configuration if not all permutations are used
-        if not config_data["allAgentPermutations"]:
-            if not self._check_agents_configuration(config_data["agents"]):
-                raise KeyError(
-                    "Configuration error: There must be at least 2 agents and each agent's personalities "
-                    "and the opponentPersonalityProb list must have a length equal to the number of agents."
-                )
-
-        return config_data
-
-    def _check_keys(self, data: dict, required_keys: dict) -> None:
+    def _parse_and_validate(self, data: dict) -> ConfigModel:
         """
-        Ensures 'data' has all required keys of the correct type.
-        Raises:
-            KeyError: If any required key is missing.
-            TypeError: If any required key is present but of the wrong type.
+        Helper to parse the configuration dict into a validated Pydantic model.
         """
-        missing_keys = []
-        type_errors = []
-        for key, expected_type in required_keys.items():
-            if key not in data:
-                missing_keys.append(key)
-            elif not isinstance(data[key], expected_type):
-                type_errors.append((key, type(data[key]), expected_type))
-
-        if missing_keys:
-            raise KeyError(f"Missing keys: {', '.join(missing_keys)}")
-
-        if type_errors:
-            formatted_errors = ", ".join(
-                f"{key} (found: {found}, expected: {expected})"
-                for key, found, expected in type_errors
-            )
-            raise TypeError(f"Type errors: {formatted_errors}")
-
-    def _template_well_formed(self, data: dict) -> bool:
-        """
-        Ensures we have exactly one of the two possible template definitions:
-        'promptTemplate' or 'templateFilename'.
-        """
-        # XOR condition: Exactly one of them must be present.
-        return (self.TEMPLATE_KEY in data) ^ (self.FILENAME_KEY in data)
-
-    def _check_agents_configuration(self, agents_data: dict) -> bool:
-        """
-        Validates the agent configuration:
-          - At least 2 agents are required.
-          - The 'personalities' dict must have one key per agent.
-          - Each agent's personality list must have length = total number of agents.
-          - 'opponentPersonalityProb' must have length = total number of agents.
-        """
-        num_agents = len(agents_data.get("names", []))
-
-        # Must have at least 2 agents
-        if num_agents < 2:
-            return False
-
-        # Ensure each agent has a personality list that matches the number of agents
-        personalities = agents_data.get("personalities", {})
-        for _, v in personalities.items():
-            if len(v) < 2:
-                return False
-
-        all_personalities_correct = all(
-            len(personality_list) == num_agents
-            for personality_list in personalities.values()
-        )
-
-        # Check that the opponentPersonalityProb list length matches the number of agents
-        opponent_probs = agents_data.get("opponentPersonalityProb", [])
-        opponent_probs_correct = len(opponent_probs) == num_agents if opponent_probs else False
-
-        return all_personalities_correct and opponent_probs_correct
+        try:
+            return ConfigModel(**data)
+        except ValidationError as e:
+            raise TypeError(f"Validation error:\n{e}")

@@ -164,7 +164,7 @@ class TestGame(unittest.TestCase):
         Ensure that a malformed configuration raises a KeyError when processed.
         """
         malformed_config = self.io_manager.load_config(str(CONFIG_MALFORMED_FILE))
-        with self.assertRaises(KeyError):
+        with self.assertRaises(TypeError):
             self.io_manager.process_and_validate_configuration(malformed_config)
 
     def test_configuration_well_formed(self):

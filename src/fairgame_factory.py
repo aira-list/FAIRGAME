@@ -5,7 +5,6 @@ from src.fairgame import FairGame
 from src.agent import Agent
 from src.io_managers.io_manager import IoManager
 
-
 class FairGameFactory:
     """Factory class responsible for loading a configuration dictionary,
     generating agent/game permutations, creating FairGame instances, running
@@ -162,6 +161,7 @@ class FairGameFactory:
         Returns:
             FairGame: A FairGame instance.
         """
+
         prompt_template = self.build_prompt_template(config, game_config_row['Language'])
         agents = self.create_agents(game_config_row)
         return FairGame(
@@ -345,6 +345,6 @@ class FairGameFactory:
         """
         try:
             template = config['promptTemplate'][lang]
-        except KeyError:
+        except (KeyError, TypeError) as e:
             template = self.io_manager.load_template(config['templateFilename'], lang)
         return template
