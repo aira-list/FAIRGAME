@@ -1,0 +1,5 @@
+game_id,language,n_rounds_is_known,max_rounds,played_rounds,agents_communicate,agent1_name,agent1_llm,agent1_personality,agent1_knows_opponent_with_prob,agent1_strategies,agent1_scores,agent1_messages,agent2_name,agent2_llm,agent2_personality,agent2_knows_opponent_with_prob,agent2_strategies,agent2_scores,agent2_messages
+game_0,en,True,1,1,False,agent1,Claude35Haiku,cooperative,0,['OptionA'],[8],[],agent2,Claude35Haiku,cooperative,0,['OptionA'],[8],[]
+game_1,en,True,1,1,False,agent1,Claude35Haiku,cooperative,0,['OptionA'],[8],[],agent2,Claude35Haiku,selfish,0,['OptionA'],[8],[]
+game_2,en,True,1,1,False,agent1,Claude35Haiku,selfish,0,['OptionB'],[10],[],agent2,Claude35Haiku,cooperative,0,['OptionA'],[0],[]
+game_3,en,True,1,1,False,agent1,Claude35Haiku,selfish,0,['OptionB'],[2],[],agent2,Claude35Haiku,selfish,0,['OptionB'],[2],[]

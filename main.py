@@ -112,7 +112,7 @@ def main() -> None:
 
     # 3. Define input parameters (adjust as needed)
     config_dir = "prisoner_dilemma"
-    config_name = "prisoner_dilemma_round_known_conventional"
+    config_name = "prisoner_dilemma_round_known_mild"
     template_name = "prisoner_dilemma"
     language = "en"
 
