@@ -1,10 +1,10 @@
 {
     "name": "Prisoner's Dilemma",
-    "nRounds": 10,
-    "nRoundsIsKnown": false,
+    "nRounds": 1,
+    "nRoundsIsKnown": true,
     "llm": "OpenAIGPT4o",
     "languages": [
-        "ar", "cn", "vn"
+        "en"
     ],
     "allAgentPermutations": true,
     "agents": {
@@ -104,6 +104,6 @@
             ]
         }
     },
-    "stopGameWhen": [],
+    "stopGameWhen": ["combination4"],
     "agentsCommunicate": false
 }

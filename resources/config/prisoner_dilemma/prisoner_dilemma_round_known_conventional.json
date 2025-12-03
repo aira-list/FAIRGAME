@@ -1,8 +1,8 @@
 {
     "name": "Prisoner's Dilemma",
-    "nRounds": 10,
+    "nRounds": 1,
     "nRoundsIsKnown": true,
-    "llm": "OpenAIGPT4o",
+    "llm": "Claude35Sonnet",
     "languages": [
         "en"
     ],

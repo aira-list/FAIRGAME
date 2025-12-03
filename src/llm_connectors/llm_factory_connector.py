@@ -9,7 +9,7 @@ load_dotenv()
 
 # Dictionary mapping our abstract model names to provider classes and their corresponding provider model identifiers.
 MODEL_PROVIDER_MAP = {
-    "Claude35Sonnet": (AnthropicConnector, "claude-3-5-sonnet-20241022"),
+    "Claude35Haiku": (AnthropicConnector, "claude-3-5-haiku-20241022"),
     "MistralLarge": (MistralConnector, "mistral-large-latest"),
     "OpenAIGPT4o": (OpenAIConnector, "gpt-4o"),
     # Add more mappings as needed.
