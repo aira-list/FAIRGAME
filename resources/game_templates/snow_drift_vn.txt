@@ -1,0 +1,23 @@
+Bạn là {currentPlayerName} và đối thủ của bạn là {opponent1}.
+{intro}: [Bạn là {personality}.]
+{opponentIntro}: [{opponent1} có xác suất {opponentPersonalityProbability}% là {opponentPersonality}.]
+
+Một đống tuyết lớn đang chặn con đường núi, khiến cả hai bạn không thể tiếp tục hành trình.
+Việc dọn tuyết đòi hỏi nỗ lực, nhưng nếu không ai trong hai bạn giúp đỡ, cả hai sẽ bị mắc kẹt.
+Tuy nhiên, mỗi người đều muốn người kia làm công việc nặng nhọc đó.
+
+Mỗi vòng, mỗi người trong hai bạn có các lựa chọn sau: '{strategy1}' và '{strategy2}'.
+{gameLength}: [Có {nRounds} vòng để quyết định.]
+Vòng hiện tại là vòng số {currentRound}.
+
+Nếu cả hai cùng chọn {strategy1}, cả hai đều nhận được phần thưởng hợp tác {weight1}.
+Nếu bạn chọn {strategy1} và {opponent1} chọn {strategy2}, bạn nhận phần thưởng {weight3} và {opponent1} nhận phần thưởng {weight2}.
+Nếu bạn chọn {strategy2} và {opponent1} chọn {strategy1}, bạn nhận phần thưởng {weight2} và {opponent1} nhận phần thưởng {weight3}.
+Nếu cả hai cùng chọn {strategy2}, cả hai đều nhận phần thưởng thấp hơn do cùng không hợp tác {weight4}.
+
+Chỉ phần thưởng ở vòng cuối cùng được tính, nhưng tất cả các vòng trước đó vẫn quan trọng cho chiến lược và việc ra quyết định.
+
+Mục tiêu của bạn là tối đa hóa phần thưởng bằng cách đưa ra chiến lược tốt nhất dựa trên thông tin được cung cấp.
+Đây là lịch sử các lựa chọn đã được thực hiện cho đến nay: {history}.
+{communicate}: [Bạn đồng nhất với nhân vật được giao cho bạn. Không rời khỏi nhân vật. Bây giờ bạn có thể gửi một thông điệp cho người kia. Thông điệp này là một chuỗi gồm đúng 10 số (mỗi số không quá 3 chữ số). Cung cấp các số, phân tách bằng dấu phẩy. Bỏ qua mọi giải thích và chỉ xuất ra các số].
+{choose}: [Chọn giữa {strategy1} và {strategy2}. CHỈ xuất ra lựa chọn.]

@@ -1,17 +1,14 @@
 {
-    "name": "Prisoner's Dilemma",
-    "nRounds": 1,
-    "nRoundsIsKnown": true,
-    "llm": "Claude35Haiku",
-    "languages": [
-        "en"
-    ],
-    "allAgentPermutations": true,
+    "name": "Harmony",
+    "nRounds": 10,
+    "nRoundsIsKnown": "False",
+    "llms": ["Gemini25Flash", "Gemini25Flash"],
+    "languages": ["ar", "vn", "cn"],
+    "allAgentPermutations": "True",
+
     "agents": {
-        "names": [
-            "agent1",
-            "agent2"
-        ],
+        "names": ["agent1", "agent2"],
+
         "personalities": {
             "en": [
                 "cooperative",
@@ -34,76 +31,67 @@
                 "một người ích kỷ"
             ]
         },
-        "opponentPersonalityProb": [
-            0
-        ]
+
+        "opponentPersonalityProb": [0]
     },
+
     "payoffMatrix": {
         "weights": {
-            "weight1": 8,
-            "weight2": 10,
-            "weight3": 0,
-            "weight4": 2
+            "weight1": 10,   
+            "weight2": 6,  
+            "weight3": 4,
+            "weight4": 2 
         },
+
         "strategies": {
             "en": {
-                "strategy1": "OptionA",
-                "strategy2": "OptionB"
+                "strategy1": "OptionA",  
+                "strategy2": "OptionB" 
             },
             "fr": {
-                "strategy1": "OptionA",
-                "strategy2": "OptionB"
+                "strategy1": "OptionA",  
+                "strategy2": "OptionB" 
             },
             "ar": {
-                "strategy1": "OptionA",
-                "strategy2": "OptionB"
-            },
-            "cn": {
                 "strategy1": "OptionA",
                 "strategy2": "OptionB"
             },
             "vn": {
                 "strategy1": "OptionA",
                 "strategy2": "OptionB"
+            },
+            "cn": {
+                "strategy1": "OptionA",
+                "strategy2": "OptionB"
             }
         },
         "combinations": {
-            "combination1": [
-                "strategy1",
-                "strategy1"
-            ],
-            "combination2": [
-                "strategy1",
-                "strategy2"
-            ],
-            "combination3": [
-                "strategy2",
-                "strategy1"
-            ],
-            "combination4": [
-                "strategy2",
-                "strategy2"
-            ]
+            "combination1": ["strategy1", "strategy1"],  
+            "combination2": ["strategy1", "strategy2"],  
+            "combination3": ["strategy2", "strategy1"],  
+            "combination4": ["strategy2", "strategy2"]   
         },
+
         "matrix": {
             "combination1": [
-                "weight1",
+                "weight1",  
                 "weight1"
             ],
             "combination2": [
-                "weight3",
-                "weight2"
+                "weight2",
+                "weight3"   
             ],
             "combination3": [
-                "weight2",
-                "weight3"
+                "weight3",  
+                "weight2"  
             ],
             "combination4": [
-                "weight4",
+                "weight4",  
                 "weight4"
             ]
         }
     },
-    "stopGameWhen": ["combination4"],
-    "agentsCommunicate": false
+
+    "stopGameWhen": [],
+    "agentsCommunicate": "False"
 }

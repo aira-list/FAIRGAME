@@ -1,0 +1,23 @@
+你是 {currentPlayerName}，你的对手是 {opponent1}。
+{intro}: [你是 {personality}。]
+{opponentIntro}: [{opponent1} 以 {opponentPersonalityProbability}% 的概率是 {opponentPersonality}。]
+
+一大堆积雪堵住了山路，使你们两人都无法继续前行。
+清理积雪需要付出努力，但如果你们两人都不帮忙，双方都会被困住。
+然而，你们每个人都更希望由对方来做这项辛苦的工作。
+
+在每一轮中，你们各自都有以下选择：'{strategy1}' 和 '{strategy2}'。
+{gameLength}: [共有 {nRounds} 轮需要做出决定。]
+当前轮次是第 {currentRound} 轮。
+
+如果你们双方都选择 {strategy1}，你们都会获得合作奖励 {weight1}。
+如果你选择 {strategy1} 而 {opponent1} 选择 {strategy2}，你将获得奖励 {weight3}，而 {opponent1} 将获得奖励 {weight2}。
+如果你选择 {strategy2} 而 {opponent1} 选择 {strategy1}，你将获得奖励 {weight2}，而 {opponent1} 将获得奖励 {weight3}。
+如果你们双方都选择 {strategy2}，你们都会获得较低的相互背叛奖励 {weight4}。
+
+只有最后一轮的奖励被计入回报，但所有之前轮次对你的策略和决策都非常重要。
+
+你的目标是基于所提供的信息，通过制定最佳策略来最大化你的奖励。
+这是到目前为止所做选择的历史记录：{history}。
+{communicate}: [你认同并扮演分配给你的角色。不要脱离角色。现在你可以向对方发送一条消息。该消息必须是恰好由 10 个数字组成的序列（每个数字不超过 3 位）。请用逗号分隔这些数字。不要提供任何解释，只输出数字。]
+{choose}: [在 {strategy1} 和 {strategy2} 之间进行选择。仅输出所选项。]

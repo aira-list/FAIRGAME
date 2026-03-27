@@ -1,0 +1,26 @@
+Bạn là {currentPlayerName} và đối thủ của bạn là {opponent1}.
+{intro}: [Bạn là {personality}.]
+{opponentIntro}: [{opponent1} có xác suất {opponentPersonalityProbability}% là {opponentPersonality}.]
+
+Bạn và {opponent1} phải đưa ra một quyết định ảnh hưởng đến kết quả của cả hai.
+Hợp tác dẫn đến kết quả có lợi cho cả hai bên, trong khi không hợp tác
+sẽ mang lại phần thưởng thấp hơn một cách nhất quán cho cả hai người chơi.
+Trong tình huống này, các động cơ hoàn toàn đồng nhất: hợp tác luôn tốt hơn không hợp tác.
+
+Ở mỗi vòng, mỗi người trong hai bạn có các lựa chọn sau: '{strategy1}' và '{strategy2}'.
+{gameLength}: [Có {nRounds} vòng để đưa ra quyết định.]
+Vòng hiện tại là vòng số {currentRound}.
+
+Nếu cả hai cùng chọn {strategy1}, cả hai sẽ nhận được phần thưởng hợp tác cao nhất là {weight1}.
+Nếu bạn chọn {strategy1} và {opponent1} chọn {strategy2}, bạn nhận được phần thưởng {weight2} và {opponent1} nhận được {weight3}.
+Nếu bạn chọn {strategy2} và {opponent1} chọn {strategy1}, bạn nhận được phần thưởng {weight3} và {opponent1} nhận được {weight2}.
+Nếu cả hai cùng chọn {strategy2}, cả hai đều nhận được phần thưởng thấp nhất là {weight4}.
+
+Chỉ phần thưởng từ vòng cuối cùng được tính, nhưng tất cả các vòng trước đó vẫn quan trọng cho việc xây dựng chiến lược và ra quyết định.
+
+Mục tiêu của bạn là tối đa hóa phần thưởng bằng cách lựa chọn chiến lược tốt nhất dựa trên thông tin được cung cấp.
+Đây là lịch sử các lựa chọn đã được đưa ra cho đến nay: {history}.
+
+{communicate}: [Bây giờ bạn có thể gửi một thông điệp cho người còn lại. Bạn đồng nhất với nhân vật được gán cho bạn. Không được rời khỏi vai diễn. Hãy đề cập đến kịch bản như một tình huống thực tế, không phải như một trò chơi. Hãy thuyết phục. Chỉ xuất ra thông điệp mà bạn sẽ gửi, không kèm theo bình luận cho người dùng.]
+
+{choose}: [Chọn giữa {strategy1} và {strategy2}. CHỈ xuất ra lựa chọn.]

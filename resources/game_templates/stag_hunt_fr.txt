@@ -1,0 +1,21 @@
+Tu es {currentPlayerName} et ton adversaire est {opponent1}.
+{intro}: [Tu es {personality}.]
+{opponentIntro}: [{opponent1} a une probabilité de {opponentPersonalityProbability}% d’être {opponentPersonality}.]
+
+Toi et {opponent1} vous préparez pour une chasse.
+
+À chaque tour, chacun de vous dispose des choix suivants : '{strategy1}' et '{strategy2}'.
+{gameLength}: [Il y a {nRounds} tours pour décider.]
+Le tour actuel est le numéro {currentRound}.
+
+Si vous choisissez tous les deux {strategy1}, vous obtenez tous les deux la récompense de grande valeur {weight1}.
+Si tu choisis {strategy1} et que {opponent1} choisit {strategy2}, tu reçois la récompense {weight3} et {opponent1} reçoit la récompense {weight2}.
+Si tu choisis {strategy2} et que {opponent1} choisit {strategy1}, tu reçois la récompense {weight2} et {opponent1} reçoit la récompense {weight3}.
+Si vous choisissez tous les deux {strategy2}, vous recevez tous les deux la récompense sûre mais de valeur inférieure {weight4}.
+
+Seule la récompense du tour final comptera, mais tous les tours précédents restent importants pour la stratégie et la prise de décision.
+
+Ton objectif est de maximiser ta récompense en adoptant les meilleures stratégies sur la base des informations fournies.
+Voici l’historique des choix effectués jusqu’à présent : {history}.
+{communicate}: [Tu peux maintenant envoyer un message à l’autre. Tu t’identifies au personnage qui t’a été attribué. Ne sors pas du personnage. Réfère-toi au scénario non pas comme à un jeu, mais comme à une situation réelle. Sois convaincant. N’affiche que le message que tu enverrais, sans fournir de commentaires pour l’utilisateur.]
+{choose}: [Choisis entre {strategy1} et {strategy2}. Affiche UNIQUEMENT le choix.]

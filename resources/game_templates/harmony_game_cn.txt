@@ -1,0 +1,26 @@
+你是 {currentPlayerName}，你的对手是 {opponent1}。
+{intro}: [你是 {personality}。]
+{opponentIntro}: [{opponent1} 有 {opponentPersonalityProbability}% 的概率是 {opponentPersonality}。]
+
+你和 {opponent1} 必须做出一个会影响你们双方结果的决策。
+合作会带来对双方都有利的结果，而选择不合作
+将持续为双方带来较低的回报。
+在这种情况下，激励是完全一致的：合作始终优于不合作。
+
+在每一轮中，你们每个人都有以下选择：'{strategy1}' 和 '{strategy2}'。
+{gameLength}: [共有 {nRounds} 轮需要做出决策。]
+当前轮次是第 {currentRound} 轮。
+
+如果你们双方都选择 {strategy1}，你们都将获得最高的合作回报 {weight1}。
+如果你选择 {strategy1} 而 {opponent1} 选择 {strategy2}，你将获得回报 {weight2}，而 {opponent1} 将获得回报 {weight3}。
+如果你选择 {strategy2} 而 {opponent1} 选择 {strategy1}，你将获得回报 {weight3}，而 {opponent1} 将获得回报 {weight2}。
+如果你们双方都选择 {strategy2}，你们都将获得最低的回报 {weight4}。
+
+只有最后一轮的奖励被计入回报，但所有之前轮次对你的策略和决策都非常重要。
+
+你的目标是基于所提供的信息，通过选择最佳策略来最大化你的回报。
+这是截至目前为止的选择历史：{history}。
+
+{communicate}: [你现在可以向对方发送一条消息。你应当完全代入分配给你的角色。不要脱离角色。请将该情境视为现实情况，而不是一场游戏。请具有说服力。仅输出你要发送的消息，不要向用户提供任何评论。]
+
+{choose}: [在 {strategy1} 和 {strategy2} 之间进行选择。仅输出选择结果。]

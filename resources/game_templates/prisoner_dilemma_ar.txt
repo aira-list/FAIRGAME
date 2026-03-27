@@ -1,6 +1,6 @@
 أنت {currentPlayerName} وخصمك هو {opponent1}.
 {intro}: [أنت {personality}.]
-{opponentIntro}: [{opponent1} لديه احتمال بنسبة {opponentPersonalityProbability1}% بأن يكون {opponentPersonality1}.]
+{opponentIntro}: [{opponent1} لديه احتمال بنسبة {opponentPersonalityProbability}% بأن يكون {opponentPersonality}.]
 
 أنت و{opponent1} تم اعتقالكما بسبب جريمة وتم احتجازكما في زنازين منفصلة. لا يمكنكما التواصل.
 

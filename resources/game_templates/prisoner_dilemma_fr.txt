@@ -1,6 +1,6 @@
 Vous êtes {currentPlayerName} et votre adversaire est {opponent1}. 
 {intro}: [Vous êtes {personality}.]
-{opponentIntro}: [{opponent1} a une probabilité de {opponentPersonalityProbability1}% d'être {opponentPersonality1}.]
+{opponentIntro}: [{opponent1} a une probabilité de {opponentPersonalityProbability}% d'être {opponentPersonality}.]
 
 Vous et {opponent1} êtes arrêtés pour un crime et détenus dans des cellules séparées. Vous ne pouvez pas communiquer.
 

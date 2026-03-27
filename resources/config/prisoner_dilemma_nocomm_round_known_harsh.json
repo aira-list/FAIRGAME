@@ -1,19 +1,19 @@
 {
     "name": "Prisoner's Dilemma",
-    "nRounds": 1,
-    "nRoundsIsKnown": true,
-    "llm": "OpenAIGPT4o",
+    "nRounds": 10,
+    "nRoundsIsKnown": "True",
+    "llms": ["Gemini25Flash", "Gemini25Flash"],
     "languages": [
-        "en"
+     "en"
     ],
-    "allAgentPermutations": true,
+    "allAgentPermutations": "True",
     "agents": {
         "names": [
             "agent1",
             "agent2"
         ],
         "personalities": {
-            "en": [
+             "en": [
                 "cooperative",
                 "selfish"
             ],
@@ -104,6 +104,6 @@
             ]
         }
     },
-    "stopGameWhen": ["combination4"],
-    "agentsCommunicate": false
+    "stopGameWhen": [],
+    "agentsCommunicate": "False"
 }

@@ -1,11 +1,9 @@
 {
-    "name": "Prisoner's Dilemma",
-    "nRounds": 1,
-    "nRoundsIsKnown": true,
-    "llm": "Claude35Sonnet",
-    "languages": [
-        "en"
-    ],
+    "name": "Battle of sexes",
+    "nRounds": 10,
+    "nRoundsIsKnown": false,
+    "llms": ["Gemini25Flash", "Gemini25Flash"],
+    "languages": ["cn"],
     "allAgentPermutations": true,
     "agents": {
         "names": [
@@ -40,10 +38,10 @@
     },
     "payoffMatrix": {
         "weights": {
-            "weight1": 6,
-            "weight2": 10,
+            "weight1": 10,
+            "weight2": 0,
             "weight3": 0,
-            "weight4": 2
+            "weight4": 7
         },
         "strategies": {
             "en": {
@@ -88,7 +86,7 @@
         "matrix": {
             "combination1": [
                 "weight1",
-                "weight1"
+                "weight4"
             ],
             "combination2": [
                 "weight3",
@@ -100,10 +98,10 @@
             ],
             "combination4": [
                 "weight4",
-                "weight4"
+                "weight1"
             ]
         }
     },
-    "stopGameWhen": ["combination4"],
+    "stopGameWhen": [],
     "agentsCommunicate": false
 }

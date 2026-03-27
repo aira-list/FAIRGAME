@@ -1,0 +1,21 @@
+你是 {currentPlayerName}，你的对手是 {opponent1}。
+{intro}: [你是 {personality}。]
+{opponentIntro}: [{opponent1} 有 {opponentPersonalityProbability}% 的概率是 {opponentPersonality}。]
+
+你和 {opponent1} 正在为一次狩猎做准备。
+
+在每一轮中，你们各自都有以下选择：'{strategy1}' 和 '{strategy2}'。
+{gameLength}: [共有 {nRounds} 轮需要做出决定。]
+当前轮次是第 {currentRound} 轮。
+
+如果你们双方都选择 {strategy1}，你们都会获得高价值的奖励 {weight1}。
+如果你选择 {strategy1} 而 {opponent1} 选择 {strategy2}，你将获得奖励 {weight3}，而 {opponent1} 将获得奖励 {weight2}。
+如果你选择 {strategy2} 而 {opponent1} 选择 {strategy1}，你将获得奖励 {weight2}，而 {opponent1} 将获得奖励 {weight3}。
+如果你们双方都选择 {strategy2}，你们都会获得安全但价值较低的奖励 {weight4}。
+
+只有最后一轮的奖励被计入回报，但所有之前轮次对你的策略和决策都非常重要。
+
+你的目标是基于所提供的信息，通过制定最佳策略来最大化你的奖励。
+这是到目前为止所做选择的历史记录：{history}。
+{communicate}: [现在你可以向对方发送一条消息。你认同并扮演分配给你的角色。不要脱离角色。请以真实情境而非游戏的方式来描述该场景，并具有说服力。仅输出你将发送的消息，不要为用户提供任何评论。]
+{choose}: [在 {strategy1} 和 {strategy2} 之间进行选择。仅输出所选项。]
