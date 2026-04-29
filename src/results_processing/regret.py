@@ -52,17 +52,19 @@ def best_response_payoff(
 
     combo_lookup = {tuple(v): k for k, v in combinations.items()}
 
+    # Strict completeness check: if ANY alternative-strategy combination
+    # is missing from the matrix, fail closed rather than under-stating
+    # the agent's best-response payoff.
     best: Optional[float] = None
-    # ``strategies`` is keyed by canonical strategy key (e.g. ``strategy1``).
     for own_key in strategies.keys():
         full_choice = list(other_keys)
         full_choice.insert(agent_index, own_key)
         combo_key = combo_lookup.get(tuple(full_choice))
         if combo_key is None:
-            continue
+            return None
         weight_keys = weight_matrix.get(combo_key)
         if not weight_keys or agent_index >= len(weight_keys):
-            continue
+            return None
         payoff = float(weights.get(weight_keys[agent_index], 0))
         if best is None or payoff > best:
             best = payoff

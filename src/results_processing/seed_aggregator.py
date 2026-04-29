@@ -24,17 +24,41 @@ _DEFAULT_GROUPING = (
 )
 
 
-def _ci_half_width(values: List[float], confidence: float = 0.95) -> float:
-    """Half-width of a Normal-approximation confidence interval."""
+def _ci_half_width(
+    values: List[float],
+    confidence: float = 0.95,
+    use_t: bool = False,
+) -> float:
+    """Half-width of a confidence interval for the sample mean.
+
+    Args:
+        values: sample values.
+        confidence: confidence level (e.g. 0.95).
+        use_t: if True, use the t-distribution with ``n-1`` degrees of
+            freedom (small-sample-correct). Otherwise use the
+            Normal-approximation z-statistic (faster, slightly liberal
+            for ``n < 30``). Default False preserves backwards-compat.
+    """
     n = len(values)
     if n < 2:
         return 0.0
     mean = sum(values) / n
     variance = sum((v - mean) ** 2 for v in values) / (n - 1)
     standard_error = math.sqrt(variance / n)
-    # 1.959964 ≈ Φ⁻¹(0.975); good enough for n>=2.
-    z = 1.959964 if math.isclose(confidence, 0.95) else _normal_inverse(confidence)
-    return z * standard_error
+    if use_t:
+        try:
+            from scipy import stats  # type: ignore
+
+            critical = float(stats.t.ppf((1 + confidence) / 2, df=n - 1))
+        except ImportError:  # pragma: no cover
+            critical = (
+                1.959964 if math.isclose(confidence, 0.95) else _normal_inverse(confidence)
+            )
+    else:
+        critical = (
+            1.959964 if math.isclose(confidence, 0.95) else _normal_inverse(confidence)
+        )
+    return critical * standard_error
 
 
 def _normal_inverse(confidence: float) -> float:
@@ -58,6 +82,7 @@ def aggregate_seeds(
     df: pd.DataFrame,
     grouping_columns: Iterable[str] | None = None,
     confidence: float = 0.95,
+    use_t: bool = False,
 ) -> pd.DataFrame:
     """Collapse a multi-seed DataFrame into mean ± CI per scalar column.
 
@@ -102,7 +127,9 @@ def aggregate_seeds(
                 values = [float(v) for v in numeric.tolist()]
                 mean = sum(values) / len(values)
                 out[f"{column}_mean"] = mean
-                out[f"{column}_ci_half_width"] = _ci_half_width(values, confidence)
+                out[f"{column}_ci_half_width"] = _ci_half_width(
+                    values, confidence, use_t=use_t
+                )
             else:
                 non_null = series.dropna()
                 try:

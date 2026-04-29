@@ -34,6 +34,7 @@ class _StubAgent:
 
 def _make_creator(
     reputation_window=None,
+    reputation_applies: bool = True,
     template: str = (
         "{currentPlayerName} faces {opponent1} (coop rate {coopRate1}, "
         "reputation {reputation1}). {choose}: [Pick {strategy1} or {strategy2}.]"
@@ -47,6 +48,7 @@ def _make_creator(
         n_rounds_known=False,
         payoff_matrix=pm,
         reputation_window=reputation_window,
+        reputation_applies=reputation_applies,
     )
 
 
@@ -250,6 +252,45 @@ class TestHistoryHoles(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Placeholder hygiene
 # ---------------------------------------------------------------------------
+
+class TestReputationApplies(unittest.TestCase):
+    """The ``reputation_applies`` flag must suppress reputation labels for
+    games where 'cooperate' / 'defect' aren't meaningful (Battle of Sexes,
+    Zero Sum, …)."""
+
+    def setUp(self) -> None:
+        self.history = _hist(["Cooperate", "Cooperate", "Cooperate", "Cooperate"])
+
+    def test_applies_false_yields_unknown_even_with_full_history(self) -> None:
+        creator = _make_creator(reputation_applies=False)
+        prompt = creator.fill_template(
+            _StubAgent("agent1"), [_StubAgent("opp")], 5, self.history, "choose"
+        )
+        # No coop-rate inference even though the opponent always cooperated.
+        self.assertIn("coop rate n/a", prompt)
+        self.assertIn("reputation unknown", prompt)
+
+    def test_applies_true_inferences_remain_intact(self) -> None:
+        # Default behaviour preserved when the flag is True.
+        creator = _make_creator(reputation_applies=True)
+        prompt = creator.fill_template(
+            _StubAgent("agent1"), [_StubAgent("opp")], 5, self.history, "choose"
+        )
+        self.assertIn("coop rate 1.00", prompt)
+        self.assertIn("reputation highly cooperative", prompt)
+
+    def test_default_flag_value_is_true_for_backwards_compat(self) -> None:
+        # Don't break existing callers that rely on auto-injection.
+        from src.prompt_creator import PromptCreator as PC
+
+        pm = PayoffMatrix(_matrix_data(), "en")
+        # Construct without the new flag — must default to True.
+        creator = PC(
+            "en", "{coopRate1} {reputation1} {choose}: [Pick {strategy1}.]",
+            n_rounds=1, n_rounds_known=False, payoff_matrix=pm,
+        )
+        self.assertTrue(creator.reputation_applies)
+
 
 class TestPlaceholderHygiene(unittest.TestCase):
     def test_no_unfilled_placeholders_in_prompt(self) -> None:

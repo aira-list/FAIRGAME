@@ -189,6 +189,69 @@ class TestCompareMetricsSweep(unittest.TestCase):
 # default_comparison_metrics
 # ---------------------------------------------------------------------------
 
+class TestMultipleComparisonCorrection(unittest.TestCase):
+    """``compare_metrics`` must support Bonferroni and Holm corrections so
+    multi-metric exploratory comparisons don't produce inflated false
+    positives."""
+
+    def _three_metric_inputs(self) -> tuple:
+        # Three metrics, each with the same A/B distinction.
+        df_a = pd.DataFrame(
+            {"x": [10, 11, 12, 13], "y": [10, 11, 12, 13], "z": [10, 11, 12, 13]}
+        )
+        df_b = pd.DataFrame(
+            {"x": [1, 2, 3, 4], "y": [1, 2, 3, 4], "z": [1, 2, 3, 4]}
+        )
+        return df_a, df_b
+
+    def test_bonferroni_multiplies_pvalues_by_count(self) -> None:
+        df_a, df_b = self._three_metric_inputs()
+        out_raw = compare_metrics(df_a, df_b, ["x", "y", "z"], correction="none")
+        out_bon = compare_metrics(df_a, df_b, ["x", "y", "z"], correction="bonferroni")
+        # Each Bonferroni-adjusted p must be 3x the raw p (capped at 1.0).
+        for raw, bon in zip(out_raw["welch_p"], out_bon["welch_p_adjusted"]):
+            self.assertAlmostEqual(min(raw * 3, 1.0), bon, places=6)
+
+    def test_holm_is_at_least_as_strict_as_raw_but_no_worse_than_bonferroni(self) -> None:
+        df_a, df_b = self._three_metric_inputs()
+        out_raw = compare_metrics(df_a, df_b, ["x", "y", "z"], correction="none")
+        out_holm = compare_metrics(df_a, df_b, ["x", "y", "z"], correction="holm")
+        out_bon = compare_metrics(df_a, df_b, ["x", "y", "z"], correction="bonferroni")
+        for raw, holm, bon in zip(
+            out_raw["welch_p"], out_holm["welch_p_adjusted"], out_bon["welch_p_adjusted"]
+        ):
+            self.assertGreaterEqual(holm, raw - 1e-9)
+            self.assertLessEqual(holm, bon + 1e-9)
+
+    def test_correction_none_passes_pvalues_through_unchanged(self) -> None:
+        df_a, df_b = self._three_metric_inputs()
+        out_raw = compare_metrics(df_a, df_b, ["x", "y", "z"], correction="none")
+        # The adjusted column equals the raw p.
+        for raw, adj in zip(out_raw["welch_p"], out_raw["welch_p_adjusted"]):
+            self.assertAlmostEqual(raw, adj)
+
+    def test_unknown_correction_method_rejected(self) -> None:
+        df_a, df_b = self._three_metric_inputs()
+        with self.assertRaises(ValueError):
+            compare_metrics(df_a, df_b, ["x"], correction="bogus")
+
+    def test_default_correction_is_none(self) -> None:
+        # Backward-compat: existing callers without the kwarg get raw p-values.
+        df_a, df_b = self._three_metric_inputs()
+        out_default = compare_metrics(df_a, df_b, ["x"])
+        out_explicit = compare_metrics(df_a, df_b, ["x"], correction="none")
+        # Same adjusted values.
+        self.assertAlmostEqual(
+            out_default["welch_p_adjusted"].iloc[0],
+            out_explicit["welch_p_adjusted"].iloc[0],
+        )
+
+    def test_correction_applies_to_mannwhitney_too(self) -> None:
+        df_a, df_b = self._three_metric_inputs()
+        out_bon = compare_metrics(df_a, df_b, ["x", "y", "z"], correction="bonferroni")
+        self.assertIn("mannwhitney_p_adjusted", out_bon.columns)
+
+
 class TestDefaultComparisonMetrics(unittest.TestCase):
     def test_returns_only_existing_columns(self) -> None:
         df = pd.DataFrame({"welfare_mean_sum": [1], "equilibrium_rate": [0.5]})

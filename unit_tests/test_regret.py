@@ -185,6 +185,27 @@ class TestBestResponseAgainstFixedOpponent(unittest.TestCase):
         # The matrix has no "Treason" — should fail closed, not crash.
         self.assertIsNone(best_response_payoff(_pd_matrix(), "en", 0, ["Treason"]))
 
+    def test_returns_none_when_an_alternative_combination_is_missing(self) -> None:
+        # Engine integrity: if the matrix doesn't include every (own,
+        # others) combination needed to compute the max, the function
+        # MUST return None rather than silently picking from a partial
+        # set. Otherwise regret is under-stated.
+        m = _three_player_matrix()
+        # Remove BAA — agent 0 with others (A, A) needs BAA to evaluate
+        # its B-strategy alternative.
+        del m["combinations"]["combo_BAA"]
+        del m["matrix"]["combo_BAA"]
+        self.assertIsNone(best_response_payoff(m, "en", 0, ["A", "A"]))
+
+    def test_returns_none_when_matrix_lacks_weight_keys_for_combination(self) -> None:
+        # Combination present in ``combinations`` but missing from
+        # ``matrix``. Agent 0 against opponent D needs CD=combination2
+        # (own=C → strategy1+strategy2 = combination2). Removing the
+        # weight keys for combination2 must cause a None return.
+        m = _pd_matrix()
+        del m["matrix"]["combination2"]
+        self.assertIsNone(best_response_payoff(m, "en", 0, ["Defect"]))
+
 
 # ---------------------------------------------------------------------------
 # regret_per_round

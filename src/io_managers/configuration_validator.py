@@ -132,6 +132,12 @@ class ConfigModel(BaseModel):
     placeholders average only the most recent N rounds. Strategy1 is
     treated as 'cooperate' by convention."""
 
+    reputationApplies: bool = True
+    """When False, the rolling-cooperation-rate placeholders are filled
+    with ``n/a`` / ``unknown`` regardless of history. Set this to False
+    for asymmetric coordination games (Battle of the Sexes), zero-sum
+    games, and any scenario where strategy1 doesn't mean 'cooperate'."""
+
     seed: Optional[int] = None
     """Master seed for deterministic replay. ``None`` = nondeterministic."""
 

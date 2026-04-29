@@ -39,6 +39,7 @@ class PromptCreator:
         *,
         tom_order: int = 1,
         reputation_window: Optional[int] = None,
+        reputation_applies: bool = True,
     ) -> None:
         self.language = lang
         self.prompt_template = prompt_template
@@ -50,6 +51,11 @@ class PromptCreator:
         # average only the most recent N rounds; otherwise they use the full
         # history.
         self.reputation_window = reputation_window
+        # When False, ``{coopRateN}``/``{reputationN}`` are filled with
+        # ``n/a``/``unknown`` regardless of history. Set this to False for
+        # asymmetric coordination games (Battle of the Sexes), zero-sum
+        # games, and any scenario where strategy1 doesn't mean "cooperate".
+        self.reputation_applies = reputation_applies
 
     # ---- Block helpers --------------------------------------------------
 
@@ -154,10 +160,15 @@ class PromptCreator:
             values[f"strategy{i+1}"] = self.payoff_matrix.strategies[key]
 
         # Per-opponent reputation: rolling cooperation rate over their
-        # past plays. By convention strategy1 = "cooperate".
+        # past plays. By convention strategy1 = "cooperate". When
+        # ``reputation_applies`` is False (asymmetric / zero-sum games),
+        # we deliberately emit ``n/a`` / ``unknown`` so the labels
+        # don't mislead the LLM.
         cooperate_label = self.payoff_matrix.strategies.get(strategies_keys[0]) if strategies_keys else None
         for i, opp in enumerate(opponents, start=1):
-            rate = self._opponent_cooperation_rate(opp, history, cooperate_label)
+            rate: Optional[float] = None
+            if self.reputation_applies:
+                rate = self._opponent_cooperation_rate(opp, history, cooperate_label)
             if rate is not None:
                 values[f"coopRate{i}"] = f"{rate:.2f}"
                 values[f"reputation{i}"] = self._reputation_label(rate)

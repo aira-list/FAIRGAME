@@ -29,6 +29,7 @@ canonical reference for every field accepted by the validator
 | `typesAreCommonKnowledge` | bool | no | When `agents.types` is set, surface the *prior distribution* (not the realised type) to opponents. Default `false`. |
 | `mixedStrategies` | bool | no | Ask the agent for a probability distribution and sample. Default `false`. |
 | `reputationWindow` | int | no | Number of recent rounds used to compute `{coopRateN}` / `{reputationN}` template placeholders. Omit for full-history average. |
+| `reputationApplies` | bool | no | When `false`, `{coopRateN}` / `{reputationN}` are filled with `n/a` / `unknown` instead of inferred labels. Use this for asymmetric or zero-sum games where strategy1 doesn't mean "cooperate". Default `true`. |
 | `discountFactor` | float | no | δ ∈ (0, 1] applied to payoffs each round. Default `1.0`. |
 | `continuationProbability` | float | no | Indefinite-horizon termination probability per round (after round 1). |
 | `utilityTransform` | object | no | Maps raw payoffs to utilities. See [`GAME_THEORY.md`](GAME_THEORY.md). |

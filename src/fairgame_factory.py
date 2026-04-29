@@ -244,6 +244,7 @@ class FairGameFactory:
             pareto_optimal_sum=config.get("paretoOptimalSum"),
             mixed_strategies=bool(config.get("mixedStrategies", False)),
             reputation_window=config.get("reputationWindow"),
+            reputation_applies=bool(config.get("reputationApplies", True)),
             rng=rng,
             seed=seed,
         )

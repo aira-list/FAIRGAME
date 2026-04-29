@@ -273,5 +273,71 @@ class TestRng(unittest.TestCase):
         self.assertEqual(seq_a, seq_b)
 
 
+# ---------------------------------------------------------------------------
+# Reputation-applies wiring
+# ---------------------------------------------------------------------------
+
+class TestCompoundDiscountWarning(unittest.TestCase):
+    """Combining discount factor with continuation probability double-counts
+    the effective discount; we want a clear warning when the user does both
+    (without forbidding the combination)."""
+
+    def test_warning_logged_when_both_set(self) -> None:
+        with self.assertLogs("src.fairgame", level="WARNING") as cm:
+            _make_game(discount_factor=0.9, continuation_probability=0.95)
+        joined = "\n".join(cm.output)
+        self.assertIn("discount", joined.lower())
+        self.assertIn("continuation", joined.lower())
+
+    def test_no_warning_when_only_discount_set(self) -> None:
+        # Pure discount factor → no warning.
+        import logging
+
+        with mock.patch.object(
+            __import__("src.fairgame", fromlist=["logger"]).logger,
+            "warning",
+        ) as warn:
+            _make_game(discount_factor=0.9)
+            warn.assert_not_called()
+
+    def test_no_warning_when_only_continuation_set(self) -> None:
+        import logging
+
+        with mock.patch.object(
+            __import__("src.fairgame", fromlist=["logger"]).logger,
+            "warning",
+        ) as warn:
+            _make_game(continuation_probability=0.95)
+            warn.assert_not_called()
+
+    def test_no_warning_when_discount_is_one(self) -> None:
+        # Discount=1.0 means no discounting — combining with continuation
+        # is the canonical stochastic-horizon model and shouldn't warn.
+        import logging
+
+        with mock.patch.object(
+            __import__("src.fairgame", fromlist=["logger"]).logger,
+            "warning",
+        ) as warn:
+            _make_game(discount_factor=1.0, continuation_probability=0.95)
+            warn.assert_not_called()
+
+
+class TestReputationAppliesWiring(unittest.TestCase):
+    def test_default_value_true(self) -> None:
+        game = _make_game()
+        self.assertTrue(game.reputation_applies)
+
+    def test_constructor_accepts_reputation_applies_false(self) -> None:
+        game = _make_game(reputation_applies=False)
+        self.assertFalse(game.reputation_applies)
+
+    def test_description_surfaces_reputation_applies(self) -> None:
+        # When False, the description must mention so a downstream consumer
+        # (results_processor, GUI) knows the labels are suppressed.
+        desc = _make_game(reputation_applies=False).description
+        self.assertEqual(desc.get("reputation_applies"), False)
+
+
 if __name__ == "__main__":
     unittest.main()

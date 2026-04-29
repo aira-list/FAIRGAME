@@ -106,5 +106,6 @@
     },
     "stopGameWhen": [],
     "agentsCommunicate": false,
-    "templateFilename": "battle_sexes"
+    "templateFilename": "battle_sexes",
+    "reputationApplies": false
 }

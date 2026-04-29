@@ -142,6 +142,7 @@ class GameRound:
             self.game.payoff_matrix,
             tom_order=getattr(self.game, "tom_order", 1),
             reputation_window=getattr(self.game, "reputation_window", None),
+            reputation_applies=getattr(self.game, "reputation_applies", True),
         )
         return prompt_creator.fill_template(
             agent,

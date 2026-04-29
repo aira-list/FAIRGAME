@@ -19,7 +19,7 @@ researcher reach for whichever the reviewers prefer.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, Optional
 
 import pandas as pd
 
@@ -105,12 +105,73 @@ def compare_metrics(
     df_a: pd.DataFrame,
     df_b: pd.DataFrame,
     metrics: Iterable[str],
+    correction: str = "none",
 ) -> pd.DataFrame:
-    """Run :func:`compare_metric` over many metrics, return a DataFrame."""
-    rows: List[Dict[str, Any]] = []
-    for metric in metrics:
-        rows.append(compare_metric(df_a, df_b, metric).to_dict())
+    """Run :func:`compare_metric` over many metrics, return a DataFrame.
+
+    Args:
+        df_a, df_b: per-seed DataFrames to compare.
+        metrics: column names to test on.
+        correction: ``"none"`` (default — backwards compatible), ``"bonferroni"``,
+            or ``"holm"``. The adjusted Welch and Mann-Whitney p-values
+            land in ``welch_p_adjusted`` / ``mannwhitney_p_adjusted``
+            columns; the raw values are preserved in ``welch_p`` /
+            ``mannwhitney_p``.
+    """
+    method = correction.lower()
+    if method not in {"none", "bonferroni", "holm"}:
+        raise ValueError(
+            f"Unknown correction {correction!r}. "
+            "Use 'none', 'bonferroni', or 'holm'."
+        )
+
+    rows: List[Dict[str, Any]] = [
+        compare_metric(df_a, df_b, m).to_dict() for m in metrics
+    ]
+    welch_raw = [r["welch_p"] for r in rows]
+    mw_raw = [r["mannwhitney_p"] for r in rows]
+    welch_adj = _adjust_pvalues(welch_raw, method)
+    mw_adj = _adjust_pvalues(mw_raw, method)
+    for row, w, m_ in zip(rows, welch_adj, mw_adj):
+        row["welch_p_adjusted"] = w
+        row["mannwhitney_p_adjusted"] = m_
+        row["correction"] = method
     return pd.DataFrame(rows)
+
+
+def _adjust_pvalues(raw: List[Optional[float]], method: str) -> List[Optional[float]]:
+    """Apply the chosen multiple-comparison correction in place.
+
+    Implements three rules:
+
+    * ``"none"`` — return ``raw`` unchanged.
+    * ``"bonferroni"`` — multiply each p by ``n`` (capped at 1).
+    * ``"holm"`` — sort ascending; the i-th smallest p (0-indexed) is
+      multiplied by ``n - i``; non-decreasing sequence enforced; capped
+      at 1; result re-mapped to original order.
+    """
+    if method == "none":
+        return list(raw)
+
+    n = sum(1 for p in raw if p is not None)
+    if n == 0:
+        return list(raw)
+
+    if method == "bonferroni":
+        return [None if p is None else min(1.0, p * n) for p in raw]
+
+    # Holm-Bonferroni step-down procedure.
+    indexed = sorted(
+        ((p, i) for i, p in enumerate(raw) if p is not None),
+        key=lambda t: t[0],
+    )
+    adjusted: List[Optional[float]] = list(raw)
+    running_max = 0.0
+    for rank, (p, idx) in enumerate(indexed):
+        candidate = p * (n - rank)
+        running_max = max(running_max, candidate)
+        adjusted[idx] = min(1.0, running_max)
+    return adjusted
 
 
 def default_comparison_metrics(df: pd.DataFrame) -> List[str]:

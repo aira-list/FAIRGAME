@@ -48,6 +48,7 @@ class FairGame:
         pareto_optimal_sum: Optional[float] = None,
         mixed_strategies: bool = False,
         reputation_window: Optional[int] = None,
+        reputation_applies: bool = True,
         rng: Optional[random.Random] = None,
         seed: Optional[int] = None,
     ) -> None:
@@ -81,12 +82,27 @@ class FairGame:
         self.continuation_probability = (
             float(continuation_probability) if continuation_probability is not None else None
         )
+        if (
+            self.continuation_probability is not None
+            and self.continuation_probability < 1.0
+            and self.discount_factor < 1.0
+        ):
+            logger.warning(
+                "Both discount_factor (%.3f) and continuation_probability (%.3f) "
+                "are set with values below 1.0. Their effects compound — the "
+                "effective per-round discount becomes %.3f. Standard practice "
+                "uses one or the other, not both.",
+                self.discount_factor,
+                self.continuation_probability,
+                self.discount_factor * self.continuation_probability,
+            )
         self.equilibria: List[str] = list(equilibria or [])
         self.pareto_optimal_sum = pareto_optimal_sum
         self.mixed_strategies = bool(mixed_strategies)
         self.reputation_window = (
             int(reputation_window) if reputation_window is not None else None
         )
+        self.reputation_applies = bool(reputation_applies)
 
         # RNG: explicit instance > derived-from-seed > nondeterministic.
         self.seed = seed
@@ -126,6 +142,7 @@ class FairGame:
         if self.pareto_optimal_sum is not None:
             desc["pareto_optimal_sum"] = self.pareto_optimal_sum
         desc["mixed_strategies"] = self.mixed_strategies
+        desc["reputation_applies"] = self.reputation_applies
         if self.seed is not None:
             desc["seed"] = self.seed
 
