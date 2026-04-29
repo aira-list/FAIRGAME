@@ -3,6 +3,14 @@
 **/*env*/**
 **/*env
 
+# Secrets — never commit these.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+
 # VSCode settings
 .vscode
 .vscode.*

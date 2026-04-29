@@ -11,7 +11,6 @@ if str(_PROJECT_ROOT) not in sys.path:
 
 import json  # noqa: E402
 
-import pandas as pd  # noqa: E402
 import streamlit as st  # noqa: E402
 
 from gui.components.plots import (  # noqa: E402

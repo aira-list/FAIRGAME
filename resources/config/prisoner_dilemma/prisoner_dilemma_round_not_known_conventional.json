@@ -4,7 +4,9 @@
     "nRoundsIsKnown": false,
     "llm": "OpenAIGPT4o",
     "languages": [
-        "ar", "cn", "vn"
+        "ar",
+        "cn",
+        "vn"
     ],
     "allAgentPermutations": true,
     "agents": {
@@ -105,5 +107,6 @@
         }
     },
     "stopGameWhen": [],
-    "agentsCommunicate": false
+    "agentsCommunicate": false,
+    "templateFilename": "prisoner_dilemma"
 }

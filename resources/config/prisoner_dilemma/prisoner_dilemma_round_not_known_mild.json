@@ -4,7 +4,8 @@
     "nRoundsIsKnown": false,
     "llm": "MistralLarge",
     "languages": [
-        "cn", "vn"
+        "cn",
+        "vn"
     ],
     "allAgentPermutations": true,
     "agents": {
@@ -105,5 +106,6 @@
         }
     },
     "stopGameWhen": [],
-    "agentsCommunicate": false
+    "agentsCommunicate": false,
+    "templateFilename": "prisoner_dilemma"
 }

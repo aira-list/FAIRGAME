@@ -25,7 +25,6 @@ from gui.components.payoff_diagram import render_2x2_payoff_html  # noqa: E402
 from gui.components.presets import (  # noqa: E402
     categories,
     usable_by_category,
-    usable_presets,
 )
 from gui.components.runner import list_past_runs  # noqa: E402
 from gui.components.state import init_page  # noqa: E402

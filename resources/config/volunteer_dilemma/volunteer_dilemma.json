@@ -2,8 +2,8 @@
     "name": "Volunteer's Dilemma",
     "nRounds": 10,
     "nRoundsIsKnown": true,
-    "templateFilename": "prisoner_dilemma",
-    "llm": "OpenAIGPT4Turbo",
+    "templateFilename": "volunteer_dilemma",
+    "llm": "OpenAIGPT4o",
     "languages": [
         "en"
     ],

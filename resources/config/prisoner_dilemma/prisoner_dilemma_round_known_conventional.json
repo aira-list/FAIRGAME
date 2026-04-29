@@ -104,6 +104,9 @@
             ]
         }
     },
-    "stopGameWhen": ["combination4"],
-    "agentsCommunicate": false
+    "stopGameWhen": [
+        "combination4"
+    ],
+    "agentsCommunicate": false,
+    "templateFilename": "prisoner_dilemma"
 }

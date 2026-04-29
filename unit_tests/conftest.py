@@ -1,11 +1,9 @@
 """Shared pytest fixtures for the FAIRGAME test suite.
 
-The fixture registered here installs a deterministic fake connector for every
-model name the test configurations reference. This means the unit test suite
-does not require live LLM credentials.
-
-Tests that genuinely need a live model can opt out by setting the
-``FAIRGAME_LIVE_LLM=1`` env var, in which case the fake is not registered.
+* Installs a deterministic fake LLM connector for every model name the
+  test configurations reference (skip with ``FAIRGAME_LIVE_LLM=1``).
+* Strips any S3 credentials the developer may have in their ``.env`` so
+  tests can never hit a live bucket (skip with ``FAIRGAME_LIVE_S3=1``).
 """
 
 from __future__ import annotations
@@ -18,6 +16,18 @@ import pytest
 
 from src.llm_connectors import register_model
 from src.llm_connectors.abstract_connector import AbstractConnector
+
+# Clear S3-related env vars at import time so dotenv-loaded credentials
+# from a developer's ``.env`` don't leak into the test process.
+if os.getenv("FAIRGAME_LIVE_S3") != "1":
+    for _key in (
+        "S3_ENDPOINT",
+        "S3_KEY",
+        "S3_SECRET",
+        "BUCKET_NAME",
+        "S3_PREFIX",
+    ):
+        os.environ.pop(_key, None)
 
 # Model names referenced by configs in unit_tests/config and resources/config.
 _TEST_MODEL_NAMES: List[str] = [

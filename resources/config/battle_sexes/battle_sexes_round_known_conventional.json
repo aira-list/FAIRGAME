@@ -4,7 +4,7 @@
     "nRoundsIsKnown": true,
     "llm": "MistralLarge",
     "languages": [
-       "fr"
+        "fr"
     ],
     "allAgentPermutations": true,
     "agents": {
@@ -105,5 +105,6 @@
         }
     },
     "stopGameWhen": [],
-    "agentsCommunicate": false
+    "agentsCommunicate": false,
+    "templateFilename": "battle_sexes"
 }

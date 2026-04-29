@@ -41,6 +41,10 @@ class GamesRunner:
         self.config = config
         self.templates = templates
         self.config["promptTemplate"] = self.templates
+        # ``templateFilename`` is mutually exclusive with ``promptTemplate``
+        # in the validator. The CLI provides the template inline, so drop
+        # any file-pointer the config might also have set.
+        self.config.pop("templateFilename", None)
         self.fairgame_url = fairgame_url
 
     def run(self) -> Dict[str, Any]:
@@ -97,6 +101,7 @@ def save_results(results: Dict[str, Any], config_name: str) -> None:
     """
     results_processor = ResultsProcessor()
     df = results_processor.process(results)
+    RESULTS_PATH.mkdir(parents=True, exist_ok=True)
     results_filepath = RESULTS_PATH / f"results_{config_name}.csv"
     FileManager.save_results_csv(df, results_filepath)
 

@@ -40,8 +40,17 @@ class IoManager:
         return self.config_validator.validate_config_structure(config_data)
 
     def load_template(self, filename: str, lang: str) -> str:
+        """Load a per-language template file.
+
+        Tries ``.txt`` first, then ``.rtf`` (some shipped templates for
+        languages with right-to-left or CJK scripts arrived in RTF). The
+        RTF reader strips formatting before returning the plain text.
         """
-        Loads the content of a template file based on a language code.
-        """
-        template_filepath = self.game_path / f"{filename}_{lang}.txt"
-        return self.file_manager.load_text_file(template_filepath)
+        stem = self.game_path / f"{filename}_{lang}"
+        for suffix in (".txt", ".rtf"):
+            candidate = stem.with_suffix(suffix)
+            if candidate.is_file():
+                return self.file_manager.read_template_file(candidate)
+        raise FileNotFoundError(
+            f"Template not found: {stem.with_suffix('.txt')} or {stem.with_suffix('.rtf')}"
+        )

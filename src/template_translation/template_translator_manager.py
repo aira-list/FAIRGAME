@@ -76,13 +76,20 @@ class TemplateTranslatorManager:
         Returns:
             str: The translated template.
         """
-        url = "http://127.0.0.1:5003/translate_template"
+        import os
+
+        base = os.getenv("FAIRGAME_URL", "http://127.0.0.1:5003").rstrip("/")
+        # Strip a trailing /create_and_run_games so the env var can be reused.
+        if base.endswith("/create_and_run_games"):
+            base = base[: -len("/create_and_run_games")]
+        url = f"{base}/translate_template"
         headers = {"Content-Type": "application/json"}
         data = {"llm": self.llm, "template": template, "lang_to": self.lang_to}
         response = requests.post(url, data=json.dumps(data), headers=headers)
-        response.raise_for_status()  # Raises an HTTPError for bad responses
-        # The API contract returns ``{"translated_text": ...}``; ``translation``
-        # was a stale legacy key that always resolved to "".
+        response.raise_for_status()
+        # Contract: ``{"translated_text": ...}``. Earlier code read the key
+        # ``translation`` which always returned "" — fixed during the
+        # refactor.
         return response.json().get("translated_text", "")
 
     def save_translation(self, original_filepath: Path, translation: str) -> Path:
