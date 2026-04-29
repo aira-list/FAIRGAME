@@ -33,6 +33,11 @@ def _two_player_payoff_arrays(
     combinations = matrix_block.get("combinations") or {}
     weight_matrix = matrix_block.get("matrix") or {}
 
+    # All four sub-blocks must be present and non-empty; otherwise the
+    # game isn't fully specified and we can't compute equilibria honestly.
+    if not (strategies and weights and combinations and weight_matrix):
+        return None
+
     strategy_keys = list(strategies.keys())
     if len(strategy_keys) != 2:
         return None

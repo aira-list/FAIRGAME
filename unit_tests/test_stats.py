@@ -1,12 +1,19 @@
-"""Tests for :mod:`src.results_processing.stats`."""
+"""Tests for :mod:`src.results_processing.stats`.
+
+Behaviour-level tests of the hypothesis-testing helpers. Each test
+exercises one narrow contract; edge-case inputs (singletons, NaN-only,
+zero-variance, missing column) get their own cases.
+"""
 
 from __future__ import annotations
 
+import math
 import unittest
 
 import pandas as pd
 
 from src.results_processing.stats import (
+    ComparisonResult,
     compare_metric,
     compare_metrics,
     default_comparison_metrics,
@@ -14,16 +21,38 @@ from src.results_processing.stats import (
 )
 
 
+# ---------------------------------------------------------------------------
+# extract_numeric
+# ---------------------------------------------------------------------------
+
 class TestExtractNumeric(unittest.TestCase):
-    def test_drops_nans_and_strings(self) -> None:
+    def test_drops_strings_and_nans(self) -> None:
         df = pd.DataFrame({"x": [1, 2, "bad", None, 3.5]})
         self.assertEqual(extract_numeric(df, "x"), [1.0, 2.0, 3.5])
 
     def test_returns_empty_for_missing_column(self) -> None:
         self.assertEqual(extract_numeric(pd.DataFrame(), "x"), [])
 
+    def test_returns_empty_for_all_nan_column(self) -> None:
+        df = pd.DataFrame({"x": [None, None, None]})
+        self.assertEqual(extract_numeric(df, "x"), [])
 
-class TestCompareMetric(unittest.TestCase):
+    def test_does_not_mutate_input_dataframe(self) -> None:
+        df = pd.DataFrame({"x": [1, 2, "bad", None, 3.5]})
+        snapshot = df.copy()
+        _ = extract_numeric(df, "x")
+        pd.testing.assert_frame_equal(df, snapshot)
+
+    def test_preserves_order(self) -> None:
+        df = pd.DataFrame({"x": [3.0, 1.0, 2.0]})
+        self.assertEqual(extract_numeric(df, "x"), [3.0, 1.0, 2.0])
+
+
+# ---------------------------------------------------------------------------
+# compare_metric: happy paths
+# ---------------------------------------------------------------------------
+
+class TestCompareMetricHappyPath(unittest.TestCase):
     def test_distinct_distributions_have_low_pvalue(self) -> None:
         df_a = pd.DataFrame({"x": [10, 11, 12, 13, 14]})
         df_b = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
@@ -40,34 +69,143 @@ class TestCompareMetric(unittest.TestCase):
         self.assertLess(result.mannwhitney_p, 0.05)
 
     def test_identical_distributions_have_high_pvalue(self) -> None:
-        df_a = pd.DataFrame({"x": [5, 6, 7, 8, 9]})
-        df_b = pd.DataFrame({"x": [5, 6, 7, 8, 9]})
-        result = compare_metric(df_a, df_b, "x")
+        same = [5, 6, 7, 8, 9]
+        result = compare_metric(pd.DataFrame({"x": same}), pd.DataFrame({"x": same}), "x")
         self.assertAlmostEqual(result.mean_diff, 0.0)
         self.assertGreater(result.welch_p or 0.0, 0.5)
 
-    def test_empty_a_returns_nan_means(self) -> None:
+    def test_mean_diff_sign_follows_argument_order(self) -> None:
+        df_a = pd.DataFrame({"x": [5, 6, 7]})
+        df_b = pd.DataFrame({"x": [1, 2, 3]})
+        forward = compare_metric(df_a, df_b, "x")
+        backward = compare_metric(df_b, df_a, "x")
+        self.assertAlmostEqual(forward.mean_diff, -backward.mean_diff)
+
+    def test_welch_t_sign_matches_mean_diff(self) -> None:
+        df_a = pd.DataFrame({"x": [10, 11, 12]})
+        df_b = pd.DataFrame({"x": [1, 2, 3]})
+        result = compare_metric(df_a, df_b, "x")
+        self.assertGreater(result.welch_t, 0)  # mean_a > mean_b
+
+    def test_n_a_and_n_b_count_only_numeric_rows(self) -> None:
+        df_a = pd.DataFrame({"x": [1, "bad", 2, None, 3]})
+        df_b = pd.DataFrame({"x": [4, 5, 6]})
+        result = compare_metric(df_a, df_b, "x")
+        self.assertEqual(result.n_a, 3)
+        self.assertEqual(result.n_b, 3)
+
+
+# ---------------------------------------------------------------------------
+# compare_metric: edge cases
+# ---------------------------------------------------------------------------
+
+class TestCompareMetricEdgeCases(unittest.TestCase):
+    def test_empty_a_yields_nan_mean_a(self) -> None:
         result = compare_metric(pd.DataFrame({"x": []}), pd.DataFrame({"x": [1, 2]}), "x")
         self.assertEqual(result.n_a, 0)
-        self.assertNotEqual(result.mean_a, result.mean_a)  # NaN check
+        self.assertTrue(math.isnan(result.mean_a))
+        # Tests can't run with an empty sample → both p-values are None.
+        self.assertIsNone(result.welch_p)
+        self.assertIsNone(result.mannwhitney_p)
 
+    def test_both_empty_yields_nan_means(self) -> None:
+        result = compare_metric(pd.DataFrame({"x": []}), pd.DataFrame({"x": []}), "x")
+        self.assertEqual(result.n_a, 0)
+        self.assertEqual(result.n_b, 0)
+        self.assertTrue(math.isnan(result.mean_a))
+        self.assertTrue(math.isnan(result.mean_b))
+        self.assertTrue(math.isnan(result.mean_diff))
+
+    def test_singleton_samples_dont_crash(self) -> None:
+        # n=1 has zero variance → Welch may return nan or fail; we accept
+        # either as long as the call itself doesn't raise.
+        result = compare_metric(pd.DataFrame({"x": [1]}), pd.DataFrame({"x": [10]}), "x")
+        self.assertEqual(result.n_a, 1)
+        self.assertEqual(result.n_b, 1)
+        self.assertAlmostEqual(result.mean_diff, -9.0)
+
+    def test_zero_variance_in_both_samples(self) -> None:
+        # Identical constant samples → no test statistic possible; mean_diff
+        # must still be 0 and the call must not raise.
+        result = compare_metric(pd.DataFrame({"x": [5, 5, 5]}), pd.DataFrame({"x": [5, 5, 5]}), "x")
+        self.assertAlmostEqual(result.mean_diff, 0.0)
+
+    def test_missing_column_yields_zero_n(self) -> None:
+        result = compare_metric(pd.DataFrame({"y": [1, 2]}), pd.DataFrame({"x": [3]}), "x")
+        self.assertEqual(result.n_a, 0)
+        self.assertEqual(result.n_b, 1)
+
+
+# ---------------------------------------------------------------------------
+# ComparisonResult dataclass
+# ---------------------------------------------------------------------------
+
+class TestComparisonResultDataclass(unittest.TestCase):
+    def test_to_dict_round_trip_keys(self) -> None:
+        result = compare_metric(pd.DataFrame({"x": [1, 2]}), pd.DataFrame({"x": [3, 4]}), "x")
+        d = result.to_dict()
+        # All declared fields appear.
+        for field in (
+            "metric", "n_a", "n_b", "mean_a", "mean_b", "mean_diff",
+            "welch_t", "welch_p", "mannwhitney_u", "mannwhitney_p",
+        ):
+            self.assertIn(field, d)
+
+    def test_dataclass_can_be_reconstructed_from_dict(self) -> None:
+        result = compare_metric(pd.DataFrame({"x": [1, 2]}), pd.DataFrame({"x": [3, 4]}), "x")
+        d = result.to_dict()
+        rebuilt = ComparisonResult(**d)
+        self.assertEqual(rebuilt.to_dict(), d)
+
+
+# ---------------------------------------------------------------------------
+# compare_metrics (sweep)
+# ---------------------------------------------------------------------------
 
 class TestCompareMetricsSweep(unittest.TestCase):
-    def test_returns_one_row_per_metric(self) -> None:
+    def test_one_row_per_metric(self) -> None:
         df_a = pd.DataFrame({"x": [1, 2, 3], "y": [10, 20, 30]})
         df_b = pd.DataFrame({"x": [4, 5, 6], "y": [10, 20, 30]})
         out = compare_metrics(df_a, df_b, ["x", "y"])
         self.assertEqual(len(out), 2)
         self.assertEqual(set(out["metric"]), {"x", "y"})
 
+    def test_empty_metric_list_yields_empty_dataframe(self) -> None:
+        df_a = pd.DataFrame({"x": [1]})
+        df_b = pd.DataFrame({"x": [2]})
+        out = compare_metrics(df_a, df_b, [])
+        self.assertEqual(len(out), 0)
+
+    def test_metric_missing_from_both_yields_zero_counts(self) -> None:
+        df_a = pd.DataFrame({"x": [1]})
+        df_b = pd.DataFrame({"x": [2]})
+        out = compare_metrics(df_a, df_b, ["does_not_exist"])
+        row = out.iloc[0]
+        self.assertEqual(row["n_a"], 0)
+        self.assertEqual(row["n_b"], 0)
+
+
+# ---------------------------------------------------------------------------
+# default_comparison_metrics
+# ---------------------------------------------------------------------------
 
 class TestDefaultComparisonMetrics(unittest.TestCase):
-    def test_returns_only_columns_that_exist(self) -> None:
+    def test_returns_only_existing_columns(self) -> None:
         df = pd.DataFrame({"welfare_mean_sum": [1], "equilibrium_rate": [0.5]})
         result = default_comparison_metrics(df)
         self.assertIn("welfare_mean_sum", result)
         self.assertIn("equilibrium_rate", result)
         self.assertNotIn("agent1_belief_mean_brier", result)
+
+    def test_returns_empty_when_no_known_metrics_present(self) -> None:
+        df = pd.DataFrame({"unrelated": [1, 2]})
+        self.assertEqual(default_comparison_metrics(df), [])
+
+    def test_includes_regret_columns_when_present(self) -> None:
+        df = pd.DataFrame({"agent1_regret_mean": [0.1], "agent2_regret_mean": [0.2]})
+        result = default_comparison_metrics(df)
+        self.assertIn("agent1_regret_mean", result)
+        self.assertIn("agent2_regret_mean", result)
 
 
 if __name__ == "__main__":
