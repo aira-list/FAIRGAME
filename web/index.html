@@ -114,10 +114,6 @@
             <h3 class="font-semibold mb-1">📊 Results</h3>
             <p class="text-sm text-slate-600">Browse past runs with interactive charts.</p>
           </div>
-          <div class="fg-card p-5 cursor-pointer transition" @click="activePage='compare'">
-            <h3 class="font-semibold mb-1">⚖️ Compare runs</h3>
-            <p class="text-sm text-slate-600">Welch + Mann-Whitney significance tests across two runs.</p>
-          </div>
         </div>
 
         <h2 class="text-xl font-semibold mb-3">📖 Guide</h2>
@@ -396,10 +392,6 @@
               <label class="fg-label">Number of rounds</label>
               <input type="number" min="1" x-model.number="builder.cfg.nRounds" class="fg-input"/>
             </div>
-            <div>
-              <label class="fg-label">Iterations per scenario</label>
-              <input type="number" min="1" x-model.number="builder.cfg.nIterations" class="fg-input"/>
-            </div>
             <div class="md:col-span-2 flex flex-wrap gap-4 mt-2">
               <label class="flex items-center gap-2 text-sm">
                 <input type="checkbox" x-model="builder.cfg.nRoundsIsKnown"/>
@@ -438,36 +430,101 @@
 
         <!-- AGENTS -->
         <div x-show="builder.tab === 'agents'" class="fg-card p-6">
-          <p class="text-sm text-slate-600 mb-4">Edit per-agent settings. Personality and opponent prior shape the prompt template.</p>
-          <div class="grid grid-cols-12 gap-2 text-xs font-medium text-slate-600 mb-2">
-            <div class="col-span-3">Name</div>
-            <div class="col-span-3">LLM / baseline</div>
-            <div class="col-span-3">Personality (en)</div>
-            <div class="col-span-2">Opp. prior</div>
-            <div class="col-span-1"></div>
+          <div class="mb-4">
+            <p class="text-sm font-medium mb-2">Personality assignment</p>
+            <label class="flex items-center gap-2 text-sm mb-1.5">
+              <input type="radio" name="pmode" value="per_agent" x-model="builder.personalityMode"/>
+              <span><strong>Per agent</strong> — each agent gets its own personality (positional).</span>
+            </label>
+            <label class="flex items-center gap-2 text-sm">
+              <input type="radio" name="pmode" value="pool" x-model="builder.personalityMode"/>
+              <span><strong>Pool with permutations</strong> — define a list of personality types; the engine generates one game per permutation across the agents.</span>
+            </label>
           </div>
-          <template x-for="(agent, i) in builder.agents" :key="i">
-            <div class="grid grid-cols-12 gap-2 mb-2">
-              <input type="text" x-model="agent.name" class="fg-input col-span-3"/>
-              <select x-model="agent.llm" class="fg-input col-span-3">
-                <optgroup label="LLMs">
-                  <template x-for="m in llms" :key="m"><option :value="m" x-text="m"></option></template>
-                </optgroup>
-                <optgroup label="Baselines">
-                  <template x-for="b in baselines" :key="b">
-                    <option :value="'baseline:'+b" x-text="'baseline:' + b"></option>
-                  </template>
-                </optgroup>
-              </select>
-              <input type="text" x-model="agent.personality" class="fg-input col-span-3" placeholder="cooperative"/>
-              <input type="number" step="0.1" min="0" max="1" x-model.number="agent.opponentPersonalityPr" class="fg-input col-span-2"/>
-              <button class="col-span-1 text-rose-600 hover:text-rose-800" @click="builder.agents.splice(i,1)" title="Remove">✕</button>
+
+          <!-- Mode A: per-agent -->
+          <div x-show="builder.personalityMode === 'per_agent'">
+            <div class="grid grid-cols-12 gap-2 text-xs font-medium text-slate-600 mb-2">
+              <div class="col-span-3">Name</div>
+              <div class="col-span-3">LLM / baseline</div>
+              <div class="col-span-3">Personality (en)</div>
+              <div class="col-span-2">Opp. prior</div>
+              <div class="col-span-1"></div>
             </div>
-          </template>
-          <button class="mt-2 px-4 py-1.5 rounded-md border border-slate-300 text-sm hover:bg-slate-50"
-                  @click="builder.agents.push({ name: 'agent'+(builder.agents.length+1), llm: llms[0]||'OpenAIGPT4o', personality: 'neutral', opponentPersonalityPr: 0.0 })">
-            + Add agent
-          </button>
+            <template x-for="(agent, i) in builder.agents" :key="i">
+              <div class="grid grid-cols-12 gap-2 mb-2">
+                <input type="text" x-model="agent.name" class="fg-input col-span-3"/>
+                <select x-model="agent.llm" class="fg-input col-span-3">
+                  <optgroup label="LLMs">
+                    <template x-for="m in llms" :key="m"><option :value="m" x-text="m"></option></template>
+                  </optgroup>
+                  <optgroup label="Baselines">
+                    <template x-for="b in baselines" :key="b">
+                      <option :value="'baseline:'+b" x-text="'baseline:' + b"></option>
+                    </template>
+                  </optgroup>
+                </select>
+                <input type="text" x-model="agent.personality" class="fg-input col-span-3" placeholder="cooperative"/>
+                <input type="number" step="0.1" min="0" max="1" x-model.number="agent.opponentPersonalityPr" class="fg-input col-span-2"/>
+                <button class="col-span-1 text-rose-600 hover:text-rose-800" @click="builder.agents.splice(i,1)" title="Remove">✕</button>
+              </div>
+            </template>
+            <button class="mt-2 px-4 py-1.5 rounded-md border border-slate-300 text-sm hover:bg-slate-50"
+                    @click="builder.agents.push({ name: 'agent'+(builder.agents.length+1), llm: llms[0]||'OpenAIGPT4o', personality: 'neutral', opponentPersonalityPr: 0.0 })">
+              + Add agent
+            </button>
+          </div>
+
+          <!-- Mode B: pool -->
+          <div x-show="builder.personalityMode === 'pool'">
+            <p class="fg-help mb-3">In pool mode, the engine generates one game per agent-personality permutation. With <em>k</em> personalities and <em>n</em> agents, you get <em>k<sup>n</sup></em> games (or smaller when same-LLM agents trigger combinations-with-replacement).</p>
+
+            <div class="fg-section">
+              <h3>Agent slots</h3>
+              <p class="fg-help mb-2">Names + LLM/baseline assignments still come from this list — only the personality column is replaced by the pool below.</p>
+              <div class="grid grid-cols-12 gap-2 text-xs font-medium text-slate-600 mb-2">
+                <div class="col-span-4">Name</div>
+                <div class="col-span-7">LLM / baseline</div>
+                <div class="col-span-1"></div>
+              </div>
+              <template x-for="(agent, i) in builder.agents" :key="i">
+                <div class="grid grid-cols-12 gap-2 mb-2">
+                  <input type="text" x-model="agent.name" class="fg-input col-span-4"/>
+                  <select x-model="agent.llm" class="fg-input col-span-7">
+                    <optgroup label="LLMs">
+                      <template x-for="m in llms" :key="m"><option :value="m" x-text="m"></option></template>
+                    </optgroup>
+                    <optgroup label="Baselines">
+                      <template x-for="b in baselines" :key="b">
+                        <option :value="'baseline:'+b" x-text="'baseline:' + b"></option>
+                      </template>
+                    </optgroup>
+                  </select>
+                  <button class="col-span-1 text-rose-600 hover:text-rose-800" @click="builder.agents.splice(i,1)" title="Remove">✕</button>
+                </div>
+              </template>
+              <button class="mt-2 px-4 py-1.5 rounded-md border border-slate-300 text-sm hover:bg-slate-50"
+                      @click="builder.agents.push({ name: 'agent'+(builder.agents.length+1), llm: llms[0]||'OpenAIGPT4o', personality: 'neutral', opponentPersonalityPr: 0.0 })">
+                + Add agent slot
+              </button>
+            </div>
+
+            <div class="fg-section">
+              <h3>Personality pool (one per line)</h3>
+              <textarea x-model="builder.personalityPoolText"
+                        class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm h-32"
+                        placeholder="cooperative&#10;selfish&#10;neutral"></textarea>
+              <p class="fg-help">The first language's pool is used as the source of truth; other languages get the same list.</p>
+            </div>
+
+            <div class="fg-section">
+              <h3>Opponent-knowledge probabilities (one per line)</h3>
+              <textarea x-model="builder.opponentPriorPoolText"
+                        class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm h-24"
+                        placeholder="0&#10;0.5&#10;1"></textarea>
+              <p class="fg-help">Each value is a probability (0..1). The engine permutes these across the agents the same way as personalities.</p>
+            </div>
+          </div>
         </div>
 
         <!-- THEORY OF MIND -->
@@ -908,10 +965,16 @@
             </template>
           </div>
 
-          <div class="grid md:grid-cols-3 gap-4">
+          <div class="grid md:grid-cols-4 gap-4">
+            <div>
+              <label class="fg-label">Iterations per config</label>
+              <input type="number" min="1" x-model.number="experiment.nIterations" class="fg-input"/>
+              <p class="fg-help">Repeat the same configuration this many times back-to-back. Each iteration is a separate run with its own id.</p>
+            </div>
             <div>
               <label class="fg-label">Seed count per config</label>
               <input type="number" min="1" x-model.number="experiment.seedCount" class="fg-input"/>
+              <p class="fg-help">Engine-side multi-seed averaging within a single run.</p>
             </div>
             <div>
               <label class="fg-label">Master seed</label>
@@ -1030,55 +1093,6 @@
       </section>
 
 
-      <!-- ===== COMPARE RUNS ===== -->
-      <section x-show="activePage === 'compare'">
-        <h1 class="text-2xl font-semibold mb-1">⚖️ Compare runs</h1>
-        <p class="text-slate-600 mb-6">Side-by-side Welch t-test + Mann-Whitney U test on every numeric metric. Use it to ask "did changing X make a statistically significant difference?".</p>
-
-        <div class="fg-card p-6 mb-6">
-          <div class="grid md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label class="fg-label">Run A</label>
-              <select x-model="compare.runA" class="fg-input">
-                <option value="">— select a run —</option>
-                <template x-for="r in runs" :key="r.id">
-                  <option :value="r.id" x-text="r.name + ' · ' + r.id"></option>
-                </template>
-              </select>
-            </div>
-            <div>
-              <label class="fg-label">Run B</label>
-              <select x-model="compare.runB" class="fg-input">
-                <option value="">— select a run —</option>
-                <template x-for="r in runs" :key="r.id">
-                  <option :value="r.id" x-text="r.name + ' · ' + r.id"></option>
-                </template>
-              </select>
-            </div>
-          </div>
-
-          <label class="fg-label">Multiple-comparison correction</label>
-          <select x-model="compare.correction" class="fg-input md:w-1/3">
-            <option value="none">None (raw p-values)</option>
-            <option value="bonferroni">Bonferroni</option>
-            <option value="holm">Holm-Bonferroni</option>
-          </select>
-
-          <button class="mt-5 px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
-                  :disabled="!compare.runA || !compare.runB || compare.runA===compare.runB || compare.running"
-                  @click="runCompare()">
-            <span x-show="!compare.running">▶ Compare</span>
-            <span x-show="compare.running">Comparing…</span>
-          </button>
-
-          <div x-show="compare.error" class="mt-4 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-sm" x-text="compare.error"></div>
-        </div>
-
-        <div x-show="compare.result" class="fg-card p-6">
-          <h2 class="text-lg font-semibold mb-3">Comparison</h2>
-          <div x-html="renderTable(compare.result?.rows)"></div>
-        </div>
-      </section>
 
     </main>
   </div>
@@ -1096,7 +1110,6 @@
         { id: 'tournament',     icon: '🏆', label: 'Tournament' },
         { id: 'experiment',     icon: '🧪', label: 'Experiment' },
         { id: 'results',        icon: '📊', label: 'Results' },
-        { id: 'compare',        icon: '⚖️', label: 'Compare runs' },
       ],
       builderTabs: [
         { id: 'basics', label: 'Basics' },
@@ -1205,6 +1218,10 @@
           },
         },
         stopGameWhenCsv: '',
+        // Personality input mode
+        personalityMode: 'per_agent',         // 'per_agent' | 'pool'
+        personalityPoolText: 'cooperative\nselfish',
+        opponentPriorPoolText: '0',
         json: '',
         running: false, error: '', lastRun: null,
       },
@@ -1224,15 +1241,14 @@
 
       experiment: {
         selectedPresets: [],
-        seedCount: 3,
+        nIterations: 1,
+        seedCount: 1,
         seed: 0,
         nRoundsOverride: 0,
         running: false, error: '', progress: '', results: [],
       },
 
       results: { tab: 'table' },
-
-      compare: { runA: '', runB: '', correction: 'none', running: false, error: '', result: null },
 
       _charts: {},   // Chart.js instances, keyed by canvas id
 
@@ -1687,12 +1703,26 @@
           const persons = (a.personalities && a.personalities[lang0]) || [];
           const llms = a.llmServices || [];
           const probs = a.opponentPersonalityProbs || [];
-          this.builder.agents = a.names.map((n, i) => ({
-            name: n,
-            llm: llms[i] || (this.llms[0] || 'OpenAIGPT4o'),
-            personality: persons[i] || 'neutral',
-            opponentPersonalityPr: probs[i] || 0,
-          }));
+
+          this.builder.personalityMode = cfg.allAgentPermutations ? 'pool' : 'per_agent';
+          if (this.builder.personalityMode === 'pool') {
+            // Pool mode: persons / probs are the pool, not per-agent.
+            this.builder.personalityPoolText = persons.join('\n');
+            this.builder.opponentPriorPoolText = probs.map(String).join('\n');
+            this.builder.agents = a.names.map((n, i) => ({
+              name: n,
+              llm: llms[i] || (this.llms[0] || 'OpenAIGPT4o'),
+              personality: '',
+              opponentPersonalityPr: 0,
+            }));
+          } else {
+            this.builder.agents = a.names.map((n, i) => ({
+              name: n,
+              llm: llms[i] || (this.llms[0] || 'OpenAIGPT4o'),
+              personality: persons[i] || 'neutral',
+              opponentPersonalityPr: probs[i] || 0,
+            }));
+          }
         }
 
         // Utility transform.
@@ -1798,9 +1828,17 @@
       buildConfig() {
         const c = this.builder.cfg;
         const langs = (c.languages && c.languages.length) ? [...c.languages] : ['en'];
+        const isPool = this.builder.personalityMode === 'pool';
+        const pool = (this.builder.personalityPoolText || '')
+          .split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+        const priorPool = (this.builder.opponentPriorPoolText || '')
+          .split(/\r?\n/).map(s => s.trim()).filter(Boolean)
+          .map(s => Number(s)).filter(n => !Number.isNaN(n));
         const personalities = {};
         for (const lang of langs) {
-          personalities[lang] = this.builder.agents.map(a => a.personality);
+          personalities[lang] = isPool
+            ? pool
+            : this.builder.agents.map(a => a.personality);
         }
         const cfg = JSON.parse(JSON.stringify(this.builder._raw || {}));
         Object.assign(cfg, {
@@ -1870,8 +1908,15 @@
           names: this.builder.agents.map(a => a.name),
           personalities,
           llmServices: this.builder.agents.map(a => a.llm),
-          opponentPersonalityProbs: this.builder.agents.map(a => a.opponentPersonalityPr || 0),
+          opponentPersonalityProbs: isPool
+            ? (priorPool.length ? priorPool : [0])
+            : this.builder.agents.map(a => a.opponentPersonalityPr || 0),
         };
+        if (isPool) {
+          cfg.allAgentPermutations = true;
+        } else {
+          delete cfg.allAgentPermutations;
+        }
         if (this.builder.utilityType !== 'identity') {
           cfg.utility = { type: this.builder.utilityType };
           if (this.builder.utilityType === 'CRRA') {
@@ -1993,24 +2038,30 @@
         this.experiment.running = true;
         this.experiment.error = '';
         this.experiment.results = [];
-        const total = this.experiment.selectedPresets.length;
+        const iterations = Math.max(1, this.experiment.nIterations || 1);
+        const total = this.experiment.selectedPresets.length * iterations;
         try {
-          for (let i = 0; i < total; i++) {
-            this.experiment.progress = `${i + 1}/${total}`;
-            const presetId = this.experiment.selectedPresets[i];
-            const cfg = await this.api(`/api/presets/${presetId}`);
-            if (this.experiment.seedCount > 1) cfg.seedCount = this.experiment.seedCount;
-            if (this.experiment.seed !== undefined) cfg.seed = this.experiment.seed;
-            if (this.experiment.nRoundsOverride > 0) cfg.nRounds = this.experiment.nRoundsOverride;
-            const result = await this.api('/api/runs', {
-              method: 'POST',
-              body: JSON.stringify({ config: cfg, demo_mode: this.demoMode }),
-            });
-            this.experiment.results.push({
-              id: result.id,
-              preset: presetId,
-              n_rows: result.rows.length,
-            });
+          let done = 0;
+          for (const presetId of this.experiment.selectedPresets) {
+            for (let it = 0; it < iterations; it++) {
+              this.experiment.progress = `${++done}/${total}`;
+              const cfg = await this.api(`/api/presets/${presetId}`);
+              if (this.experiment.seedCount > 1) cfg.seedCount = this.experiment.seedCount;
+              // Vary the seed per iteration so the engine doesn't return
+              // identical-on-prompt outputs from the demo connector.
+              if (this.experiment.seed !== undefined) cfg.seed = this.experiment.seed + it;
+              if (this.experiment.nRoundsOverride > 0) cfg.nRounds = this.experiment.nRoundsOverride;
+              const result = await this.api('/api/runs', {
+                method: 'POST',
+                body: JSON.stringify({ config: cfg, demo_mode: this.demoMode }),
+              });
+              this.experiment.results.push({
+                id: result.id,
+                preset: presetId,
+                iteration: it + 1,
+                n_rows: result.rows.length,
+              });
+            }
           }
           await this.loadRuns();
         } catch (e) { this.experiment.error = String(e.message || e); }
@@ -2140,26 +2191,6 @@
             plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } },
           },
         });
-      },
-
-      // ---- Compare runs ---------------------------------------------
-
-      async runCompare() {
-        this.compare.running = true;
-        this.compare.error = '';
-        this.compare.result = null;
-        try {
-          const result = await this.api('/api/runs/compare', {
-            method: 'POST',
-            body: JSON.stringify({
-              run_a: this.compare.runA,
-              run_b: this.compare.runB,
-              correction: this.compare.correction,
-            }),
-          });
-          this.compare.result = result;
-        } catch (e) { this.compare.error = String(e.message || e); }
-        finally { this.compare.running = false; }
       },
 
       // ---- Rendering helpers ----------------------------------------

@@ -24,7 +24,7 @@ import json
 import os
 import posixpath
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -67,15 +67,35 @@ def _store_path(name: str) -> Path:
     return DATA_DIR / f"{name}.json"
 
 
+def _seed_data(name: str) -> List[Dict[str, Any]]:
+    """Initial tags / templates for a fresh install. Returned (and
+    persisted) when ``data/<name>.json`` is missing or empty so a new
+    user lands on a usable library."""
+    if name == "tags":
+        return _SEED_TAGS
+    if name == "templates":
+        return _SEED_TEMPLATES
+    return []
+
+
 def _load_store(name: str) -> List[Dict[str, Any]]:
     path = _store_path(name)
     if not path.is_file():
-        return []
+        seed = _seed_data(name)
+        if seed:
+            _save_store(name, seed)
+        return list(seed)
     try:
-        return json.loads(path.read_text())
+        items = json.loads(path.read_text())
     except json.JSONDecodeError:
         logger.warning("Corrupt store at %s; starting fresh.", path)
-        return []
+        items = []
+    if not items:
+        seed = _seed_data(name)
+        if seed:
+            _save_store(name, seed)
+            return list(seed)
+    return items
 
 
 def _save_store(name: str, items: List[Dict[str, Any]]) -> None:
@@ -88,6 +108,120 @@ def _new_id() -> str:
 
 def _now_iso() -> str:
     return datetime.now().isoformat(timespec="seconds")
+
+
+# ---------------------------------------------------------------------------
+# Default starter library: 5 canonical 2x2 games, English templates.
+# Auto-seeded on first read of tags.json / templates.json.
+# ---------------------------------------------------------------------------
+
+
+_SEED_TAGS: List[Dict[str, Any]] = [
+    {"id": "tag_pd",  "name": "Prisoner's Dilemma",
+     "description": "Two-agent dilemma: mutual cooperation is socially optimal but mutual defection is the unique Nash equilibrium.",
+     "created_at": "2026-04-29T20:00:00"},
+    {"id": "tag_sh",  "name": "Stag Hunt",
+     "description": "Coordination game with two pure equilibria — payoff-dominant (Stag, Stag) and risk-dominant (Hare, Hare).",
+     "created_at": "2026-04-29T20:00:00"},
+    {"id": "tag_h",   "name": "Harmony Game",
+     "description": "Cooperative analogue of PD: mutual cooperation is socially optimal AND a unique dominant strategy.",
+     "created_at": "2026-04-29T20:00:00"},
+    {"id": "tag_sd",  "name": "Snowdrift",
+     "description": "Anti-coordination game (Chicken / Hawk-Dove). Each player prefers the opponent does the work.",
+     "created_at": "2026-04-29T20:00:00"},
+    {"id": "tag_bos", "name": "Battle of the Sexes",
+     "description": "Coordination game with two pure equilibria, each favouring one player.",
+     "created_at": "2026-04-29T20:00:00"},
+]
+
+
+def _seed_template(tpl_id: str, tag_id: str, body: str) -> Dict[str, Any]:
+    return {
+        "id": tpl_id, "tag_id": tag_id, "variation": "classic",
+        "language": "en", "body": body,
+        "source_template_id": None, "source_language": None,
+        "created_at": "2026-04-29T20:00:00",
+    }
+
+
+_SEED_TEMPLATES: List[Dict[str, Any]] = [
+    _seed_template("tpl_pd_en", "tag_pd",
+        "You are {currentPlayerName} and your opponent is {opponent1}.\n"
+        "{intro}: [You are {personality}.]\n"
+        "{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.]\n\n"
+        "You and {opponent1} are arrested for a crime and held in separate cells. You cannot communicate.\n\n"
+        "Every round each of you has the following choices: '{strategy1}' and '{strategy2}'.\n"
+        "{gameLength}: [There are {nRounds} rounds to decide.]\n"
+        "The current round is number {currentRound}.\n\n"
+        "If you both choose {strategy1}, you both get a penalty of {weight1}.\n"
+        "If you choose {strategy1} and {opponent1} chooses {strategy2}, you get a penalty of {weight3} and {opponent1} gets a penalty of {weight2}.\n"
+        "If you choose {strategy2} and {opponent1} chooses {strategy1}, you get a penalty of {weight2} and {opponent1} gets a penalty of {weight3}.\n"
+        "If you both choose {strategy2}, you both get a penalty of {weight4}.\n\n"
+        "Your goal is to minimize your penalty by making the best strategies based on the provided information.\n"
+        "This is the history of the choices made so far: {history}.\n"
+        "Choose between {strategy1} and {strategy2}.\n"
+        "Output ONLY the choice.\n"),
+    _seed_template("tpl_sh_en", "tag_sh",
+        "You are {currentPlayerName} and your hunting partner is {opponent1}.\n"
+        "{intro}: [You are {personality}.]\n"
+        "{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.]\n\n"
+        "You and {opponent1} hunt in the woods. Each round you choose, independently and without communicating, between '{strategy1}' (the high-value but cooperation-required prey) and '{strategy2}' (the safe, smaller prey you can catch alone).\n"
+        "{gameLength}: [There are {nRounds} rounds in total.]\n"
+        "The current round is number {currentRound}.\n\n"
+        "If you both choose {strategy1}, you each gain {weight1} (the stag is shared).\n"
+        "If you choose {strategy1} but {opponent1} chooses {strategy2}, you gain {weight3} and {opponent1} gains {weight2}.\n"
+        "If you choose {strategy2} but {opponent1} chooses {strategy1}, you gain {weight2} and {opponent1} gains {weight3}.\n"
+        "If you both choose {strategy2}, you each gain {weight4}.\n\n"
+        "Your goal is to maximise your gain over the rounds.\n"
+        "History so far: {history}.\n"
+        "Choose between {strategy1} and {strategy2}.\n"
+        "Output ONLY the choice.\n"),
+    _seed_template("tpl_h_en", "tag_h",
+        "You are {currentPlayerName} and you are paired with {opponent1}.\n"
+        "{intro}: [You are {personality}.]\n"
+        "{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.]\n\n"
+        "You and {opponent1} jointly produce a public good. Each round you each choose between '{strategy1}' (full effort) and '{strategy2}' (low effort), without communication.\n"
+        "{gameLength}: [There are {nRounds} rounds.]\n"
+        "The current round is number {currentRound}.\n\n"
+        "If you both choose {strategy1}, you each gain {weight1}.\n"
+        "If you choose {strategy1} and {opponent1} chooses {strategy2}, you gain {weight2} and {opponent1} gains {weight3}.\n"
+        "If you choose {strategy2} and {opponent1} chooses {strategy1}, you gain {weight3} and {opponent1} gains {weight2}.\n"
+        "If you both choose {strategy2}, you each gain {weight4}.\n\n"
+        "Your goal is to maximise your gain.\n"
+        "History: {history}.\n"
+        "Choose between {strategy1} and {strategy2}.\n"
+        "Output ONLY the choice.\n"),
+    _seed_template("tpl_sd_en", "tag_sd",
+        "You are {currentPlayerName} and the other driver is {opponent1}.\n"
+        "{intro}: [You are {personality}.]\n"
+        "{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.]\n\n"
+        "A snowdrift blocks the road between you and {opponent1}. Each of you independently chooses '{strategy1}' (get out and shovel) or '{strategy2}' (stay in the car).\n"
+        "{gameLength}: [There are {nRounds} rounds.]\n"
+        "The current round is number {currentRound}.\n\n"
+        "If you both choose {strategy1}, you each gain {weight1} (road cleared, effort shared).\n"
+        "If you choose {strategy1} and {opponent1} chooses {strategy2}, you gain {weight2} and {opponent1} gains {weight3}.\n"
+        "If you choose {strategy2} and {opponent1} chooses {strategy1}, you gain {weight3} and {opponent1} gains {weight2}.\n"
+        "If you both choose {strategy2}, you both gain {weight4} — the road stays blocked.\n\n"
+        "Your goal is to maximise your gain.\n"
+        "History: {history}.\n"
+        "Choose between {strategy1} and {strategy2}.\n"
+        "Output ONLY the choice.\n"),
+    _seed_template("tpl_bos_en", "tag_bos",
+        "You are {currentPlayerName} and your partner is {opponent1}.\n"
+        "{intro}: [You are {personality}.]\n"
+        "{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.]\n\n"
+        "You and {opponent1} agreed to spend the evening together but cannot reach each other. Each independently chooses between '{strategy1}' and '{strategy2}'.\n"
+        "{gameLength}: [There are {nRounds} rounds.]\n"
+        "The current round is number {currentRound}.\n\n"
+        "If you both choose {strategy1}, you gain {weight1} and {opponent1} gains {weight2} (your preferred venue).\n"
+        "If you choose {strategy1} and {opponent1} chooses {strategy2}, you both gain {weight3} (miscoordination).\n"
+        "If you choose {strategy2} and {opponent1} chooses {strategy1}, you both gain {weight3}.\n"
+        "If you both choose {strategy2}, you gain {weight2} and {opponent1} gains {weight1} (their preferred venue).\n\n"
+        "Your goal is to maximise your gain — coordination matters more than getting your favourite.\n"
+        "History: {history}.\n"
+        "Choose between {strategy1} and {strategy2}.\n"
+        "Output ONLY the choice.\n"),
+]
 
 
 # ---------------------------------------------------------------------------
@@ -249,6 +383,83 @@ def _save_run(
     return run_dir
 
 
+def _seed_synthetic_runs() -> None:
+    """Generate a handful of demo runs so the Results page has data to
+    visualise on a fresh install. Skipped when ``results/web/`` already
+    contains anything (so user runs are never overwritten)."""
+    import csv
+    import random
+
+    if any(RUNS_DIR.iterdir()) if RUNS_DIR.is_dir() else False:
+        return
+
+    scenarios = [
+        ("syn_pd_001",  "Prisoner's Dilemma — classic, demo", "Cooperate", "Defect",  (3, 5, 0, 1), ["cooperative", "selfish"],     [0.30, 0.55], 8, 5),
+        ("syn_sh_001",  "Stag Hunt — payoff vs risk",          "Stag",      "Hare",   (4, 1, 0, 2), ["cooperative", "cooperative"], [0.65, 0.70], 6, 4),
+        ("syn_bos_001", "Battle of the Sexes — coordination",   "Concert",   "Match",  (2, 1, 0, 0), ["assertive", "agreeable"],     [0.55, 0.40], 5, 3),
+        ("syn_sd_001",  "Snowdrift — anti-coordination",        "Shovel",    "Stay",   (3, 1, 4, 0), ["dutiful", "selfish"],         [0.62, 0.35], 7, 4),
+        ("syn_h_001",   "Harmony Game — dominant cooperation",  "Help",      "Slack",  (5, 2, 4, 1), ["altruistic", "altruistic"],   [0.92, 0.88], 5, 4),
+    ]
+    now = datetime.now()
+    for offset, (sid, name, A, B, weights, styles, coop, n_games, n_rounds) in enumerate(scenarios):
+        rng = random.Random(hash(sid) & 0xFFFFFFFF)
+        run_dir = RUNS_DIR / sid
+        run_dir.mkdir(parents=True, exist_ok=True)
+        R, S, T, P = weights
+        rows: List[Dict[str, Any]] = []
+        for g in range(n_games):
+            strats = [
+                [A if rng.random() < coop[a] else B for _ in range(n_rounds)]
+                for a in range(2)
+            ]
+            s0: List[float] = []
+            s1: List[float] = []
+            for r in range(n_rounds):
+                x, y = strats[0][r], strats[1][r]
+                if x == A and y == A: a, b = R, R
+                elif x == A and y == B: a, b = S, T
+                elif x == B and y == A: a, b = T, S
+                else: a, b = P, P
+                s0.append(a); s1.append(b)
+            wsum = sum(s0) + sum(s1)
+            wmin = min(sum(s0), sum(s1))
+            wgini = abs(sum(s0) - sum(s1)) / max(wsum, 1) / 2
+            eq = sum(1 for r in range(n_rounds) if strats[0][r] == B and strats[1][r] == B) / n_rounds
+            rows.append({
+                "game_id": f"game_{g}", "language": "en",
+                "n_rounds_is_known": True, "max_rounds": n_rounds, "played_rounds": n_rounds,
+                "agent1_name": "agent1", "agent1_llm": "OpenAIGPT4o", "agent1_personality": styles[0],
+                "agent1_strategies": json.dumps(strats[0]), "agent1_scores": json.dumps(s0),
+                "agent1_total_score": sum(s0), "agent1_messages": "[]",
+                "agent2_name": "agent2", "agent2_llm": "OpenAIGPT4o", "agent2_personality": styles[1],
+                "agent2_strategies": json.dumps(strats[1]), "agent2_scores": json.dumps(s1),
+                "agent2_total_score": sum(s1), "agent2_messages": "[]",
+                "welfare_sum": wsum, "welfare_min": wmin,
+                "welfare_gini": round(wgini, 4), "equilibrium_rate": round(eq, 4),
+            })
+        with (run_dir / "results.csv").open("w", newline="") as fh:
+            w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
+            w.writeheader()
+            for r in rows:
+                w.writerow(r)
+        (run_dir / "metadata.json").write_text(json.dumps({
+            "id": sid, "name": name,
+            "timestamp": (now - timedelta(hours=offset)).isoformat(timespec="seconds"),
+            "demo_mode": True,
+            "config": {
+                "name": name, "languages": ["en"], "nRounds": n_rounds,
+                "agents": {
+                    "names": ["agent1", "agent2"],
+                    "personalities": {"en": styles},
+                    "llmServices": ["OpenAIGPT4o", "OpenAIGPT4o"],
+                },
+                "_synthetic": True,
+            },
+            "n_rows": len(rows),
+        }, indent=2))
+    logger.info("Seeded %d synthetic demo runs under %s", len(scenarios), RUNS_DIR)
+
+
 def _list_runs() -> List[Dict[str, Any]]:
     runs: List[Dict[str, Any]] = []
     if not RUNS_DIR.is_dir():
@@ -387,6 +598,10 @@ class HealthResponse(BaseModel):
 app = FastAPI(title="FAIRGAME", version="0.2.0")
 
 engine = FairGameEngine()
+
+# Seed demo runs at import time so the Results page has visualisable
+# data on a fresh checkout. Idempotent: skipped if any run exists.
+_seed_synthetic_runs()
 
 
 @app.get("/api/health", response_model=HealthResponse)

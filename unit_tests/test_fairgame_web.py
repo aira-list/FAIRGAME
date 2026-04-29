@@ -30,13 +30,26 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 class TestFairgameWeb(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        # Isolate each test class from any prior runs so list_runs() is deterministic.
-        runs_dir = PROJECT_ROOT / "results" / "web"
-        if runs_dir.is_dir():
-            shutil.rmtree(runs_dir)
-        from fairgame_web import app  # late import: triggers logging config
+        # Don't wipe the real results/web/ dir — that's user-visible
+        # state. Point fairgame_web's RUNS_DIR at a per-test tempdir
+        # for the duration of this class, then restore it.
+        import tempfile
 
+        cls._tmp = tempfile.mkdtemp(prefix="fg_test_runs_")
+        from fairgame_web import app
+        import fairgame_web
+
+        cls._real_runs_dir = fairgame_web.RUNS_DIR
+        fairgame_web.RUNS_DIR = Path(cls._tmp)
         cls.client = TestClient(app)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        import fairgame_web
+
+        fairgame_web.RUNS_DIR = cls._real_runs_dir
+        if cls._tmp:
+            shutil.rmtree(cls._tmp, ignore_errors=True)
 
     def tearDown(self) -> None:
         # Each /api/runs call toggles the LLM connector registry via
@@ -87,7 +100,7 @@ class TestFairgameWeb(unittest.TestCase):
         self.assertIsInstance(body["rows"], list)
         self.assertGreater(len(body["rows"]), 0)
         # Per-run metadata must be persisted on disk.
-        run_dir = PROJECT_ROOT / "results" / "web" / body["id"]
+        run_dir = Path(self._tmp) / body["id"]
         self.assertTrue((run_dir / "metadata.json").is_file())
         self.assertTrue((run_dir / "results.csv").is_file())
 
