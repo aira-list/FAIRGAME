@@ -68,13 +68,15 @@ def _store_path(name: str) -> Path:
 
 
 def _seed_data(name: str) -> List[Dict[str, Any]]:
-    """Initial tags / templates for a fresh install. Returned (and
-    persisted) when ``data/<name>.json`` is missing or empty so a new
-    user lands on a usable library."""
+    """Initial tags / templates / configurations for a fresh install.
+    Returned (and persisted) when ``data/<name>.json`` is missing or
+    empty so a new user lands on a usable library."""
     if name == "tags":
         return _SEED_TAGS
     if name == "templates":
         return _SEED_TEMPLATES
+    if name == "configurations":
+        return _SEED_CONFIGURATIONS
     return []
 
 
@@ -221,6 +223,195 @@ _SEED_TEMPLATES: List[Dict[str, Any]] = [
         "History: {history}.\n"
         "Choose between {strategy1} and {strategy2}.\n"
         "Output ONLY the choice.\n"),
+]
+
+
+# Five example configurations that, taken together, exercise every
+# feature of the Builder. Auto-seeded on first read of
+# data/configurations.json so a fresh install gives the user a working
+# library immediately. Each one is editable / deletable like any
+# user-saved configuration.
+
+_PD_MATRIX: Dict[str, Any] = {
+    "weights": {"weight1": 3, "weight2": 5, "weight3": 0, "weight4": 1},
+    "strategies": {"en": {"strategy1": "Cooperate", "strategy2": "Defect"}},
+    "combinations": {
+        "combination1": ["strategy1", "strategy1"],
+        "combination2": ["strategy1", "strategy2"],
+        "combination3": ["strategy2", "strategy1"],
+        "combination4": ["strategy2", "strategy2"],
+    },
+    "matrix": {
+        "combination1": ["weight1", "weight1"],
+        "combination2": ["weight3", "weight2"],
+        "combination3": ["weight2", "weight3"],
+        "combination4": ["weight4", "weight4"],
+    },
+}
+
+_SH_MATRIX: Dict[str, Any] = {
+    "weights": {"weight1": 4, "weight2": 1, "weight3": 0, "weight4": 2},
+    "strategies": {"en": {"strategy1": "Stag", "strategy2": "Hare"}},
+    "combinations": {
+        "combination1": ["strategy1", "strategy1"],
+        "combination2": ["strategy1", "strategy2"],
+        "combination3": ["strategy2", "strategy1"],
+        "combination4": ["strategy2", "strategy2"],
+    },
+    "matrix": {
+        "combination1": ["weight1", "weight1"],
+        "combination2": ["weight3", "weight2"],
+        "combination3": ["weight2", "weight3"],
+        "combination4": ["weight4", "weight4"],
+    },
+}
+
+
+def _seed_configuration(
+    cid: str, name: str, tag_id: str, languages: List[str], game_config: Dict[str, Any],
+) -> Dict[str, Any]:
+    return {
+        "id": cid,
+        "name": name,
+        "tag_id": tag_id,
+        "variation": "classic",
+        "languages": languages,
+        "game_config": game_config,
+        "created_at": "2026-04-29T20:00:00",
+    }
+
+
+_SEED_CONFIGURATIONS: List[Dict[str, Any]] = [
+    # 1. Minimal viable — the simplest possible run. No ToM extras, no
+    #    randomness, two LLM agents with positional personalities.
+    _seed_configuration(
+        "cfg_pd_basic",
+        "1. Basic Prisoner's Dilemma — minimal",
+        "tag_pd",
+        ["en"],
+        {
+            "nRounds": 5,
+            "nRoundsIsKnown": True,
+            "agents": {
+                "names": ["agent1", "agent2"],
+                "personalities": {"en": ["cooperative", "selfish"]},
+                "llmServices": ["OpenAIGPT4o", "OpenAIGPT4o"],
+                "opponentPersonalityProbs": [0, 0],
+            },
+            "payoffMatrix": _PD_MATRIX,
+            "llm": "OpenAIGPT4o",
+            "seed": 42,
+            "tomOrder": 0,
+        },
+    ),
+    # 2. Theory-of-Mind showcase: belief elicitation, second-order ToM,
+    #    opponent prior > 0, rolling reputation window. This is the
+    #    "everything ToM-related" example.
+    _seed_configuration(
+        "cfg_pd_tom",
+        "2. PD with Theory of Mind — beliefs, ToM 2, reputation",
+        "tag_pd",
+        ["en"],
+        {
+            "nRounds": 5,
+            "nRoundsIsKnown": True,
+            "elicitBeliefs": True,
+            "tomOrder": 2,
+            "reputationWindow": 3,
+            "reputationApplies": True,
+            "agents": {
+                "names": ["agent1", "agent2"],
+                "personalities": {"en": ["cooperative", "selfish"]},
+                "llmServices": ["OpenAIGPT4o", "OpenAIGPT4o"],
+                "opponentPersonalityProbs": [0.7, 0.7],
+            },
+            "payoffMatrix": _PD_MATRIX,
+            "llm": "OpenAIGPT4o",
+            "baselineSemantics": {"cooperate": "strategy1", "defect": "strategy2"},
+            "seed": 42,
+        },
+    ),
+    # 3. Round-robin tournament with a mix of LLMs and canonical
+    #    baseline strategies. Demonstrates the tournament toggle and
+    #    baselineSemantics.
+    _seed_configuration(
+        "cfg_pd_tournament",
+        "3. Round-robin tournament — LLM vs Tit-for-Tat vs AlwaysDefect",
+        "tag_pd",
+        ["en"],
+        {
+            "nRounds": 10,
+            "nRoundsIsKnown": True,
+            "tournament": {"enabled": True, "mode": "round_robin", "symmetric": True},
+            "agents": {
+                "names": ["llm_player", "tit_for_tat", "always_defect"],
+                "personalities": {"en": ["neutral", "neutral", "neutral"]},
+                "llmServices": [
+                    "OpenAIGPT4o", "baseline:tit_for_tat", "baseline:always_defect",
+                ],
+                "opponentPersonalityProbs": [0, 0, 0],
+            },
+            "payoffMatrix": _PD_MATRIX,
+            "llm": "OpenAIGPT4o",
+            "baselineSemantics": {"cooperate": "strategy1", "defect": "strategy2"},
+            "discountFactor": 0.95,
+            "seed": 42,
+        },
+    ),
+    # 4. Game-theoretic extensions: mixed strategies (engine samples a
+    #    distribution from each agent each round), non-trivial discount,
+    #    auto-equilibrium computation, declared Pareto optimum,
+    #    Fehr-Schmidt utility transform.
+    _seed_configuration(
+        "cfg_sh_advanced",
+        "4. Stag Hunt — mixed strategies + discount + auto Nash + Fehr-Schmidt",
+        "tag_sh",
+        ["en"],
+        {
+            "nRounds": 8,
+            "nRoundsIsKnown": True,
+            "mixedStrategies": True,
+            "discountFactor": 0.9,
+            "continuationProbability": 1.0,
+            "equilibria": "auto",
+            "paretoOptimalSum": 8.0,
+            "agents": {
+                "names": ["agent1", "agent2"],
+                "personalities": {"en": ["bold", "cautious"]},
+                "llmServices": ["OpenAIGPT4o", "OpenAIGPT4o"],
+                "opponentPersonalityProbs": [0.3, 0.3],
+            },
+            "payoffMatrix": _SH_MATRIX,
+            "utility": {"type": "FehrSchmidt", "alpha": 0.4, "beta": 0.6},
+            "llm": "OpenAIGPT4o",
+            "seed": 7,
+            "seedCount": 3,
+        },
+    ),
+    # 5. Personality permutations across a multilingual deployment.
+    #    Demonstrates allAgentPermutations + multi-language + opponent
+    #    prior pool. Every (personality_i, personality_j, prob_k,
+    #    prob_l, language) combination becomes a separate game.
+    _seed_configuration(
+        "cfg_pd_perms",
+        "5. PD permutation sweep — personality pool × multi-language",
+        "tag_pd",
+        ["en"],
+        {
+            "nRounds": 3,
+            "nRoundsIsKnown": True,
+            "allAgentPermutations": True,
+            "agents": {
+                "names": ["agent1", "agent2"],
+                "personalities": {"en": ["cooperative", "selfish", "neutral"]},
+                "llmServices": ["OpenAIGPT4o", "OpenAIGPT4o"],
+                "opponentPersonalityProbs": [0, 0.5, 1],
+            },
+            "payoffMatrix": _PD_MATRIX,
+            "llm": "OpenAIGPT4o",
+            "seed": 11,
+        },
+    ),
 ]
 
 

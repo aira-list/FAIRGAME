@@ -639,22 +639,13 @@ Output ONLY the JSON.
           </div>
         </div>
 
-        <!-- Preset loader (optional bootstrap from a shipped scenario) -->
-        <div class="fg-card p-4 mb-4">
-          <label class="fg-label">Bootstrap from a shipped preset (optional)</label>
-          <div class="flex gap-2">
-            <select x-model="builder.preset" class="fg-input">
-              <option value="">— blank slate —</option>
-              <template x-for="(presets, category) in presetsByCategory" :key="category">
-                <optgroup :label="category">
-                  <template x-for="p in presets" :key="p.id">
-                    <option :value="p.id" x-text="p.label || p.name"></option>
-                  </template>
-                </optgroup>
-              </template>
-            </select>
-            <button class="px-4 py-2 rounded-md bg-slate-200 hover:bg-slate-300 text-sm" @click="loadPresetIntoBuilder()">Load</button>
-          </div>
+        <!-- Bootstrap hint pointing at the seed configurations -->
+        <div class="fg-card p-4 mb-4 text-sm text-slate-700 bg-blue-50 border-blue-200">
+          <strong>New here?</strong> Five example configurations are pre-loaded in the saved list
+          below — they collectively cover every Builder feature (basic PD, Theory of Mind,
+          tournament, mixed strategies + discount + auto-Nash + Fehr-Schmidt, and personality
+          permutations). Click <em>Edit</em> on any of them to load it into this form, tweak,
+          and save under a new name.
         </div>
 
         <!-- Builder tabs -->
