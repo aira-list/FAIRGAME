@@ -394,6 +394,52 @@ def run_csv(run_id: str) -> FileResponse:
     )
 
 
+@app.get("/api/llms")
+def list_llms() -> Dict[str, List[str]]:
+    """Available LLM model names registered in the connector factory."""
+    from src.llm_connectors import llm_factory_connector
+
+    return {"llms": sorted(llm_factory_connector.MODEL_PROVIDER_MAP.keys())}
+
+
+@app.get("/api/baselines")
+def list_baselines() -> Dict[str, List[str]]:
+    """Available canonical baseline strategy names."""
+    from src.baseline_strategies import _REGISTRY  # noqa: SLF001 — internal but stable
+
+    return {"baselines": sorted(_REGISTRY.keys())}
+
+
+class CompareBody(BaseModel):
+    run_a: str
+    run_b: str
+    metrics: Optional[List[str]] = None
+    correction: str = Field(default="none")
+
+
+@app.post("/api/runs/compare")
+def compare_runs(body: CompareBody) -> Dict[str, Any]:
+    """Welch + Mann-Whitney comparison between two persisted runs."""
+    from src.results_processing.stats import (
+        compare_metrics,
+        default_comparison_metrics,
+    )
+
+    csv_a = RUNS_DIR / body.run_a / "results.csv"
+    csv_b = RUNS_DIR / body.run_b / "results.csv"
+    if not csv_a.is_file() or not csv_b.is_file():
+        raise HTTPException(status_code=404, detail="One or both runs not found.")
+    df_a = pd.read_csv(csv_a)
+    df_b = pd.read_csv(csv_b)
+    metrics = body.metrics or sorted(
+        set(default_comparison_metrics(df_a) + default_comparison_metrics(df_b))
+    )
+    if not metrics:
+        return {"metrics": [], "rows": []}
+    result = compare_metrics(df_a, df_b, metrics, correction=body.correction)
+    return {"metrics": metrics, "rows": result.to_dict(orient="records")}
+
+
 # ---- Backwards-compatible Flask paths -----------------------------------
 # Old clients hitting /create_and_run_games, /translate_template, /health
 # get a 308 redirect to the new /api/* equivalents. Each legacy path is

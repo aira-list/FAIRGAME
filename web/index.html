@@ -13,45 +13,33 @@
   <style>
     [x-cloak] { display: none !important; }
     body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-    .fg-hero {
-      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #06b6d4 100%);
-    }
-    .fg-card {
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 14px;
-    }
-    .fg-card:hover {
-      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-    }
-    /* Sidebar nav active/hover. */
-    .nav-link {
-      display: flex;
-      align-items: center;
-      gap: 0.65rem;
-      padding: 0.55rem 0.9rem;
-      border-radius: 8px;
-      color: #cbd5e1;
-      cursor: pointer;
-      font-size: 0.93rem;
-    }
+    .fg-hero { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #06b6d4 100%); }
+    .fg-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; }
+    .fg-card:hover { box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06); }
+    .nav-link { display: flex; align-items: center; gap: 0.65rem; padding: 0.55rem 0.9rem; border-radius: 8px; color: #cbd5e1; cursor: pointer; font-size: 0.93rem; }
     .nav-link:hover { background: #1e293b; color: #f8fafc; }
     .nav-link.active { background: #1e3a8a; color: #fff; }
-    /* Banner. */
-    .fg-banner {
-      padding: 0.7rem 0.9rem;
-      border-radius: 10px;
-      font-size: 0.86rem;
-      font-weight: 500;
-    }
+    .fg-banner { padding: 0.7rem 0.9rem; border-radius: 10px; font-size: 0.86rem; font-weight: 500; }
     .fg-banner-demo { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
     .fg-banner-live { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .fg-tab { padding: 0.45rem 0.95rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem; color: #475569; }
+    .fg-tab:hover { background: #f1f5f9; }
+    .fg-tab.active { background: #1e3a8a; color: #fff; }
+    .fg-input { width: 100%; padding: 0.45rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; background: #fff; }
+    .fg-input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+    .fg-label { display: block; font-size: 0.82rem; font-weight: 500; color: #334155; margin-bottom: 0.25rem; }
+    .fg-help { font-size: 0.78rem; color: #64748b; margin-top: 0.18rem; }
+    .fg-pill { display: inline-block; padding: 0.18rem 0.6rem; border-radius: 999px; font-size: 0.74rem; font-weight: 500; margin-right: 0.3rem; }
+    .fg-pill-blue { background: #dbeafe; color: #1d4ed8; }
+    .fg-pill-amber { background: #fef3c7; color: #92400e; }
+    .fg-pill-green { background: #dcfce7; color: #166534; }
+    .fg-pill-violet { background: #ede9fe; color: #6d28d9; }
+    .fg-section { margin-bottom: 1.4rem; }
+    .fg-section h3 { font-size: 0.9rem; font-weight: 600; color: #1e293b; margin-bottom: 0.4rem; padding-bottom: 0.3rem; border-bottom: 1px solid #e2e8f0; }
   </style>
 </head>
 
 <body class="bg-slate-50 text-slate-800" x-data="fairgame()" x-init="init()" x-cloak>
-
-  <!-- Layout: dark sidebar (left) + main column (right). -->
   <div class="flex min-h-screen">
 
     <!-- ============= SIDEBAR ============= -->
@@ -74,22 +62,17 @@
 
       <div class="border-t border-slate-700 my-5"></div>
 
-      <!-- Demo-mode toggle -->
       <div class="px-2">
         <div class="text-xs uppercase tracking-wider text-slate-400 mb-1">Mode</div>
         <label class="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" x-model="demoMode" @change="syncDemoMode()"
+          <input type="checkbox" x-model="demoMode"
                  class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"/>
           <span class="text-sm">Demo mode <span class="text-slate-400">(no API calls)</span></span>
         </label>
 
         <div class="mt-3 fg-banner" :class="demoMode ? 'fg-banner-demo' : 'fg-banner-live'">
-          <template x-if="demoMode">
-            <span>Demo mode is on. Results are illustrative — no provider API is called.</span>
-          </template>
-          <template x-if="!demoMode">
-            <span>Live mode. Provider APIs will be billed for each agent action.</span>
-          </template>
+          <span x-show="demoMode">Demo mode is on. Results are illustrative — no provider API is called.</span>
+          <span x-show="!demoMode">Live mode. Provider APIs will be billed for each agent action.</span>
         </div>
       </div>
 
@@ -100,9 +83,9 @@
 
 
     <!-- ============= MAIN ============= -->
-    <main class="flex-1 px-8 py-8 max-w-6xl mx-auto">
+    <main class="flex-1 px-8 py-8 max-w-6xl mx-auto w-full">
 
-      <!-- HOME ............................... -->
+      <!-- ===== HOME ===== -->
       <section x-show="activePage === 'home'">
         <div class="fg-hero rounded-2xl p-8 text-white shadow-lg mb-8">
           <h1 class="text-3xl font-semibold tracking-tight mb-2">FAIRGAME · Multi-agent game-theoretic studio</h1>
@@ -119,9 +102,21 @@
             <h3 class="font-semibold mb-1">🛠️ Scenario builder</h3>
             <p class="text-sm text-slate-600">Custom personality / payoff / model setups via guided forms.</p>
           </div>
+          <div class="fg-card p-5 cursor-pointer transition" @click="activePage='tournament'">
+            <h3 class="font-semibold mb-1">🏆 Tournament</h3>
+            <p class="text-sm text-slate-600">Round-robin between LLM agents and canonical baseline strategies.</p>
+          </div>
+          <div class="fg-card p-5 cursor-pointer transition" @click="activePage='experiment'">
+            <h3 class="font-semibold mb-1">🧪 Experiment</h3>
+            <p class="text-sm text-slate-600">Bundle multiple configs + multi-seed reruns into one manifest.</p>
+          </div>
           <div class="fg-card p-5 cursor-pointer transition" @click="activePage='results'">
-            <h3 class="font-semibold mb-1">📊 Explore results</h3>
-            <p class="text-sm text-slate-600">Browse past runs, view tables and interactive charts.</p>
+            <h3 class="font-semibold mb-1">📊 Results</h3>
+            <p class="text-sm text-slate-600">Browse past runs with interactive charts.</p>
+          </div>
+          <div class="fg-card p-5 cursor-pointer transition" @click="activePage='compare'">
+            <h3 class="font-semibold mb-1">⚖️ Compare runs</h3>
+            <p class="text-sm text-slate-600">Welch + Mann-Whitney significance tests across two runs.</p>
           </div>
         </div>
 
@@ -136,49 +131,64 @@
           </p>
         </details>
         <details class="fg-card p-4 mb-2">
-          <summary class="cursor-pointer font-medium">The three big switches</summary>
-          <ul class="mt-3 text-sm text-slate-700 space-y-2">
-            <li><strong>🟢 Demo mode</strong> — on by default. LLM calls are answered by a deterministic stub.</li>
-            <li><strong>🎯 Pick a game</strong> — Prisoner's Dilemma, Stag Hunt, Snowdrift, Harmony, Battle of the Sexes, Zero-Sum, Volunteer's Dilemma — plus tournament and ToM variants.</li>
-            <li><strong>📊 Read the results</strong> — table of choices and scores per game; interactive charts.</li>
-          </ul>
-        </details>
-        <details class="fg-card p-4 mb-2">
           <summary class="cursor-pointer font-medium">Glossary</summary>
           <ul class="mt-3 text-sm text-slate-700 space-y-1.5">
-            <li><strong>Agent</strong> — one participant; LLM by default, or a baseline like Tit-for-Tat.</li>
-            <li><strong>Strategy</strong> — what the agent picks each round (e.g. Cooperate, Defect).</li>
-            <li><strong>Payoff matrix</strong> — points each agent earns for every strategy combination.</li>
+            <li><strong>Agent</strong> — one participant; LLM or a baseline strategy.</li>
+            <li><strong>Strategy</strong> — what the agent picks each round.</li>
+            <li><strong>Payoff matrix</strong> — points each agent earns per strategy combination.</li>
             <li><strong>Equilibrium</strong> — strategy combination where no agent regrets its move.</li>
-            <li><strong>Theory of Mind</strong> — the agent reasoning about its opponent's choice (belief elicitation, ToM order ablation).</li>
-            <li><strong>Brier score</strong> — how well-calibrated the agent's predictions were (lower = better).</li>
+            <li><strong>Theory of Mind</strong> — the agent reasoning about its opponent's choice.</li>
+            <li><strong>Brier score</strong> — calibration metric for predictions (lower = better).</li>
             <li><strong>Discount factor (δ)</strong> — multiplies each round's payoff by δ^(round-1).</li>
             <li><strong>Tournament</strong> — round-robin between every pair of agents.</li>
-            <li><strong>Seed</strong> — pins random choices so a run is reproducible.</li>
+            <li><strong>Seed</strong> — pins random choices for reproducible runs.</li>
           </ul>
         </details>
       </section>
 
 
-      <!-- QUICK START ............................... -->
+      <!-- ===== QUICK START ===== -->
       <section x-show="activePage === 'quick'">
         <h1 class="text-2xl font-semibold mb-1">🚀 Quick start</h1>
-        <p class="text-slate-600 mb-6">Pick a shipped scenario and click <strong>Run</strong>. Demo mode is on by default — no API keys needed.</p>
+        <p class="text-slate-600 mb-6">Pick a shipped scenario, optionally tweak the basics, click Run.</p>
 
         <div class="fg-card p-6 mb-6">
-          <label class="block text-sm font-medium mb-1">Scenario</label>
-          <select x-model="quick.preset" class="w-full border border-slate-300 rounded-md px-3 py-2 mb-4 bg-white">
-            <option value="">— select a preset —</option>
-            <template x-for="(presets, category) in presetsByCategory" :key="category">
-              <optgroup :label="category">
-                <template x-for="p in presets" :key="p.id">
-                  <option :value="p.id" x-text="p.name"></option>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+              <label class="fg-label">Scenario</label>
+              <select x-model="quick.preset" @change="loadPresetIntoQuick()" class="fg-input">
+                <option value="">— select a preset —</option>
+                <template x-for="(presets, category) in presetsByCategory" :key="category">
+                  <optgroup :label="category">
+                    <template x-for="p in presets" :key="p.id">
+                      <option :value="p.id" x-text="p.name"></option>
+                    </template>
+                  </optgroup>
                 </template>
-              </optgroup>
-            </template>
-          </select>
+              </select>
+            </div>
 
-          <button class="px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+            <div>
+              <label class="fg-label">Run name (optional)</label>
+              <input type="text" x-model="quick.name" class="fg-input" placeholder="leave blank to use preset name"/>
+            </div>
+            <div>
+              <label class="fg-label">Number of rounds</label>
+              <input type="number" min="1" x-model.number="quick.nRounds" class="fg-input"/>
+            </div>
+            <div>
+              <label class="fg-label">Master seed</label>
+              <input type="number" x-model.number="quick.seed" class="fg-input"/>
+              <p class="fg-help">Same seed → same outcome. Used for type draws + mixed-strategy sampling.</p>
+            </div>
+            <div>
+              <label class="fg-label">Seed count (for confidence intervals)</label>
+              <input type="number" min="1" x-model.number="quick.seedCount" class="fg-input"/>
+              <p class="fg-help">>1 reruns the scenario with different seeds and aggregates with 95% CIs.</p>
+            </div>
+          </div>
+
+          <button class="mt-5 px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
                   :disabled="!quick.preset || quick.running"
                   @click="runQuick()">
             <span x-show="!quick.running">▶ Run scenario</span>
@@ -199,15 +209,394 @@
       </section>
 
 
-      <!-- RESULTS ............................... -->
+      <!-- ===== BUILDER ===== -->
+      <section x-show="activePage === 'builder'">
+        <h1 class="text-2xl font-semibold mb-1">🛠️ Scenario builder</h1>
+        <p class="text-slate-600 mb-6">Form-based config builder. Tabs cover basics, agents, theory of mind, game theory, and reproducibility. The JSON view at the bottom lets you eyeball or download the generated config.</p>
+
+        <!-- Preset loader -->
+        <div class="fg-card p-4 mb-4">
+          <label class="fg-label">Start from preset (optional)</label>
+          <div class="flex gap-2">
+            <select x-model="builder.preset" class="fg-input">
+              <option value="">— blank slate —</option>
+              <template x-for="(presets, category) in presetsByCategory" :key="category">
+                <optgroup :label="category">
+                  <template x-for="p in presets" :key="p.id">
+                    <option :value="p.id" x-text="p.name"></option>
+                  </template>
+                </optgroup>
+              </select>
+            </select>
+            <button class="px-4 py-2 rounded-md bg-slate-200 hover:bg-slate-300 text-sm" @click="loadPresetIntoBuilder()">Load</button>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex gap-1 border-b border-slate-200 mb-4">
+          <template x-for="t in builderTabs" :key="t.id">
+            <a class="fg-tab"
+               :class="{ active: builder.tab === t.id }"
+               @click="builder.tab = t.id"
+               x-text="t.label"></a>
+          </template>
+        </div>
+
+        <!-- BASICS -->
+        <div x-show="builder.tab === 'basics'" class="fg-card p-6">
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="fg-label">Scenario name</label>
+              <input type="text" x-model="builder.cfg.name" class="fg-input"/>
+            </div>
+            <div>
+              <label class="fg-label">Number of rounds</label>
+              <input type="number" min="1" x-model.number="builder.cfg.nRounds" class="fg-input"/>
+            </div>
+            <div class="md:col-span-2">
+              <label class="fg-label">Languages (comma-separated)</label>
+              <input type="text" x-model="builder.languagesCsv" class="fg-input" placeholder="en, fr, ar"/>
+              <p class="fg-help">Each language is a separate game; useful for cross-lingual bias studies.</p>
+            </div>
+            <div>
+              <label class="fg-label">Default LLM</label>
+              <select x-model="builder.cfg.llm" class="fg-input">
+                <template x-for="m in llms" :key="m"><option :value="m" x-text="m"></option></template>
+              </select>
+            </div>
+            <div>
+              <label class="fg-label">Iterations per scenario</label>
+              <input type="number" min="1" x-model.number="builder.cfg.nIterations" class="fg-input"/>
+            </div>
+            <div class="md:col-span-2 flex flex-wrap gap-4 mt-2">
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" x-model="builder.cfg.nRoundsIsKnown"/>
+                <span>Agents know how many rounds will be played</span>
+              </label>
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" x-model="builder.cfg.agentsCommunicate"/>
+                <span>Agents communicate</span>
+              </label>
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" x-model="builder.cfg.randomizeBetweenIterations"/>
+                <span>Randomise agent order between iterations</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- AGENTS -->
+        <div x-show="builder.tab === 'agents'" class="fg-card p-6">
+          <p class="text-sm text-slate-600 mb-4">Edit per-agent settings. Personality and opponent prior shape the prompt template.</p>
+          <div class="grid grid-cols-12 gap-2 text-xs font-medium text-slate-600 mb-2">
+            <div class="col-span-3">Name</div>
+            <div class="col-span-3">LLM / baseline</div>
+            <div class="col-span-3">Personality (en)</div>
+            <div class="col-span-2">Opp. prior</div>
+            <div class="col-span-1"></div>
+          </div>
+          <template x-for="(agent, i) in builder.agents" :key="i">
+            <div class="grid grid-cols-12 gap-2 mb-2">
+              <input type="text" x-model="agent.name" class="fg-input col-span-3"/>
+              <select x-model="agent.llm" class="fg-input col-span-3">
+                <optgroup label="LLMs">
+                  <template x-for="m in llms" :key="m"><option :value="m" x-text="m"></option></template>
+                </optgroup>
+                <optgroup label="Baselines">
+                  <template x-for="b in baselines" :key="b">
+                    <option :value="'baseline:'+b" x-text="'baseline:' + b"></option>
+                  </template>
+                </optgroup>
+              </select>
+              <input type="text" x-model="agent.personality" class="fg-input col-span-3" placeholder="cooperative"/>
+              <input type="number" step="0.1" min="0" max="1" x-model.number="agent.opponentPersonalityPr" class="fg-input col-span-2"/>
+              <button class="col-span-1 text-rose-600 hover:text-rose-800" @click="builder.agents.splice(i,1)" title="Remove">✕</button>
+            </div>
+          </template>
+          <button class="mt-2 px-4 py-1.5 rounded-md border border-slate-300 text-sm hover:bg-slate-50"
+                  @click="builder.agents.push({ name: 'agent'+(builder.agents.length+1), llm: llms[0]||'OpenAIGPT4o', personality: 'neutral', opponentPersonalityPr: 0.0 })">
+            + Add agent
+          </button>
+        </div>
+
+        <!-- THEORY OF MIND -->
+        <div x-show="builder.tab === 'tom'" class="fg-card p-6">
+          <div class="grid md:grid-cols-2 gap-4">
+            <label class="flex items-center gap-2 text-sm md:col-span-2">
+              <input type="checkbox" x-model="builder.cfg.elicitBeliefs"/>
+              <span>Elicit beliefs (probability the opponent picks each strategy)</span>
+            </label>
+            <div>
+              <label class="fg-label">ToM order</label>
+              <select x-model.number="builder.cfg.tomOrder" class="fg-input">
+                <option :value="0">0 — no opponent reasoning</option>
+                <option :value="1">1 — first-order (default)</option>
+                <option :value="2">2 — second-order ("they think we…")</option>
+              </select>
+            </div>
+            <div>
+              <label class="fg-label">Reputation window (rounds, optional)</label>
+              <input type="number" min="0" x-model.number="builder.cfg.reputationWindow" class="fg-input"/>
+              <p class="fg-help">Past N rounds shown as opponent reputation. Leave 0 to disable.</p>
+            </div>
+            <label class="flex items-center gap-2 text-sm md:col-span-2">
+              <input type="checkbox" x-model="builder.cfg.reputationApplies"/>
+              <span>Reputation labels apply (cooperate-rate framing)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- GAME THEORY -->
+        <div x-show="builder.tab === 'theory'" class="fg-card p-6">
+          <div class="grid md:grid-cols-2 gap-4">
+            <label class="flex items-center gap-2 text-sm md:col-span-2">
+              <input type="checkbox" x-model="builder.cfg.mixedStrategies"/>
+              <span>Mixed strategies — sample from a probability distribution</span>
+            </label>
+            <div>
+              <label class="fg-label">Discount factor δ</label>
+              <input type="number" step="0.01" min="0" max="1" x-model.number="builder.cfg.discountFactor" class="fg-input"/>
+              <p class="fg-help">δ &lt; 1 means future rounds matter less. 1.0 = no discount.</p>
+            </div>
+            <div>
+              <label class="fg-label">Continuation probability</label>
+              <input type="number" step="0.01" min="0" max="1" x-model.number="builder.cfg.continuationProbability" class="fg-input"/>
+              <p class="fg-help">Stochastic horizon: at end of each round, game continues with this probability.</p>
+            </div>
+            <div class="md:col-span-2">
+              <label class="fg-label">Utility transform</label>
+              <select x-model="builder.utilityType" class="fg-input">
+                <option value="identity">Identity (no transform)</option>
+                <option value="CRRA">CRRA (constant relative risk aversion)</option>
+                <option value="FehrSchmidt">Fehr-Schmidt (inequity aversion)</option>
+              </select>
+            </div>
+            <div x-show="builder.utilityType === 'CRRA'">
+              <label class="fg-label">CRRA γ (risk aversion)</label>
+              <input type="number" step="0.05" min="0" x-model.number="builder.utilityParams.gamma" class="fg-input"/>
+            </div>
+            <div x-show="builder.utilityType === 'CRRA'">
+              <label class="fg-label">CRRA offset</label>
+              <input type="number" step="0.5" x-model.number="builder.utilityParams.offset" class="fg-input"/>
+            </div>
+            <div x-show="builder.utilityType === 'FehrSchmidt'">
+              <label class="fg-label">α (envy weight)</label>
+              <input type="number" step="0.05" min="0" x-model.number="builder.utilityParams.alpha" class="fg-input"/>
+            </div>
+            <div x-show="builder.utilityType === 'FehrSchmidt'">
+              <label class="fg-label">β (guilt weight)</label>
+              <input type="number" step="0.05" min="0" x-model.number="builder.utilityParams.beta" class="fg-input"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- REPRODUCIBILITY -->
+        <div x-show="builder.tab === 'repro'" class="fg-card p-6">
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="fg-label">Master seed</label>
+              <input type="number" x-model.number="builder.cfg.seed" class="fg-input"/>
+            </div>
+            <div>
+              <label class="fg-label">Seed count</label>
+              <input type="number" min="1" x-model.number="builder.cfg.seedCount" class="fg-input"/>
+              <p class="fg-help">Reruns the same config N times with N different seeds; outputs aggregated mean ± 95% CI.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- JSON VIEW -->
+        <div x-show="builder.tab === 'json'" class="fg-card p-6">
+          <p class="text-sm text-slate-600 mb-2">Raw config JSON. Edits here are kept until you reload a preset.</p>
+          <textarea x-model="builder.json"
+                    @blur="syncJsonToForm()"
+                    class="w-full border border-slate-300 rounded-md px-3 py-2 font-mono text-xs h-96"></textarea>
+        </div>
+
+        <!-- RUN BAR -->
+        <div class="fg-card p-4 mt-4 flex items-center gap-4">
+          <button class="px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+                  :disabled="builder.running"
+                  @click="runBuilder()">
+            <span x-show="!builder.running">▶ Run scenario</span>
+            <span x-show="builder.running">Running…</span>
+          </button>
+          <button class="px-4 py-2 rounded-md border border-slate-300 text-sm hover:bg-slate-50"
+                  @click="downloadJson(buildConfig(), (builder.cfg.name||'scenario')+'.json')">
+            Download config JSON ↓
+          </button>
+          <span class="text-xs text-slate-500 ml-auto" x-text="agentSummary()"></span>
+        </div>
+
+        <div x-show="builder.error" class="mt-4 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-sm" x-text="builder.error"></div>
+
+        <div x-show="builder.lastRun" class="fg-card p-6 mt-4">
+          <div class="flex items-baseline justify-between mb-3">
+            <h2 class="text-lg font-semibold">Latest run</h2>
+            <a class="text-sm text-blue-600 hover:underline" :href="`/api/runs/${builder.lastRun?.id}/csv`">Download CSV ↓</a>
+          </div>
+          <div x-html="renderTable(builder.lastRun?.rows)"></div>
+        </div>
+      </section>
+
+
+      <!-- ===== TOURNAMENT ===== -->
+      <section x-show="activePage === 'tournament'">
+        <h1 class="text-2xl font-semibold mb-1">🏆 Tournament</h1>
+        <p class="text-slate-600 mb-6">Round-robin between any combination of LLM agents and canonical baseline strategies. The engine runs every pair as a separate game.</p>
+
+        <div class="fg-card p-6 mb-6">
+          <h3 class="font-semibold mb-3">Roster</h3>
+          <div class="grid grid-cols-12 gap-2 text-xs font-medium text-slate-600 mb-2">
+            <div class="col-span-4">Name</div>
+            <div class="col-span-7">Agent</div>
+            <div class="col-span-1"></div>
+          </div>
+          <template x-for="(player, i) in tournament.players" :key="i">
+            <div class="grid grid-cols-12 gap-2 mb-2">
+              <input type="text" x-model="player.name" class="fg-input col-span-4"/>
+              <select x-model="player.agent" class="fg-input col-span-7">
+                <optgroup label="LLMs">
+                  <template x-for="m in llms" :key="m"><option :value="m" x-text="m"></option></template>
+                </optgroup>
+                <optgroup label="Baselines">
+                  <template x-for="b in baselines" :key="b">
+                    <option :value="'baseline:'+b" x-text="'baseline:' + b"></option>
+                  </template>
+                </optgroup>
+              </select>
+              <button class="col-span-1 text-rose-600 hover:text-rose-800" @click="tournament.players.splice(i,1)">✕</button>
+            </div>
+          </template>
+          <button class="mt-2 px-4 py-1.5 rounded-md border border-slate-300 text-sm hover:bg-slate-50"
+                  @click="tournament.players.push({ name: 'player'+(tournament.players.length+1), agent: 'baseline:tit_for_tat' })">
+            + Add player
+          </button>
+
+          <div class="grid md:grid-cols-3 gap-4 mt-6">
+            <div>
+              <label class="fg-label">Rounds per match</label>
+              <input type="number" min="1" x-model.number="tournament.nRounds" class="fg-input"/>
+            </div>
+            <div>
+              <label class="fg-label">Discount factor δ</label>
+              <input type="number" step="0.01" min="0" max="1" x-model.number="tournament.discount" class="fg-input"/>
+            </div>
+            <div>
+              <label class="fg-label">Seed</label>
+              <input type="number" x-model.number="tournament.seed" class="fg-input"/>
+            </div>
+            <div>
+              <label class="fg-label">Mutual cooperation reward (R)</label>
+              <input type="number" x-model.number="tournament.weights.r" class="fg-input"/>
+            </div>
+            <div>
+              <label class="fg-label">Sucker payoff (S)</label>
+              <input type="number" x-model.number="tournament.weights.s" class="fg-input"/>
+            </div>
+            <div>
+              <label class="fg-label">Temptation (T)</label>
+              <input type="number" x-model.number="tournament.weights.t" class="fg-input"/>
+            </div>
+            <div>
+              <label class="fg-label">Mutual defection (P)</label>
+              <input type="number" x-model.number="tournament.weights.p" class="fg-input"/>
+            </div>
+          </div>
+
+          <button class="mt-5 px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+                  :disabled="tournament.players.length < 2 || tournament.running"
+                  @click="runTournament()">
+            <span x-show="!tournament.running">▶ Run tournament</span>
+            <span x-show="tournament.running">Running…</span>
+          </button>
+
+          <div x-show="tournament.error" class="mt-4 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-sm" x-text="tournament.error"></div>
+        </div>
+
+        <div x-show="tournament.lastRun" class="fg-card p-6">
+          <div class="flex items-baseline justify-between mb-3">
+            <h2 class="text-lg font-semibold">Tournament results</h2>
+            <a class="text-sm text-blue-600 hover:underline" :href="`/api/runs/${tournament.lastRun?.id}/csv`">Download CSV ↓</a>
+          </div>
+          <div x-html="renderTable(tournament.lastRun?.rows)"></div>
+        </div>
+      </section>
+
+
+      <!-- ===== EXPERIMENT ===== -->
+      <section x-show="activePage === 'experiment'">
+        <h1 class="text-2xl font-semibold mb-1">🧪 Experiment</h1>
+        <p class="text-slate-600 mb-6">Run multiple configs back-to-back, each at multiple seeds. Each config produces its own run id, browseable in <a class="text-blue-600 underline" @click.prevent="activePage='results'" href="#">Results</a>.</p>
+
+        <div class="fg-card p-6 mb-6">
+          <h3 class="font-semibold mb-3">Pick configs</h3>
+          <div class="max-h-72 overflow-auto border border-slate-200 rounded-md p-2 mb-4">
+            <template x-for="(presets, category) in presetsByCategory" :key="category">
+              <div class="mb-2">
+                <div class="text-xs uppercase tracking-wider text-slate-500 mb-1" x-text="category"></div>
+                <template x-for="p in presets" :key="p.id">
+                  <label class="flex items-center gap-2 text-sm py-0.5">
+                    <input type="checkbox" :value="p.id" x-model="experiment.selectedPresets"/>
+                    <span x-text="p.name"></span>
+                  </label>
+                </template>
+              </div>
+            </template>
+          </div>
+
+          <div class="grid md:grid-cols-3 gap-4">
+            <div>
+              <label class="fg-label">Seed count per config</label>
+              <input type="number" min="1" x-model.number="experiment.seedCount" class="fg-input"/>
+            </div>
+            <div>
+              <label class="fg-label">Master seed</label>
+              <input type="number" x-model.number="experiment.seed" class="fg-input"/>
+            </div>
+            <div>
+              <label class="fg-label">Override nRounds (optional)</label>
+              <input type="number" min="0" x-model.number="experiment.nRoundsOverride" class="fg-input"/>
+              <p class="fg-help">0 = leave each config's own nRounds.</p>
+            </div>
+          </div>
+
+          <button class="mt-5 px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+                  :disabled="experiment.selectedPresets.length === 0 || experiment.running"
+                  @click="runExperiment()">
+            <span x-show="!experiment.running">▶ Run experiment</span>
+            <span x-show="experiment.running">Running… <span x-text="experiment.progress"></span></span>
+          </button>
+
+          <div x-show="experiment.error" class="mt-4 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-sm" x-text="experiment.error"></div>
+        </div>
+
+        <div x-show="experiment.results.length > 0" class="fg-card p-6">
+          <h2 class="text-lg font-semibold mb-3">Per-config runs</h2>
+          <ul class="space-y-1 text-sm">
+            <template x-for="r in experiment.results" :key="r.id">
+              <li>
+                <a class="text-blue-600 underline" @click.prevent="activePage='results'; openRun(r.id)" href="#"
+                   x-text="r.preset"></a>
+                <span class="text-slate-500"> · </span>
+                <code class="text-slate-700" x-text="r.id"></code>
+                <span class="text-slate-500" x-text="' · ' + r.n_rows + ' games'"></span>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </section>
+
+
+      <!-- ===== RESULTS ===== -->
       <section x-show="activePage === 'results'">
         <h1 class="text-2xl font-semibold mb-1">📊 Results</h1>
         <p class="text-slate-600 mb-6">Every run that's ever happened on this machine.</p>
 
-        <button class="text-sm text-blue-600 hover:underline mb-4" @click="loadRuns()">Refresh</button>
+        <button class="text-sm text-blue-600 hover:underline mb-4" @click="loadRuns()">↻ Refresh</button>
 
         <div x-show="runs.length === 0" class="text-slate-500 italic">
-          No runs yet — go to <a class="text-blue-600 underline" @click.prevent="activePage='quick'" href="#">Quick start</a> to create one.
+          No runs yet — start one in <a class="text-blue-600 underline" @click.prevent="activePage='quick'" href="#">Quick start</a>.
         </div>
 
         <div class="grid gap-3 mb-6">
@@ -221,7 +610,9 @@
                   <div class="text-xs text-slate-500">
                     <span x-text="run.timestamp"></span> ·
                     <span x-text="run.n_rows + ' games'"></span> ·
-                    <span x-text="run.demo_mode ? 'demo' : 'live'"></span>
+                    <span class="fg-pill"
+                          :class="run.demo_mode ? 'fg-pill-amber' : 'fg-pill-green'"
+                          x-text="run.demo_mode ? 'demo' : 'live'"></span>
                   </div>
                 </div>
                 <code class="text-xs text-slate-400" x-text="run.id"></code>
@@ -231,50 +622,98 @@
         </div>
 
         <div x-show="activeRun" class="fg-card p-6">
-          <h2 class="text-lg font-semibold mb-3" x-text="activeRun?.name"></h2>
-          <div x-html="renderTable(activeRun?.rows)"></div>
+          <div class="flex items-baseline justify-between mb-3">
+            <h2 class="text-lg font-semibold" x-text="activeRun?.name"></h2>
+            <div class="text-sm">
+              <a class="text-blue-600 hover:underline mr-3" :href="`/api/runs/${activeRun?.id}/csv`">Download CSV ↓</a>
+              <a class="text-blue-600 hover:underline" @click.prevent="downloadJson(activeRun?.config, 'config.json')" href="#">Download config ↓</a>
+            </div>
+          </div>
+
+          <div class="flex gap-1 border-b border-slate-200 mb-4">
+            <a class="fg-tab" :class="{active: results.tab==='charts'}" @click="renderCharts()">📈 Charts</a>
+            <a class="fg-tab" :class="{active: results.tab==='table'}" @click="results.tab='table'">📋 DataFrame</a>
+            <a class="fg-tab" :class="{active: results.tab==='config'}" @click="results.tab='config'">⚙️ Config</a>
+          </div>
+
+          <div x-show="results.tab === 'charts'">
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <h3 class="text-sm font-semibold mb-2">Cooperation rate per round (per agent)</h3>
+                <canvas id="chart-cooperation" class="border rounded-md p-2"></canvas>
+              </div>
+              <div>
+                <h3 class="text-sm font-semibold mb-2">Score per round (per agent)</h3>
+                <canvas id="chart-score" class="border rounded-md p-2"></canvas>
+              </div>
+              <div>
+                <h3 class="text-sm font-semibold mb-2">Welfare per game (sum / min / Gini)</h3>
+                <canvas id="chart-welfare" class="border rounded-md p-2"></canvas>
+              </div>
+              <div>
+                <h3 class="text-sm font-semibold mb-2">Equilibrium rate per game</h3>
+                <canvas id="chart-equilibrium" class="border rounded-md p-2"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div x-show="results.tab === 'table'" x-html="renderTable(activeRun?.rows)"></div>
+
+          <div x-show="results.tab === 'config'">
+            <pre class="text-xs bg-slate-100 rounded-md p-3 overflow-auto"
+                 x-text="activeRun ? JSON.stringify(activeRun.config, null, 2) : ''"></pre>
+          </div>
         </div>
       </section>
 
 
-      <!-- BUILDER (placeholder for now) ............................... -->
-      <section x-show="activePage === 'builder'">
-        <h1 class="text-2xl font-semibold mb-1">🛠️ Scenario builder</h1>
-        <p class="text-slate-600 mb-6">Edit a preset's JSON inline and run it. (Form-based builder coming soon.)</p>
+      <!-- ===== COMPARE RUNS ===== -->
+      <section x-show="activePage === 'compare'">
+        <h1 class="text-2xl font-semibold mb-1">⚖️ Compare runs</h1>
+        <p class="text-slate-600 mb-6">Side-by-side Welch t-test + Mann-Whitney U test on every numeric metric. Use it to ask "did changing X make a statistically significant difference?".</p>
 
         <div class="fg-card p-6 mb-6">
-          <label class="block text-sm font-medium mb-1">Start from preset</label>
-          <select x-model="builder.preset" @change="loadPresetIntoBuilder()" class="w-full border border-slate-300 rounded-md px-3 py-2 mb-4 bg-white">
-            <option value="">— select a preset —</option>
-            <template x-for="(presets, category) in presetsByCategory" :key="category">
-              <optgroup :label="category">
-                <template x-for="p in presets" :key="p.id">
-                  <option :value="p.id" x-text="p.name"></option>
+          <div class="grid md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="fg-label">Run A</label>
+              <select x-model="compare.runA" class="fg-input">
+                <option value="">— select a run —</option>
+                <template x-for="r in runs" :key="r.id">
+                  <option :value="r.id" x-text="r.name + ' · ' + r.id"></option>
                 </template>
-              </optgroup>
-            </template>
+              </select>
+            </div>
+            <div>
+              <label class="fg-label">Run B</label>
+              <select x-model="compare.runB" class="fg-input">
+                <option value="">— select a run —</option>
+                <template x-for="r in runs" :key="r.id">
+                  <option :value="r.id" x-text="r.name + ' · ' + r.id"></option>
+                </template>
+              </select>
+            </div>
+          </div>
+
+          <label class="fg-label">Multiple-comparison correction</label>
+          <select x-model="compare.correction" class="fg-input md:w-1/3">
+            <option value="none">None (raw p-values)</option>
+            <option value="bonferroni">Bonferroni</option>
+            <option value="holm">Holm-Bonferroni</option>
           </select>
 
-          <label class="block text-sm font-medium mb-1">Config (JSON)</label>
-          <textarea x-model="builder.json"
-                    class="w-full border border-slate-300 rounded-md px-3 py-2 font-mono text-xs h-80"></textarea>
-
-          <button class="mt-4 px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
-                  :disabled="builder.running"
-                  @click="runBuilder()">
-            <span x-show="!builder.running">▶ Run</span>
-            <span x-show="builder.running">Running…</span>
+          <button class="mt-5 px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+                  :disabled="!compare.runA || !compare.runB || compare.runA===compare.runB || compare.running"
+                  @click="runCompare()">
+            <span x-show="!compare.running">▶ Compare</span>
+            <span x-show="compare.running">Comparing…</span>
           </button>
 
-          <div x-show="builder.error" class="mt-4 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-sm" x-text="builder.error"></div>
+          <div x-show="compare.error" class="mt-4 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-sm" x-text="compare.error"></div>
         </div>
 
-        <div x-show="builder.lastRun" class="fg-card p-6">
-          <div class="flex items-baseline justify-between mb-3">
-            <h2 class="text-lg font-semibold">Latest run</h2>
-            <a class="text-sm text-blue-600 hover:underline" :href="`/api/runs/${builder.lastRun?.id}/csv`">Download CSV ↓</a>
-          </div>
-          <div x-html="renderTable(builder.lastRun?.rows)"></div>
+        <div x-show="compare.result" class="fg-card p-6">
+          <h2 class="text-lg font-semibold mb-3">Comparison</h2>
+          <div x-html="renderTable(compare.result?.rows)"></div>
         </div>
       </section>
 
@@ -285,35 +724,97 @@
   <script>
   function fairgame() {
     return {
-      // Sidebar / nav
       activePage: 'home',
       pages: [
-        { id: 'home',    icon: '🏠', label: 'Home' },
-        { id: 'quick',   icon: '🚀', label: 'Quick start' },
-        { id: 'builder', icon: '🛠️', label: 'Scenario builder' },
-        { id: 'results', icon: '📊', label: 'Results' },
+        { id: 'home',       icon: '🏠', label: 'Home' },
+        { id: 'quick',      icon: '🚀', label: 'Quick start' },
+        { id: 'builder',    icon: '🛠️', label: 'Scenario builder' },
+        { id: 'tournament', icon: '🏆', label: 'Tournament' },
+        { id: 'experiment', icon: '🧪', label: 'Experiment' },
+        { id: 'results',    icon: '📊', label: 'Results' },
+        { id: 'compare',    icon: '⚖️', label: 'Compare runs' },
+      ],
+      builderTabs: [
+        { id: 'basics', label: 'Basics' },
+        { id: 'agents', label: 'Agents' },
+        { id: 'tom',    label: 'Theory of Mind' },
+        { id: 'theory', label: 'Game theory' },
+        { id: 'repro',  label: 'Reproducibility' },
+        { id: 'json',   label: 'JSON view' },
       ],
 
-      // Demo mode
       demoMode: true,
-
-      // Presets
       presets: [],
       presetsByCategory: {},
+      llms: [],
+      baselines: [],
 
-      // Run history
       runs: [],
       activeRun: null,
 
-      // Quick-start state
-      quick: { preset: '', running: false, error: '', lastRun: null },
+      quick: { preset: '', name: '', nRounds: 1, seed: 0, seedCount: 1, running: false, error: '', lastRun: null },
 
-      // Builder state
-      builder: { preset: '', json: '', running: false, error: '', lastRun: null },
+      builder: {
+        preset: '',
+        tab: 'basics',
+        cfg: {
+          name: 'My scenario',
+          nRounds: 1,
+          nIterations: 1,
+          nRoundsIsKnown: true,
+          agentsCommunicate: false,
+          randomizeBetweenIterations: false,
+          elicitBeliefs: false,
+          tomOrder: 1,
+          reputationWindow: 0,
+          reputationApplies: true,
+          mixedStrategies: false,
+          discountFactor: 1.0,
+          continuationProbability: 1.0,
+          seed: 0,
+          seedCount: 1,
+          llm: 'OpenAIGPT4o',
+        },
+        languagesCsv: 'en',
+        agents: [
+          { name: 'agent1', llm: 'OpenAIGPT4o', personality: 'cooperative', opponentPersonalityPr: 0.0 },
+          { name: 'agent2', llm: 'OpenAIGPT4o', personality: 'selfish',     opponentPersonalityPr: 0.0 },
+        ],
+        utilityType: 'identity',
+        utilityParams: { gamma: 0.5, offset: 1.0, alpha: 0.4, beta: 0.6 },
+        json: '',
+        running: false, error: '', lastRun: null,
+      },
+
+      tournament: {
+        players: [
+          { name: 'tit_for_tat', agent: 'baseline:tit_for_tat' },
+          { name: 'always_cooperate', agent: 'baseline:always_cooperate' },
+          { name: 'always_defect', agent: 'baseline:always_defect' },
+        ],
+        nRounds: 10,
+        discount: 0.95,
+        seed: 0,
+        weights: { r: 3, s: 0, t: 5, p: 1 },
+        running: false, error: '', lastRun: null,
+      },
+
+      experiment: {
+        selectedPresets: [],
+        seedCount: 3,
+        seed: 0,
+        nRoundsOverride: 0,
+        running: false, error: '', progress: '', results: [],
+      },
+
+      results: { tab: 'table' },
+
+      compare: { runA: '', runB: '', correction: 'none', running: false, error: '', result: null },
+
+      _charts: {},   // Chart.js instances, keyed by canvas id
 
       async init() {
-        await this.loadPresets();
-        await this.loadRuns();
+        await Promise.all([this.loadPresets(), this.loadRuns(), this.loadModelLists()]);
       },
 
       // ---- Networking helpers ---------------------------------------
@@ -337,50 +838,63 @@
           const data = await this.api('/api/presets');
           this.presets = data.presets;
           this.presetsByCategory = data.by_category;
-        } catch (e) {
-          console.error('loadPresets failed', e);
-        }
+        } catch (e) { console.error('loadPresets', e); }
       },
 
       async loadRuns() {
+        try { this.runs = (await this.api('/api/runs')).runs; }
+        catch (e) { console.error('loadRuns', e); }
+      },
+
+      async loadModelLists() {
         try {
-          const data = await this.api('/api/runs');
-          this.runs = data.runs;
-        } catch (e) {
-          console.error('loadRuns failed', e);
-        }
+          const [a, b] = await Promise.all([
+            this.api('/api/llms'), this.api('/api/baselines'),
+          ]);
+          this.llms = a.llms;
+          this.baselines = b.baselines;
+        } catch (e) { console.error('loadModelLists', e); }
       },
 
       async openRun(runId) {
         try {
           this.activeRun = await this.api(`/api/runs/${runId}`);
-        } catch (e) {
-          console.error('openRun failed', e);
-        }
-      },
-
-      syncDemoMode() {
-        // Persisted client-side only; the server applies it per-request via /api/runs.
-        localStorage.setItem('fg_demo', this.demoMode ? '1' : '0');
+          this.results.tab = 'table';
+          this.activePage = 'results';
+          await this.$nextTick();
+          this.renderCharts();
+        } catch (e) { console.error('openRun', e); }
       },
 
       // ---- Quick start ----------------------------------------------
 
-      async runQuick() {
-        this.quick.running = true;
-        this.quick.error = '';
+      async loadPresetIntoQuick() {
+        if (!this.quick.preset) return;
         try {
+          const cfg = await this.api(`/api/presets/${this.quick.preset}`);
+          this.quick.name = cfg.name || '';
+          this.quick.nRounds = cfg.nRounds || 1;
+          this.quick.seed = cfg.seed || 0;
+          this.quick.seedCount = cfg.seedCount || 1;
+        } catch (e) { console.error('loadPresetIntoQuick', e); }
+      },
+
+      async runQuick() {
+        this.quick.running = true; this.quick.error = '';
+        try {
+          const cfg = await this.api(`/api/presets/${this.quick.preset}`);
+          if (this.quick.name) cfg.name = this.quick.name;
+          if (this.quick.nRounds) cfg.nRounds = this.quick.nRounds;
+          if (this.quick.seed !== undefined) cfg.seed = this.quick.seed;
+          if (this.quick.seedCount > 1) cfg.seedCount = this.quick.seedCount;
           const result = await this.api('/api/runs', {
             method: 'POST',
-            body: JSON.stringify({ preset: this.quick.preset, demo_mode: this.demoMode }),
+            body: JSON.stringify({ config: cfg, demo_mode: this.demoMode }),
           });
           this.quick.lastRun = result;
           await this.loadRuns();
-        } catch (e) {
-          this.quick.error = String(e.message || e);
-        } finally {
-          this.quick.running = false;
-        }
+        } catch (e) { this.quick.error = String(e.message || e); }
+        finally { this.quick.running = false; }
       },
 
       // ---- Builder --------------------------------------------------
@@ -389,28 +903,376 @@
         if (!this.builder.preset) return;
         try {
           const cfg = await this.api(`/api/presets/${this.builder.preset}`);
-          this.builder.json = JSON.stringify(cfg, null, 2);
-        } catch (e) {
-          this.builder.error = String(e.message || e);
+          this.applyConfigToBuilder(cfg);
+        } catch (e) { this.builder.error = String(e.message || e); }
+      },
+
+      applyConfigToBuilder(cfg) {
+        // Pull known fields into the builder; preserve everything else
+        // by stashing the raw config so buildConfig() can layer on top.
+        this.builder._raw = JSON.parse(JSON.stringify(cfg));
+        const c = this.builder.cfg;
+        c.name = cfg.name ?? c.name;
+        c.nRounds = cfg.nRounds ?? c.nRounds;
+        c.nIterations = cfg.nIterations ?? c.nIterations;
+        c.nRoundsIsKnown = cfg.nRoundsIsKnown ?? c.nRoundsIsKnown;
+        c.agentsCommunicate = cfg.agentsCommunicate ?? c.agentsCommunicate;
+        c.randomizeBetweenIterations = cfg.randomizeBetweenIterations ?? c.randomizeBetweenIterations;
+        c.elicitBeliefs = cfg.elicitBeliefs ?? c.elicitBeliefs;
+        c.tomOrder = cfg.tomOrder ?? c.tomOrder;
+        c.reputationWindow = cfg.reputationWindow ?? c.reputationWindow ?? 0;
+        c.reputationApplies = cfg.reputationApplies ?? c.reputationApplies ?? true;
+        c.mixedStrategies = cfg.mixedStrategies ?? c.mixedStrategies;
+        c.discountFactor = cfg.discountFactor ?? c.discountFactor ?? 1.0;
+        c.continuationProbability = cfg.continuationProbability ?? c.continuationProbability ?? 1.0;
+        c.seed = cfg.seed ?? c.seed;
+        c.seedCount = cfg.seedCount ?? c.seedCount;
+        c.llm = cfg.llm ?? c.llm;
+
+        this.builder.languagesCsv = (cfg.languages || ['en']).join(', ');
+
+        // Agents — try the canonical shape first.
+        if (cfg.agents && cfg.agents.names) {
+          const a = cfg.agents;
+          const langs = (cfg.languages || ['en']);
+          const lang0 = langs[0];
+          const persons = (a.personalities && a.personalities[lang0]) || [];
+          const llms = a.llmServices || [];
+          const probs = a.opponentPersonalityProbs || [];
+          this.builder.agents = a.names.map((n, i) => ({
+            name: n,
+            llm: llms[i] || c.llm,
+            personality: persons[i] || 'neutral',
+            opponentPersonalityPr: probs[i] || 0,
+          }));
         }
+
+        // Utility transform.
+        if (cfg.utility && cfg.utility.type) {
+          this.builder.utilityType = cfg.utility.type;
+          Object.assign(this.builder.utilityParams, cfg.utility);
+        } else {
+          this.builder.utilityType = 'identity';
+        }
+
+        this.builder.json = JSON.stringify(this.buildConfig(), null, 2);
+      },
+
+      buildConfig() {
+        const c = this.builder.cfg;
+        const langs = this.builder.languagesCsv.split(',').map(s => s.trim()).filter(Boolean);
+        const personalities = {};
+        for (const lang of langs) {
+          personalities[lang] = this.builder.agents.map(a => a.personality);
+        }
+        const cfg = JSON.parse(JSON.stringify(this.builder._raw || {}));
+        Object.assign(cfg, {
+          name: c.name,
+          languages: langs,
+          nRounds: c.nRounds,
+          nIterations: c.nIterations,
+          nRoundsIsKnown: c.nRoundsIsKnown,
+          agentsCommunicate: c.agentsCommunicate,
+          randomizeBetweenIterations: c.randomizeBetweenIterations,
+          elicitBeliefs: c.elicitBeliefs,
+          tomOrder: c.tomOrder,
+          reputationApplies: c.reputationApplies,
+          mixedStrategies: c.mixedStrategies,
+          discountFactor: c.discountFactor,
+          continuationProbability: c.continuationProbability,
+          seed: c.seed,
+          seedCount: c.seedCount,
+          llm: c.llm,
+        });
+        if (c.reputationWindow > 0) cfg.reputationWindow = c.reputationWindow;
+        cfg.agents = {
+          names: this.builder.agents.map(a => a.name),
+          personalities,
+          llmServices: this.builder.agents.map(a => a.llm),
+          opponentPersonalityProbs: this.builder.agents.map(a => a.opponentPersonalityPr || 0),
+        };
+        if (this.builder.utilityType !== 'identity') {
+          cfg.utility = { type: this.builder.utilityType };
+          if (this.builder.utilityType === 'CRRA') {
+            cfg.utility.gamma = this.builder.utilityParams.gamma;
+            cfg.utility.offset = this.builder.utilityParams.offset;
+          } else if (this.builder.utilityType === 'FehrSchmidt') {
+            cfg.utility.alpha = this.builder.utilityParams.alpha;
+            cfg.utility.beta = this.builder.utilityParams.beta;
+          }
+        } else if (cfg.utility) {
+          delete cfg.utility;
+        }
+        return cfg;
+      },
+
+      syncJsonToForm() {
+        // User edited the JSON tab — re-import.
+        try {
+          const cfg = JSON.parse(this.builder.json);
+          this.applyConfigToBuilder(cfg);
+        } catch (e) { /* leave as-is; the parse error surfaces on Run */ }
+      },
+
+      agentSummary() {
+        const a = this.builder.agents;
+        return `${a.length} agent${a.length === 1 ? '' : 's'} · ${a.map(x => x.name).join(', ')}`;
       },
 
       async runBuilder() {
-        this.builder.running = true;
-        this.builder.error = '';
+        this.builder.running = true; this.builder.error = '';
         try {
-          const config = JSON.parse(this.builder.json);
+          let config;
+          if (this.builder.tab === 'json') {
+            config = JSON.parse(this.builder.json);
+          } else {
+            config = this.buildConfig();
+            this.builder.json = JSON.stringify(config, null, 2);
+          }
           const result = await this.api('/api/runs', {
             method: 'POST',
             body: JSON.stringify({ config, demo_mode: this.demoMode }),
           });
           this.builder.lastRun = result;
           await this.loadRuns();
-        } catch (e) {
-          this.builder.error = String(e.message || e);
-        } finally {
-          this.builder.running = false;
+        } catch (e) { this.builder.error = String(e.message || e); }
+        finally { this.builder.running = false; }
+      },
+
+      // ---- Tournament -----------------------------------------------
+
+      async runTournament() {
+        this.tournament.running = true; this.tournament.error = '';
+        try {
+          const t = this.tournament;
+          const players = t.players;
+          // Build a config the engine understands: tournament=true expands to
+          // every pair as a separate game; agents.llmServices carries the
+          // per-player roster.
+          const langs = ['en'];
+          const cfg = {
+            name: 'Tournament',
+            languages: langs,
+            nRounds: t.nRounds,
+            nIterations: 1,
+            nRoundsIsKnown: true,
+            tournament: true,
+            randomizeBetweenIterations: false,
+            agentsCommunicate: false,
+            discountFactor: t.discount,
+            seed: t.seed,
+            llm: 'OpenAIGPT4o',
+            agents: {
+              names: players.map(p => p.name),
+              personalities: { en: players.map(() => 'neutral') },
+              llmServices: players.map(p => p.agent),
+              opponentPersonalityProbs: players.map(() => 0),
+            },
+            payoffMatrix: {
+              weights: {
+                weight1: t.weights.r,
+                weight2: t.weights.s,
+                weight3: t.weights.t,
+                weight4: t.weights.p,
+              },
+              strategies: { en: { strategy1: 'Cooperate', strategy2: 'Defect' } },
+              combinations: {
+                combination1: ['strategy1', 'strategy1'],
+                combination2: ['strategy1', 'strategy2'],
+                combination3: ['strategy2', 'strategy1'],
+                combination4: ['strategy2', 'strategy2'],
+              },
+              matrix: {
+                combination1: ['weight1', 'weight1'],
+                combination2: ['weight2', 'weight3'],
+                combination3: ['weight3', 'weight2'],
+                combination4: ['weight4', 'weight4'],
+              },
+            },
+          };
+          const result = await this.api('/api/runs', {
+            method: 'POST',
+            body: JSON.stringify({ config: cfg, demo_mode: this.demoMode }),
+          });
+          this.tournament.lastRun = result;
+          await this.loadRuns();
+        } catch (e) { this.tournament.error = String(e.message || e); }
+        finally { this.tournament.running = false; }
+      },
+
+      // ---- Experiment -----------------------------------------------
+
+      async runExperiment() {
+        this.experiment.running = true;
+        this.experiment.error = '';
+        this.experiment.results = [];
+        const total = this.experiment.selectedPresets.length;
+        try {
+          for (let i = 0; i < total; i++) {
+            this.experiment.progress = `${i + 1}/${total}`;
+            const presetId = this.experiment.selectedPresets[i];
+            const cfg = await this.api(`/api/presets/${presetId}`);
+            if (this.experiment.seedCount > 1) cfg.seedCount = this.experiment.seedCount;
+            if (this.experiment.seed !== undefined) cfg.seed = this.experiment.seed;
+            if (this.experiment.nRoundsOverride > 0) cfg.nRounds = this.experiment.nRoundsOverride;
+            const result = await this.api('/api/runs', {
+              method: 'POST',
+              body: JSON.stringify({ config: cfg, demo_mode: this.demoMode }),
+            });
+            this.experiment.results.push({
+              id: result.id,
+              preset: presetId,
+              n_rows: result.rows.length,
+            });
+          }
+          await this.loadRuns();
+        } catch (e) { this.experiment.error = String(e.message || e); }
+        finally {
+          this.experiment.running = false;
+          this.experiment.progress = '';
         }
+      },
+
+      // ---- Results charts -------------------------------------------
+
+      renderCharts() {
+        this.results.tab = 'charts';
+        if (!this.activeRun || !this.activeRun.rows) return;
+        const rows = this.activeRun.rows;
+        // Each row is one game. Build Chart.js datasets.
+
+        // Cooperation rate per round, averaged over games per agent.
+        const coopByAgentRound = {};
+        for (const row of rows) {
+          for (const k of Object.keys(row)) {
+            const m = k.match(/^(agent\d+)_strategies$/);
+            if (!m) continue;
+            const agent = m[1];
+            let strategies = row[k];
+            if (typeof strategies === 'string') {
+              try { strategies = JSON.parse(strategies.replace(/'/g, '"')); }
+              catch { continue; }
+            }
+            if (!Array.isArray(strategies)) continue;
+            coopByAgentRound[agent] = coopByAgentRound[agent] || [];
+            strategies.forEach((s, r) => {
+              coopByAgentRound[agent][r] = coopByAgentRound[agent][r] || { sum: 0, n: 0 };
+              const isCoop = /coop|coopérer|coopera|cooperate|stag|optionA/i.test(s);
+              coopByAgentRound[agent][r].sum += isCoop ? 1 : 0;
+              coopByAgentRound[agent][r].n += 1;
+            });
+          }
+        }
+        const palette = ['#2563eb', '#16a34a', '#dc2626', '#9333ea', '#d97706'];
+        this._mkChart('chart-cooperation', 'line', {
+          labels: Array.from({ length: this._maxRoundLength(coopByAgentRound) }, (_, i) => `r${i + 1}`),
+          datasets: Object.keys(coopByAgentRound).map((agent, i) => ({
+            label: agent,
+            data: coopByAgentRound[agent].map(c => c ? c.sum / c.n : null),
+            borderColor: palette[i % palette.length],
+            backgroundColor: palette[i % palette.length] + '33',
+            tension: 0.2,
+          })),
+        }, { y: { min: 0, max: 1 } });
+
+        // Score per round.
+        const scoreByAgentRound = {};
+        for (const row of rows) {
+          for (const k of Object.keys(row)) {
+            const m = k.match(/^(agent\d+)_scores$/);
+            if (!m) continue;
+            const agent = m[1];
+            let scores = row[k];
+            if (typeof scores === 'string') {
+              try { scores = JSON.parse(scores); } catch { continue; }
+            }
+            if (!Array.isArray(scores)) continue;
+            scoreByAgentRound[agent] = scoreByAgentRound[agent] || [];
+            scores.forEach((s, r) => {
+              scoreByAgentRound[agent][r] = scoreByAgentRound[agent][r] || { sum: 0, n: 0 };
+              scoreByAgentRound[agent][r].sum += s;
+              scoreByAgentRound[agent][r].n += 1;
+            });
+          }
+        }
+        this._mkChart('chart-score', 'line', {
+          labels: Array.from({ length: this._maxRoundLength(scoreByAgentRound) }, (_, i) => `r${i + 1}`),
+          datasets: Object.keys(scoreByAgentRound).map((agent, i) => ({
+            label: agent,
+            data: scoreByAgentRound[agent].map(c => c ? c.sum / c.n : null),
+            borderColor: palette[i % palette.length],
+            backgroundColor: palette[i % palette.length] + '33',
+            tension: 0.2,
+          })),
+        }, {});
+
+        // Welfare per game (sum / min / Gini).
+        const labels = rows.map((_, i) => `g${i + 1}`);
+        const welfare = ['welfare_sum', 'welfare_min', 'welfare_gini']
+          .filter(k => rows.length > 0 && rows[0][k] !== undefined);
+        this._mkChart('chart-welfare', 'bar', {
+          labels,
+          datasets: welfare.map((k, i) => ({
+            label: k,
+            data: rows.map(r => r[k]),
+            backgroundColor: palette[i % palette.length] + 'aa',
+          })),
+        }, {});
+
+        // Equilibrium-rate per game.
+        const eqKey = rows.length > 0 && rows[0]['equilibrium_rate'] !== undefined
+          ? 'equilibrium_rate' : null;
+        this._mkChart('chart-equilibrium', 'bar', {
+          labels,
+          datasets: eqKey ? [{
+            label: 'equilibrium_rate',
+            data: rows.map(r => r[eqKey]),
+            backgroundColor: '#16a34aaa',
+          }] : [],
+        }, eqKey ? { y: { min: 0, max: 1 } } : {});
+      },
+
+      _maxRoundLength(byAgent) {
+        return Math.max(...Object.values(byAgent).map(arr => arr.length), 0);
+      },
+
+      _mkChart(canvasId, type, data, scaleOpts) {
+        const el = document.getElementById(canvasId);
+        if (!el) return;
+        if (this._charts[canvasId]) this._charts[canvasId].destroy();
+        if (data.datasets.length === 0) {
+          el.getContext('2d').clearRect(0, 0, el.width, el.height);
+          return;
+        }
+        this._charts[canvasId] = new Chart(el, {
+          type,
+          data,
+          options: {
+            responsive: true,
+            scales: scaleOpts,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } },
+          },
+        });
+      },
+
+      // ---- Compare runs ---------------------------------------------
+
+      async runCompare() {
+        this.compare.running = true;
+        this.compare.error = '';
+        this.compare.result = null;
+        try {
+          const result = await this.api('/api/runs/compare', {
+            method: 'POST',
+            body: JSON.stringify({
+              run_a: this.compare.runA,
+              run_b: this.compare.runB,
+              correction: this.compare.correction,
+            }),
+          });
+          this.compare.result = result;
+        } catch (e) { this.compare.error = String(e.message || e); }
+        finally { this.compare.running = false; }
       },
 
       // ---- Rendering helpers ----------------------------------------
@@ -431,7 +1293,16 @@
         if (v === null || v === undefined) return '—';
         if (typeof v === 'number') return Number.isInteger(v) ? v : v.toFixed(3);
         if (typeof v === 'object') return JSON.stringify(v);
-        return String(v);
+        const s = String(v);
+        return s.length > 60 ? s.slice(0, 57) + '…' : s;
+      },
+
+      downloadJson(obj, filename) {
+        const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = filename; a.click();
+        URL.revokeObjectURL(url);
       },
     };
   }
