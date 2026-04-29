@@ -397,12 +397,6 @@
               <input type="number" min="1" x-model.number="builder.cfg.nRounds" class="fg-input"/>
             </div>
             <div>
-              <label class="fg-label">Default LLM</label>
-              <select x-model="builder.cfg.llm" class="fg-input">
-                <template x-for="m in llms" :key="m"><option :value="m" x-text="m"></option></template>
-              </select>
-            </div>
-            <div>
               <label class="fg-label">Iterations per scenario</label>
               <input type="number" min="1" x-model.number="builder.cfg.nIterations" class="fg-input"/>
             </div>
@@ -1184,7 +1178,6 @@
           paretoOptimalSum: null,
           seed: 0,
           seedCount: 1,
-          llm: 'OpenAIGPT4o',
         },
         commStyle: 'none',           // 'none' | 'real' | 'fake_dec' | 'fake_hex'
         equilibriaMode: 'none',      // 'none' | 'auto' | 'manual'
@@ -1657,7 +1650,8 @@
         c.paretoOptimalSum = cfg.paretoOptimalSum ?? null;
         c.seed = cfg.seed ?? c.seed;
         c.seedCount = cfg.seedCount ?? c.seedCount;
-        c.llm = cfg.llm ?? c.llm;
+        // Note: cfg.llm at the top level is ignored — agent LLMs come
+        // from the per-agent rows (agents.llmServices).
         c.languages = cfg.languages || ['en'];
         c.fakeMessageCount = cfg.fakeMessageCount ?? 10;
 
@@ -1695,7 +1689,7 @@
           const probs = a.opponentPersonalityProbs || [];
           this.builder.agents = a.names.map((n, i) => ({
             name: n,
-            llm: llms[i] || c.llm,
+            llm: llms[i] || (this.llms[0] || 'OpenAIGPT4o'),
             personality: persons[i] || 'neutral',
             opponentPersonalityPr: probs[i] || 0,
           }));
@@ -1824,7 +1818,10 @@
           continuationProbability: c.continuationProbability,
           seed: c.seed,
           seedCount: c.seedCount,
-          llm: c.llm,
+          // The engine validator demands a top-level llm/llms field even
+          // though every per-agent setting wins. Synthesise it from the
+          // first agent so the API check passes; nothing actually reads it.
+          llm: this.builder.agents[0]?.llm || (this.llms[0] || 'OpenAIGPT4o'),
         });
         if (c.reputationWindow > 0) cfg.reputationWindow = c.reputationWindow;
         if (c.paretoOptimalSum !== null && c.paretoOptimalSum !== undefined) {
