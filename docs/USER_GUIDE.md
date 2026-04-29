@@ -560,7 +560,9 @@ A handful of advanced setups need extra markup beyond what's above:
 * **Discount factor framing.** Same — the engine applies δ
   numerically; if you want the agent to be told about it, mention it in
   prose.
-* **Tournament mode** doesn't change template structure; the engine
+* **Tournament mode** is a single checkbox at the top of the
+  Configurations → Agents tab ("🏆 Run as round-robin tournament"). It
+  doesn't change template structure; the engine
   spins up one game per pair and re-uses the same template.
 * **Utility transforms** (CRRA, Fehr-Schmidt) are applied on the raw
   payoff *after* the round resolves; the agent sees the raw payoffs in

@@ -102,13 +102,9 @@
             <h3 class="font-semibold mb-1">⚙️ Configurations</h3>
             <p class="text-sm text-slate-600">Build a runnable bundle: pick a template, set agents / payoffs / ToM / game-theory knobs, save with a name. Run it now or batch later.</p>
           </div>
-          <div class="fg-card p-5 cursor-pointer transition" @click="activePage='tournament'">
-            <h3 class="font-semibold mb-1">🏆 Tournament</h3>
-            <p class="text-sm text-slate-600">Round-robin between LLM agents and canonical baseline strategies.</p>
-          </div>
           <div class="fg-card p-5 cursor-pointer transition" @click="activePage='experiment'">
             <h3 class="font-semibold mb-1">🧪 Experiment</h3>
-            <p class="text-sm text-slate-600">Bundle multiple configs + multi-seed reruns into one manifest.</p>
+            <p class="text-sm text-slate-600">Run multiple configurations back-to-back, each at multiple seeds and iterations.</p>
           </div>
           <div class="fg-card p-5 cursor-pointer transition" @click="activePage='results'">
             <h3 class="font-semibold mb-1">📊 Results</h3>
@@ -720,6 +716,23 @@ Output ONLY the JSON.
 
         <!-- AGENTS -->
         <div x-show="builder.tab === 'agents'" class="fg-card p-6">
+
+          <!-- Tournament toggle -->
+          <div class="mb-4 p-3 rounded-md bg-slate-50 border border-slate-200">
+            <label class="flex items-center gap-2 text-sm font-medium">
+              <input type="checkbox" x-model="builder.tournamentMode"/>
+              <span>🏆 Run as round-robin tournament</span>
+            </label>
+            <p class="fg-help mt-1">
+              When on, the engine runs <strong>every pair of agents as a separate game</strong>
+              instead of one big multi-agent game. Use this for benchmarking — say, three
+              baselines (TitForTat, AlwaysCooperate, AlwaysDefect) plus two LLM models — to get
+              a head-to-head matrix. With <em>n</em> agents you get <em>n·(n-1)/2</em> games per
+              language per iteration. Personalities are typically left blank in tournament mode;
+              the contestant <em>is</em> the agent.
+            </p>
+          </div>
+
           <div class="mb-4">
             <p class="text-sm font-medium mb-2">Personality assignment</p>
             <label class="flex items-center gap-2 text-sm mb-1.5">
@@ -1088,90 +1101,6 @@ Output ONLY the JSON.
       </section>
 
 
-      <!-- ===== TOURNAMENT ===== -->
-      <section x-show="activePage === 'tournament'">
-        <h1 class="text-2xl font-semibold mb-1">🏆 Tournament</h1>
-        <p class="text-slate-600 mb-6">Round-robin between any combination of LLM agents and canonical baseline strategies. The engine runs every pair as a separate game.</p>
-
-        <div class="fg-card p-6 mb-6">
-          <h3 class="font-semibold mb-3">Roster</h3>
-          <div class="grid grid-cols-12 gap-2 text-xs font-medium text-slate-600 mb-2">
-            <div class="col-span-4">Name</div>
-            <div class="col-span-7">Agent</div>
-            <div class="col-span-1"></div>
-          </div>
-          <template x-for="(player, i) in tournament.players" :key="i">
-            <div class="grid grid-cols-12 gap-2 mb-2">
-              <input type="text" x-model="player.name" class="fg-input col-span-4"/>
-              <select x-model="player.agent" class="fg-input col-span-7">
-                <optgroup label="LLMs">
-                  <template x-for="m in llms" :key="m"><option :value="m" x-text="m"></option></template>
-                </optgroup>
-                <optgroup label="Baselines">
-                  <template x-for="b in baselines" :key="b">
-                    <option :value="'baseline:'+b" x-text="'baseline:' + b"></option>
-                  </template>
-                </optgroup>
-              </select>
-              <button class="col-span-1 text-rose-600 hover:text-rose-800" @click="tournament.players.splice(i,1)">✕</button>
-            </div>
-          </template>
-          <button class="mt-2 px-4 py-1.5 rounded-md border border-slate-300 text-sm hover:bg-slate-50"
-                  @click="tournament.players.push({ name: 'player'+(tournament.players.length+1), agent: 'baseline:tit_for_tat' })">
-            + Add player
-          </button>
-
-          <div class="grid md:grid-cols-3 gap-4 mt-6">
-            <div>
-              <label class="fg-label">Rounds per match</label>
-              <input type="number" min="1" x-model.number="tournament.nRounds" class="fg-input"/>
-            </div>
-            <div>
-              <label class="fg-label">Discount factor δ</label>
-              <input type="number" step="0.01" min="0" max="1" x-model.number="tournament.discount" class="fg-input"/>
-            </div>
-            <div>
-              <label class="fg-label">Seed</label>
-              <input type="number" x-model.number="tournament.seed" class="fg-input"/>
-            </div>
-            <div>
-              <label class="fg-label">Mutual cooperation reward (R)</label>
-              <input type="number" x-model.number="tournament.weights.r" class="fg-input"/>
-            </div>
-            <div>
-              <label class="fg-label">Sucker payoff (S)</label>
-              <input type="number" x-model.number="tournament.weights.s" class="fg-input"/>
-            </div>
-            <div>
-              <label class="fg-label">Temptation (T)</label>
-              <input type="number" x-model.number="tournament.weights.t" class="fg-input"/>
-            </div>
-            <div>
-              <label class="fg-label">Mutual defection (P)</label>
-              <input type="number" x-model.number="tournament.weights.p" class="fg-input"/>
-            </div>
-          </div>
-
-          <button class="mt-5 px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
-                  :disabled="tournament.players.length < 2 || tournament.running"
-                  @click="runTournament()">
-            <span x-show="!tournament.running">▶ Run tournament</span>
-            <span x-show="tournament.running">Running…</span>
-          </button>
-
-          <div x-show="tournament.error" class="mt-4 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-sm" x-text="tournament.error"></div>
-        </div>
-
-        <div x-show="tournament.lastRun" class="fg-card p-6">
-          <div class="flex items-baseline justify-between mb-3">
-            <h2 class="text-lg font-semibold">Tournament results</h2>
-            <a class="text-sm text-blue-600 hover:underline" :href="`/api/runs/${tournament.lastRun?.id}/csv`">Download CSV ↓</a>
-          </div>
-          <div x-html="renderTable(tournament.lastRun?.rows)"></div>
-        </div>
-      </section>
-
-
       <!-- ===== EXPERIMENT ===== -->
       <section x-show="activePage === 'experiment'">
         <h1 class="text-2xl font-semibold mb-1">🧪 Experiment</h1>
@@ -1334,7 +1263,6 @@ Output ONLY the JSON.
         { id: 'home',           icon: '🏠', label: 'Home' },
         { id: 'templates',      icon: '🏷️', label: 'Templates' },
         { id: 'configurations', icon: '⚙️', label: 'Configurations' },
-        { id: 'tournament',     icon: '🏆', label: 'Tournament' },
         { id: 'experiment',     icon: '🧪', label: 'Experiment' },
         { id: 'results',        icon: '📊', label: 'Results' },
       ],
@@ -1418,6 +1346,7 @@ Output ONLY the JSON.
           seedCount: 1,
         },
         commStyle: 'none',           // 'none' | 'real' | 'fake_dec' | 'fake_hex'
+        tournamentMode: false,       // round-robin between every pair of agents
         equilibriaMode: 'none',      // 'none' | 'auto' | 'manual'
         equilibriaCsv: '',
         baselineCooperate: 'strategy1',
@@ -1451,18 +1380,6 @@ Output ONLY the JSON.
         running: false, error: '', lastRun: null,
       },
 
-      tournament: {
-        players: [
-          { name: 'tit_for_tat', agent: 'baseline:tit_for_tat' },
-          { name: 'always_cooperate', agent: 'baseline:always_cooperate' },
-          { name: 'always_defect', agent: 'baseline:always_defect' },
-        ],
-        nRounds: 10,
-        discount: 0.95,
-        seed: 0,
-        weights: { r: 3, s: 0, t: 5, p: 1 },
-        running: false, error: '', lastRun: null,
-      },
 
       experiment: {
         selectedPresets: [],
@@ -1899,6 +1816,7 @@ Output ONLY the JSON.
           const probs = a.opponentPersonalityProbs || [];
 
           this.builder.personalityMode = cfg.allAgentPermutations ? 'pool' : 'per_agent';
+          this.builder.tournamentMode = !!(cfg.tournament && (cfg.tournament === true || cfg.tournament.enabled));
           if (this.builder.personalityMode === 'pool') {
             // Pool mode: persons / probs are the pool, not per-agent.
             this.builder.personalityPoolText = persons.join('\n');
@@ -2129,6 +2047,13 @@ Output ONLY the JSON.
           cfg.payoffMatrix = this.buildPayoffMatrixForBuild(langs);
         }
 
+        // Tournament mode — engine accepts a literal True or a config dict.
+        if (this.builder.tournamentMode) {
+          cfg.tournament = { enabled: true, mode: 'round_robin', symmetric: true };
+        } else {
+          delete cfg.tournament;
+        }
+
         return cfg;
       },
 
@@ -2163,67 +2088,6 @@ Output ONLY the JSON.
           await this.loadRuns();
         } catch (e) { this.builder.error = String(e.message || e); }
         finally { this.builder.running = false; }
-      },
-
-      // ---- Tournament -----------------------------------------------
-
-      async runTournament() {
-        this.tournament.running = true; this.tournament.error = '';
-        try {
-          const t = this.tournament;
-          const players = t.players;
-          // Build a config the engine understands: tournament=true expands to
-          // every pair as a separate game; agents.llmServices carries the
-          // per-player roster.
-          const langs = ['en'];
-          const cfg = {
-            name: 'Tournament',
-            languages: langs,
-            nRounds: t.nRounds,
-            nIterations: 1,
-            nRoundsIsKnown: true,
-            tournament: true,
-            randomizeBetweenIterations: false,
-            agentsCommunicate: false,
-            discountFactor: t.discount,
-            seed: t.seed,
-            llm: 'OpenAIGPT4o',
-            agents: {
-              names: players.map(p => p.name),
-              personalities: { en: players.map(() => 'neutral') },
-              llmServices: players.map(p => p.agent),
-              opponentPersonalityProbs: players.map(() => 0),
-            },
-            payoffMatrix: {
-              weights: {
-                weight1: t.weights.r,
-                weight2: t.weights.s,
-                weight3: t.weights.t,
-                weight4: t.weights.p,
-              },
-              strategies: { en: { strategy1: 'Cooperate', strategy2: 'Defect' } },
-              combinations: {
-                combination1: ['strategy1', 'strategy1'],
-                combination2: ['strategy1', 'strategy2'],
-                combination3: ['strategy2', 'strategy1'],
-                combination4: ['strategy2', 'strategy2'],
-              },
-              matrix: {
-                combination1: ['weight1', 'weight1'],
-                combination2: ['weight2', 'weight3'],
-                combination3: ['weight3', 'weight2'],
-                combination4: ['weight4', 'weight4'],
-              },
-            },
-          };
-          const result = await this.api('/api/runs', {
-            method: 'POST',
-            body: JSON.stringify({ config: cfg, demo_mode: this.demoMode }),
-          });
-          this.tournament.lastRun = result;
-          await this.loadRuns();
-        } catch (e) { this.tournament.error = String(e.message || e); }
-        finally { this.tournament.running = false; }
       },
 
       // ---- Experiment -----------------------------------------------
