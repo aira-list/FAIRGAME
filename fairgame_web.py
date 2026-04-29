@@ -245,8 +245,43 @@ def _load_run(run_id: str) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+def _variant_suffix_from_stem(stem: str, category: str) -> str:
+    """Derive a human-readable parameter suffix from the file stem.
+
+    E.g. ``prisoner_dilemma_round_known_harsh`` (in category
+    ``prisoner_dilemma``) → ``"round-known, harsh"``. The category prefix
+    is stripped so only the differentiating parameters survive.
+    """
+    parts = stem.split("_")
+    cat_parts = category.split("_")
+    # Strip the leading category prefix tokens.
+    i = 0
+    while i < len(parts) and i < len(cat_parts) and parts[i] == cat_parts[i]:
+        i += 1
+    rest = parts[i:]
+    if not rest:
+        return ""
+    # Heuristic regroup: "round_known" / "round_not_known" stay glued.
+    label = " ".join(rest)
+    label = label.replace(" round known", "round-known").replace(
+        " round not known", "round-not-known"
+    )
+    label = label.replace("round known", "round-known").replace(
+        "round not known", "round-not-known"
+    )
+    return ", ".join(t.strip() for t in label.split() if t.strip()).replace(
+        "round-known", "round-known"
+    )
+
+
 def _discover_presets() -> List[Dict[str, Any]]:
-    """Walk ``resources/config/<category>/<name>.json`` and return summaries."""
+    """Walk ``resources/config/<category>/<name>.json`` and return summaries.
+
+    Each preset gets a disambiguating ``label`` derived from the file
+    stem, so multiple variants of the same game (different round-known
+    flags, different payoff weights, …) don't all collapse into the
+    same dropdown entry.
+    """
     config_root = RESOURCES_DIR / "config"
     if not config_root.is_dir():
         return []
@@ -258,11 +293,15 @@ def _discover_presets() -> List[Dict[str, Any]]:
             except json.JSONDecodeError:
                 logger.warning("Skipping malformed preset %s", json_file)
                 continue
+            name = data.get("name", json_file.stem)
+            variant = _variant_suffix_from_stem(json_file.stem, category_dir.name)
+            label = f"{name} ({variant})" if variant else name
             presets.append(
                 {
                     "id": f"{category_dir.name}/{json_file.stem}",
                     "category": category_dir.name,
-                    "name": data.get("name", json_file.stem),
+                    "name": name,
+                    "label": label,
                     "languages": data.get("languages") or [],
                     "n_rounds": data.get("nRounds"),
                     "agents": list((data.get("agents") or {}).get("names") or []),
@@ -402,6 +441,67 @@ def list_llms() -> Dict[str, List[str]]:
     return {"llms": sorted(llm_factory_connector.MODEL_PROVIDER_MAP.keys())}
 
 
+# Top 30 languages by speakers, with a flag emoji and the language code
+# the FAIRGAME engine actually accepts. Note the codebase uses "cn" for
+# Chinese (not "zh") and "vn" for Vietnamese (not "vi").
+_TOP_LANGUAGES: List[Dict[str, str]] = [
+    {"code": "en", "name": "English",      "native": "English",        "flag": "🇬🇧"},
+    {"code": "cn", "name": "Mandarin",     "native": "中文",           "flag": "🇨🇳"},
+    {"code": "es", "name": "Spanish",      "native": "Español",         "flag": "🇪🇸"},
+    {"code": "hi", "name": "Hindi",        "native": "हिन्दी",          "flag": "🇮🇳"},
+    {"code": "ar", "name": "Arabic",       "native": "العربية",         "flag": "🇸🇦"},
+    {"code": "bn", "name": "Bengali",      "native": "বাংলা",          "flag": "🇧🇩"},
+    {"code": "pt", "name": "Portuguese",   "native": "Português",       "flag": "🇵🇹"},
+    {"code": "ru", "name": "Russian",      "native": "Русский",         "flag": "🇷🇺"},
+    {"code": "ja", "name": "Japanese",     "native": "日本語",         "flag": "🇯🇵"},
+    {"code": "de", "name": "German",       "native": "Deutsch",         "flag": "🇩🇪"},
+    {"code": "ur", "name": "Urdu",         "native": "اُردُو",          "flag": "🇵🇰"},
+    {"code": "id", "name": "Indonesian",   "native": "Bahasa Indonesia","flag": "🇮🇩"},
+    {"code": "fr", "name": "French",       "native": "Français",        "flag": "🇫🇷"},
+    {"code": "tr", "name": "Turkish",      "native": "Türkçe",          "flag": "🇹🇷"},
+    {"code": "ko", "name": "Korean",       "native": "한국어",         "flag": "🇰🇷"},
+    {"code": "vn", "name": "Vietnamese",   "native": "Tiếng Việt",      "flag": "🇻🇳"},
+    {"code": "ta", "name": "Tamil",        "native": "தமிழ்",          "flag": "🇮🇳"},
+    {"code": "te", "name": "Telugu",       "native": "తెలుగు",         "flag": "🇮🇳"},
+    {"code": "mr", "name": "Marathi",      "native": "मराठी",          "flag": "🇮🇳"},
+    {"code": "it", "name": "Italian",      "native": "Italiano",        "flag": "🇮🇹"},
+    {"code": "ms", "name": "Malay",        "native": "Bahasa Melayu",   "flag": "🇲🇾"},
+    {"code": "th", "name": "Thai",         "native": "ภาษาไทย",        "flag": "🇹🇭"},
+    {"code": "gu", "name": "Gujarati",     "native": "ગુજરાતી",         "flag": "🇮🇳"},
+    {"code": "fa", "name": "Persian",      "native": "فارسی",           "flag": "🇮🇷"},
+    {"code": "pl", "name": "Polish",       "native": "Polski",          "flag": "🇵🇱"},
+    {"code": "uk", "name": "Ukrainian",    "native": "Українська",      "flag": "🇺🇦"},
+    {"code": "nl", "name": "Dutch",        "native": "Nederlands",      "flag": "🇳🇱"},
+    {"code": "ro", "name": "Romanian",     "native": "Română",          "flag": "🇷🇴"},
+    {"code": "ha", "name": "Hausa",        "native": "Hausa",           "flag": "🇳🇬"},
+    {"code": "sw", "name": "Swahili",      "native": "Kiswahili",       "flag": "🇰🇪"},
+]
+
+
+@app.get("/api/languages")
+def list_languages() -> Dict[str, Any]:
+    """Top 30 languages with flags + which ones ship a default template.
+
+    A language is "templated" when at least one ``*_<code>.txt`` /
+    ``*_<code>.rtf`` exists under ``resources/game_templates/``. For
+    non-templated languages the user must run ``/api/translate`` first
+    or accept that the engine will fail to load a template.
+    """
+    template_dir = RESOURCES_DIR / "game_templates"
+    shipped: set = set()
+    if template_dir.is_dir():
+        for f in template_dir.iterdir():
+            if not f.is_file():
+                continue
+            stem = f.stem
+            if "_" in stem:
+                shipped.add(stem.rsplit("_", 1)[1])
+    out = []
+    for entry in _TOP_LANGUAGES:
+        out.append({**entry, "shipped": entry["code"] in shipped})
+    return {"languages": out}
+
+
 @app.get("/api/baselines")
 def list_baselines() -> Dict[str, List[str]]:
     """Available canonical baseline strategy names."""
@@ -472,20 +572,23 @@ def legacy_translate_template() -> JSONResponse:
 # ---- Static SPA mount ---------------------------------------------------
 # Catch-all serves index.html so client-side routes work.
 
+_NO_CACHE = {"Cache-Control": "no-cache, no-store, must-revalidate"}
+
+
 if WEB_DIR.is_dir():
     app.mount("/static", StaticFiles(directory=str(WEB_DIR / "static")), name="static")
 
     @app.get("/", include_in_schema=False)
     def root() -> FileResponse:
-        return FileResponse(WEB_DIR / "index.html")
+        return FileResponse(WEB_DIR / "index.html", headers=_NO_CACHE)
 
     @app.get("/{path:path}", include_in_schema=False)
     def spa(path: str) -> FileResponse:
         # Direct file under web/ wins; everything else falls back to the SPA.
         target = WEB_DIR / path
         if target.is_file():
-            return FileResponse(target)
-        return FileResponse(WEB_DIR / "index.html")
+            return FileResponse(target, headers=_NO_CACHE)
+        return FileResponse(WEB_DIR / "index.html", headers=_NO_CACHE)
 else:
     @app.get("/", include_in_schema=False)
     def root_no_web() -> Dict[str, str]:

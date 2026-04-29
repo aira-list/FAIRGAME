@@ -161,7 +161,7 @@
                 <template x-for="(presets, category) in presetsByCategory" :key="category">
                   <optgroup :label="category">
                     <template x-for="p in presets" :key="p.id">
-                      <option :value="p.id" x-text="p.name"></option>
+                      <option :value="p.id" x-text="p.label || p.name"></option>
                     </template>
                   </optgroup>
                 </template>
@@ -223,10 +223,10 @@
               <template x-for="(presets, category) in presetsByCategory" :key="category">
                 <optgroup :label="category">
                   <template x-for="p in presets" :key="p.id">
-                    <option :value="p.id" x-text="p.name"></option>
+                    <option :value="p.id" x-text="p.label || p.name"></option>
                   </template>
                 </optgroup>
-              </select>
+              </template>
             </select>
             <button class="px-4 py-2 rounded-md bg-slate-200 hover:bg-slate-300 text-sm" @click="loadPresetIntoBuilder()">Load</button>
           </div>
@@ -254,9 +254,22 @@
               <input type="number" min="1" x-model.number="builder.cfg.nRounds" class="fg-input"/>
             </div>
             <div class="md:col-span-2">
-              <label class="fg-label">Languages (comma-separated)</label>
-              <input type="text" x-model="builder.languagesCsv" class="fg-input" placeholder="en, fr, ar"/>
-              <p class="fg-help">Each language is a separate game; useful for cross-lingual bias studies.</p>
+              <label class="fg-label">Languages</label>
+              <p class="fg-help mb-2">Each language is a separate game; useful for cross-lingual bias studies. Languages with a green dot ship a default prompt template; the others would need to be auto-translated first.</p>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-1.5 max-h-56 overflow-auto p-2 border border-slate-200 rounded-md">
+                <template x-for="lang in languages" :key="lang.code">
+                  <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-slate-50 px-1.5 py-1 rounded">
+                    <input type="checkbox"
+                           :value="lang.code"
+                           x-model="builder.cfg.languages"/>
+                    <span class="text-base" x-text="lang.flag"></span>
+                    <span x-text="lang.name"></span>
+                    <span class="text-slate-400 text-xs" x-text="lang.code"></span>
+                    <span x-show="lang.shipped" class="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500" title="Template shipped"></span>
+                  </label>
+                </template>
+              </div>
+              <p class="fg-help mt-1">Currently selected: <span x-text="builder.cfg.languages.join(', ') || 'none'"></span></p>
             </div>
             <div>
               <label class="fg-label">Default LLM</label>
@@ -274,13 +287,32 @@
                 <span>Agents know how many rounds will be played</span>
               </label>
               <label class="flex items-center gap-2 text-sm">
-                <input type="checkbox" x-model="builder.cfg.agentsCommunicate"/>
-                <span>Agents communicate</span>
-              </label>
-              <label class="flex items-center gap-2 text-sm">
                 <input type="checkbox" x-model="builder.cfg.randomizeBetweenIterations"/>
                 <span>Randomise agent order between iterations</span>
               </label>
+            </div>
+
+            <!-- Communication block -->
+            <div class="md:col-span-2 mt-3 p-3 rounded-md bg-slate-50 border border-slate-200">
+              <h3 class="text-sm font-semibold mb-2">💬 Communication</h3>
+              <div class="grid md:grid-cols-2 gap-3">
+                <div>
+                  <label class="fg-label">Communication style</label>
+                  <select x-model="builder.commStyle" class="fg-input">
+                    <option value="none">None — no inter-agent messages</option>
+                    <option value="real">Real — agents exchange free-text messages via the LLM</option>
+                    <option value="fake_dec">Fake (decimal) — random base-10 number sequences</option>
+                    <option value="fake_hex">Fake (hexadecimal) — random base-16 number sequences</option>
+                  </select>
+                  <p class="fg-help">Fake-message modes test whether agents can smuggle strategy info through a noisy channel.</p>
+                </div>
+                <div>
+                  <label class="fg-label">Fake-message count per round</label>
+                  <input type="number" min="1" max="50" x-model.number="builder.cfg.fakeMessageCount" class="fg-input"
+                         :disabled="!builder.commStyle.startsWith('fake')"/>
+                  <p class="fg-help">How many number sequences each agent emits per round.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -387,6 +419,114 @@
               <label class="fg-label">β (guilt weight)</label>
               <input type="number" step="0.05" min="0" x-model.number="builder.utilityParams.beta" class="fg-input"/>
             </div>
+
+            <div class="md:col-span-2">
+              <label class="fg-label">Equilibria (declared)</label>
+              <select x-model="builder.equilibriaMode" class="fg-input">
+                <option value="none">Don't declare any</option>
+                <option value="auto">"auto" — compute pure-strategy Nash via nashpy at validation time</option>
+                <option value="manual">Manual list of combination keys (comma-separated)</option>
+              </select>
+              <input x-show="builder.equilibriaMode === 'manual'"
+                     type="text" x-model="builder.equilibriaCsv" class="fg-input mt-2"
+                     placeholder="combination4, combination1"/>
+              <p class="fg-help">Used by results processing to compute equilibrium-rate metrics.</p>
+            </div>
+
+            <div>
+              <label class="fg-label">Pareto-optimal sum (optional)</label>
+              <input type="number" step="0.5" x-model.number="builder.cfg.paretoOptimalSum" class="fg-input"/>
+              <p class="fg-help">Sum of payoffs at the Pareto-optimal cell. Lets the welfare report emit an efficiency ratio.</p>
+            </div>
+
+            <div>
+              <label class="fg-label">Reputation window (optional)</label>
+              <input type="number" min="0" x-model.number="builder.cfg.reputationWindow" class="fg-input"/>
+              <p class="fg-help">Mirrored from the ToM tab — rolling cooperate-rate window.</p>
+            </div>
+
+            <div class="md:col-span-2 mt-3 p-3 rounded-md bg-slate-50 border border-slate-200">
+              <h3 class="text-sm font-semibold mb-2">Baseline strategy semantics</h3>
+              <p class="fg-help mb-2">Tells canonical baselines (Tit-for-Tat, GrimTrigger, …) which strategy keys to read as "cooperate" and "defect". Required when you use baselines in non-PD games.</p>
+              <div class="grid md:grid-cols-2 gap-3">
+                <div>
+                  <label class="fg-label">"Cooperate" maps to</label>
+                  <input type="text" x-model="builder.baselineCooperate" class="fg-input" placeholder="strategy1"/>
+                </div>
+                <div>
+                  <label class="fg-label">"Defect" maps to</label>
+                  <input type="text" x-model="builder.baselineDefect" class="fg-input" placeholder="strategy2"/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PAYOFF MATRIX -->
+        <div x-show="builder.tab === 'matrix'" class="fg-card p-6">
+          <p class="text-sm text-slate-600 mb-4">Edit the payoff matrix. The grid below covers any 2-agent game; for each combination of strategies you set the payoff each agent receives.</p>
+
+          <div class="fg-section">
+            <h3>Strategies</h3>
+            <p class="fg-help mb-2">Each strategy has a key (used internally) and a per-language label.</p>
+            <template x-for="(strat, i) in builder.matrix.strategies" :key="i">
+              <div class="grid grid-cols-12 gap-2 mb-2 items-center">
+                <input type="text" x-model="strat.key" class="fg-input col-span-3" placeholder="strategy1"/>
+                <input type="text" x-model="strat.label" class="fg-input col-span-8"
+                       :placeholder="'Display label (' + (builder.cfg.languages[0] || 'en') + ')'"/>
+                <button class="col-span-1 text-rose-600 hover:text-rose-800"
+                        @click="builder.matrix.strategies.splice(i,1); rebuildCombos()">✕</button>
+              </div>
+            </template>
+            <button class="px-4 py-1.5 rounded-md border border-slate-300 text-sm hover:bg-slate-50"
+                    @click="addStrategy()">+ Add strategy</button>
+          </div>
+
+          <div class="fg-section">
+            <h3>Payoff cells</h3>
+            <p class="fg-help mb-2">For every combination of strategies, set the payoff each agent receives. Row = agent 1's choice; column = agent 2's choice. The cell shows <code>(payoff to agent 1, payoff to agent 2)</code>.</p>
+            <div class="overflow-auto">
+              <table class="border-collapse">
+                <thead>
+                  <tr>
+                    <th class="border p-2 bg-slate-50 text-xs"></th>
+                    <template x-for="col in builder.matrix.strategies" :key="col.key">
+                      <th class="border p-2 bg-slate-50 text-xs"
+                          x-text="(col.label || col.key) + ' (col)'"></th>
+                    </template>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="row in builder.matrix.strategies" :key="row.key">
+                    <tr>
+                      <td class="border p-2 bg-slate-50 text-xs font-medium"
+                          x-text="(row.label || row.key) + ' (row)'"></td>
+                      <template x-for="col in builder.matrix.strategies" :key="col.key">
+                        <td class="border p-1">
+                          <div class="flex gap-1">
+                            <input type="number" step="0.5"
+                                   class="fg-input text-xs w-20"
+                                   :value="cellValue(row.key, col.key, 0)"
+                                   @input="setCellValue(row.key, col.key, 0, $event.target.value)"/>
+                            <input type="number" step="0.5"
+                                   class="fg-input text-xs w-20"
+                                   :value="cellValue(row.key, col.key, 1)"
+                                   @input="setCellValue(row.key, col.key, 1, $event.target.value)"/>
+                          </div>
+                        </td>
+                      </template>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+            <p class="fg-help mt-2">For 3+ agents the engine still understands the schema — open the JSON view tab to add multi-agent combinations.</p>
+          </div>
+
+          <div class="fg-section">
+            <h3>Stop-game conditions (optional)</h3>
+            <p class="fg-help mb-2">Comma-separated combination keys that end the game when reached (e.g. <code>combination4</code> for tragedy-of-the-commons in Volunteer's Dilemma).</p>
+            <input type="text" x-model="builder.stopGameWhenCsv" class="fg-input"/>
           </div>
         </div>
 
@@ -538,7 +678,7 @@
                 <template x-for="p in presets" :key="p.id">
                   <label class="flex items-center gap-2 text-sm py-0.5">
                     <input type="checkbox" :value="p.id" x-model="experiment.selectedPresets"/>
-                    <span x-text="p.name"></span>
+                    <span x-text="p.label || p.name"></span>
                   </label>
                 </template>
               </div>
@@ -739,6 +879,7 @@
         { id: 'agents', label: 'Agents' },
         { id: 'tom',    label: 'Theory of Mind' },
         { id: 'theory', label: 'Game theory' },
+        { id: 'matrix', label: 'Payoff matrix' },
         { id: 'repro',  label: 'Reproducibility' },
         { id: 'json',   label: 'JSON view' },
       ],
@@ -748,6 +889,7 @@
       presetsByCategory: {},
       llms: [],
       baselines: [],
+      languages: [],   // populated from /api/languages
 
       runs: [],
       activeRun: null,
@@ -762,8 +904,9 @@
           nRounds: 1,
           nIterations: 1,
           nRoundsIsKnown: true,
-          agentsCommunicate: false,
           randomizeBetweenIterations: false,
+          languages: ['en'],
+          fakeMessageCount: 10,
           elicitBeliefs: false,
           tomOrder: 1,
           reputationWindow: 0,
@@ -771,17 +914,37 @@
           mixedStrategies: false,
           discountFactor: 1.0,
           continuationProbability: 1.0,
+          paretoOptimalSum: null,
           seed: 0,
           seedCount: 1,
           llm: 'OpenAIGPT4o',
         },
-        languagesCsv: 'en',
+        commStyle: 'none',           // 'none' | 'real' | 'fake_dec' | 'fake_hex'
+        equilibriaMode: 'none',      // 'none' | 'auto' | 'manual'
+        equilibriaCsv: '',
+        baselineCooperate: 'strategy1',
+        baselineDefect: 'strategy2',
         agents: [
           { name: 'agent1', llm: 'OpenAIGPT4o', personality: 'cooperative', opponentPersonalityPr: 0.0 },
           { name: 'agent2', llm: 'OpenAIGPT4o', personality: 'selfish',     opponentPersonalityPr: 0.0 },
         ],
         utilityType: 'identity',
         utilityParams: { gamma: 0.5, offset: 1.0, alpha: 0.4, beta: 0.6 },
+        // Payoff matrix scratchpad
+        matrix: {
+          strategies: [
+            { key: 'strategy1', label: 'Cooperate' },
+            { key: 'strategy2', label: 'Defect' },
+          ],
+          // cells: { 'strategy1|strategy1': [3, 3], ... }
+          cells: {
+            'strategy1|strategy1': [3, 3],
+            'strategy1|strategy2': [0, 5],
+            'strategy2|strategy1': [5, 0],
+            'strategy2|strategy2': [1, 1],
+          },
+        },
+        stopGameWhenCsv: '',
         json: '',
         running: false, error: '', lastRun: null,
       },
@@ -814,7 +977,17 @@
       _charts: {},   // Chart.js instances, keyed by canvas id
 
       async init() {
-        await Promise.all([this.loadPresets(), this.loadRuns(), this.loadModelLists()]);
+        await Promise.all([
+          this.loadPresets(),
+          this.loadRuns(),
+          this.loadModelLists(),
+          this.loadLanguages(),
+        ]);
+      },
+
+      async loadLanguages() {
+        try { this.languages = (await this.api('/api/languages')).languages; }
+        catch (e) { console.error('loadLanguages', e); }
       },
 
       // ---- Networking helpers ---------------------------------------
@@ -916,7 +1089,6 @@
         c.nRounds = cfg.nRounds ?? c.nRounds;
         c.nIterations = cfg.nIterations ?? c.nIterations;
         c.nRoundsIsKnown = cfg.nRoundsIsKnown ?? c.nRoundsIsKnown;
-        c.agentsCommunicate = cfg.agentsCommunicate ?? c.agentsCommunicate;
         c.randomizeBetweenIterations = cfg.randomizeBetweenIterations ?? c.randomizeBetweenIterations;
         c.elicitBeliefs = cfg.elicitBeliefs ?? c.elicitBeliefs;
         c.tomOrder = cfg.tomOrder ?? c.tomOrder;
@@ -925,17 +1097,42 @@
         c.mixedStrategies = cfg.mixedStrategies ?? c.mixedStrategies;
         c.discountFactor = cfg.discountFactor ?? c.discountFactor ?? 1.0;
         c.continuationProbability = cfg.continuationProbability ?? c.continuationProbability ?? 1.0;
+        c.paretoOptimalSum = cfg.paretoOptimalSum ?? null;
         c.seed = cfg.seed ?? c.seed;
         c.seedCount = cfg.seedCount ?? c.seedCount;
         c.llm = cfg.llm ?? c.llm;
+        c.languages = cfg.languages || ['en'];
+        c.fakeMessageCount = cfg.fakeMessageCount ?? 10;
 
-        this.builder.languagesCsv = (cfg.languages || ['en']).join(', ');
+        // Communication style.
+        if (cfg.fakeCommunication) {
+          this.builder.commStyle = (cfg.fakeMessageBase === 'hex') ? 'fake_hex' : 'fake_dec';
+        } else if (cfg.agentsCommunicate) {
+          this.builder.commStyle = 'real';
+        } else {
+          this.builder.commStyle = 'none';
+        }
+
+        // Equilibria.
+        if (cfg.equilibria === 'auto') this.builder.equilibriaMode = 'auto';
+        else if (Array.isArray(cfg.equilibria) && cfg.equilibria.length > 0) {
+          this.builder.equilibriaMode = 'manual';
+          this.builder.equilibriaCsv = cfg.equilibria.join(', ');
+        } else {
+          this.builder.equilibriaMode = 'none';
+          this.builder.equilibriaCsv = '';
+        }
+
+        // Baseline semantics.
+        if (cfg.baselineSemantics) {
+          this.builder.baselineCooperate = cfg.baselineSemantics.cooperate || 'strategy1';
+          this.builder.baselineDefect = cfg.baselineSemantics.defect || 'strategy2';
+        }
 
         // Agents — try the canonical shape first.
         if (cfg.agents && cfg.agents.names) {
           const a = cfg.agents;
-          const langs = (cfg.languages || ['en']);
-          const lang0 = langs[0];
+          const lang0 = c.languages[0];
           const persons = (a.personalities && a.personalities[lang0]) || [];
           const llms = a.llmServices || [];
           const probs = a.opponentPersonalityProbs || [];
@@ -955,12 +1152,101 @@
           this.builder.utilityType = 'identity';
         }
 
+        // Payoff matrix.
+        if (cfg.payoffMatrix) {
+          this.importPayoffMatrix(cfg.payoffMatrix, c.languages[0]);
+        }
+
+        // Stop game conditions.
+        this.builder.stopGameWhenCsv = (cfg.stopGameWhen || []).join(', ');
+
         this.builder.json = JSON.stringify(this.buildConfig(), null, 2);
+      },
+
+      importPayoffMatrix(pm, lang) {
+        const labelDict = (pm.strategies && pm.strategies[lang]) || {};
+        const stratKeys = Object.keys(labelDict);
+        if (stratKeys.length === 0) return;
+        this.builder.matrix.strategies = stratKeys.map(k => ({
+          key: k, label: labelDict[k] || k,
+        }));
+        this.builder.matrix.cells = {};
+        for (const [comboKey, stratPair] of Object.entries(pm.combinations || {})) {
+          const cellKey = stratPair.join('|');
+          const wkeys = pm.matrix?.[comboKey];
+          if (!wkeys) continue;
+          this.builder.matrix.cells[cellKey] = wkeys.map(wk => pm.weights?.[wk] ?? 0);
+        }
+      },
+
+      cellValue(rowKey, colKey, agentIdx) {
+        const k = rowKey + '|' + colKey;
+        const cell = this.builder.matrix.cells[k];
+        return cell ? cell[agentIdx] ?? 0 : 0;
+      },
+
+      setCellValue(rowKey, colKey, agentIdx, raw) {
+        const v = parseFloat(raw);
+        const k = rowKey + '|' + colKey;
+        this.builder.matrix.cells[k] = this.builder.matrix.cells[k] || [0, 0];
+        this.builder.matrix.cells[k][agentIdx] = isNaN(v) ? 0 : v;
+      },
+
+      addStrategy() {
+        const n = this.builder.matrix.strategies.length + 1;
+        this.builder.matrix.strategies.push({ key: 'strategy' + n, label: 'Strategy ' + n });
+      },
+
+      rebuildCombos() {
+        // Drop cells that reference deleted strategies.
+        const keys = new Set(this.builder.matrix.strategies.map(s => s.key));
+        for (const k of Object.keys(this.builder.matrix.cells)) {
+          const [a, b] = k.split('|');
+          if (!keys.has(a) || !keys.has(b)) delete this.builder.matrix.cells[k];
+        }
+      },
+
+      buildPayoffMatrixForBuild(langs) {
+        // Convert the editor scratchpad into the engine's
+        // weights/strategies/combinations/matrix shape.
+        const sm = this.builder.matrix;
+        const labels = {};
+        for (const lang of langs) {
+          labels[lang] = {};
+          for (const s of sm.strategies) labels[lang][s.key] = s.label;
+        }
+        // Distinct payoff values become weight keys.
+        const weights = {};
+        const wkeyByValue = {};
+        let wcount = 1;
+        function intern(value) {
+          const numeric = Number(value);
+          const sig = numeric.toFixed(4);
+          if (wkeyByValue[sig] === undefined) {
+            const wk = 'weight' + (wcount++);
+            wkeyByValue[sig] = wk;
+            weights[wk] = numeric;
+          }
+          return wkeyByValue[sig];
+        }
+        const combinations = {};
+        const matrix = {};
+        let ccount = 1;
+        for (const r of sm.strategies) {
+          for (const c of sm.strategies) {
+            const cell = sm.cells[r.key + '|' + c.key];
+            if (!cell) continue;
+            const ck = 'combination' + (ccount++);
+            combinations[ck] = [r.key, c.key];
+            matrix[ck] = cell.map(intern);
+          }
+        }
+        return { weights, strategies: labels, combinations, matrix };
       },
 
       buildConfig() {
         const c = this.builder.cfg;
-        const langs = this.builder.languagesCsv.split(',').map(s => s.trim()).filter(Boolean);
+        const langs = (c.languages && c.languages.length) ? [...c.languages] : ['en'];
         const personalities = {};
         for (const lang of langs) {
           personalities[lang] = this.builder.agents.map(a => a.personality);
@@ -972,7 +1258,6 @@
           nRounds: c.nRounds,
           nIterations: c.nIterations,
           nRoundsIsKnown: c.nRoundsIsKnown,
-          agentsCommunicate: c.agentsCommunicate,
           randomizeBetweenIterations: c.randomizeBetweenIterations,
           elicitBeliefs: c.elicitBeliefs,
           tomOrder: c.tomOrder,
@@ -985,6 +1270,48 @@
           llm: c.llm,
         });
         if (c.reputationWindow > 0) cfg.reputationWindow = c.reputationWindow;
+        if (c.paretoOptimalSum !== null && c.paretoOptimalSum !== undefined) {
+          cfg.paretoOptimalSum = c.paretoOptimalSum;
+        } else delete cfg.paretoOptimalSum;
+
+        // Communication style → engine fields.
+        const style = this.builder.commStyle;
+        cfg.agentsCommunicate = (style === 'real');
+        if (style === 'fake_dec' || style === 'fake_hex') {
+          cfg.fakeCommunication = true;
+          cfg.fakeMessageCount = c.fakeMessageCount;
+          cfg.fakeMessageBase = (style === 'fake_hex') ? 'hex' : 'dec';
+        } else {
+          delete cfg.fakeCommunication;
+          delete cfg.fakeMessageCount;
+          delete cfg.fakeMessageBase;
+        }
+
+        // Equilibria.
+        if (this.builder.equilibriaMode === 'auto') cfg.equilibria = 'auto';
+        else if (this.builder.equilibriaMode === 'manual') {
+          cfg.equilibria = this.builder.equilibriaCsv
+            .split(',').map(s => s.trim()).filter(Boolean);
+        } else {
+          delete cfg.equilibria;
+        }
+
+        // Baseline semantics — only emit when at least one player is a baseline.
+        const usingBaseline = this.builder.agents.some(a => String(a.llm).startsWith('baseline:'));
+        if (usingBaseline) {
+          cfg.baselineSemantics = {
+            cooperate: this.builder.baselineCooperate || 'strategy1',
+            defect: this.builder.baselineDefect || 'strategy2',
+          };
+        } else {
+          delete cfg.baselineSemantics;
+        }
+
+        // Stop conditions.
+        const stops = (this.builder.stopGameWhenCsv || '')
+          .split(',').map(s => s.trim()).filter(Boolean);
+        if (stops.length > 0) cfg.stopGameWhen = stops; else delete cfg.stopGameWhen;
+
         cfg.agents = {
           names: this.builder.agents.map(a => a.name),
           personalities,
@@ -1003,6 +1330,12 @@
         } else if (cfg.utility) {
           delete cfg.utility;
         }
+
+        // Payoff matrix from the editor (only if we have any cells).
+        if (Object.keys(this.builder.matrix.cells).length > 0) {
+          cfg.payoffMatrix = this.buildPayoffMatrixForBuild(langs);
+        }
+
         return cfg;
       },
 
