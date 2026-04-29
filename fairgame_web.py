@@ -270,13 +270,22 @@ _SH_MATRIX: Dict[str, Any] = {
 def _seed_configuration(
     cid: str, name: str, tag_id: str, languages: List[str], game_config: Dict[str, Any],
 ) -> Dict[str, Any]:
+    # Engine validator demands these fields. Fill them in here so each
+    # seed only has to spell out the parts that *differ* from the
+    # defaults.
+    full_config = {
+        "agentsCommunicate": False,
+        "allAgentPermutations": False,
+        "stopGameWhen": [],
+        **game_config,
+    }
     return {
         "id": cid,
         "name": name,
         "tag_id": tag_id,
         "variation": "classic",
         "languages": languages,
-        "game_config": game_config,
+        "game_config": full_config,
         "created_at": "2026-04-29T20:00:00",
     }
 
@@ -296,7 +305,7 @@ _SEED_CONFIGURATIONS: List[Dict[str, Any]] = [
                 "names": ["agent1", "agent2"],
                 "personalities": {"en": ["cooperative", "selfish"]},
                 "llmServices": ["OpenAIGPT4o", "OpenAIGPT4o"],
-                "opponentPersonalityProbs": [0, 0],
+                "opponentPersonalityProb": [0, 0],
             },
             "payoffMatrix": _PD_MATRIX,
             "llm": "OpenAIGPT4o",
@@ -323,7 +332,7 @@ _SEED_CONFIGURATIONS: List[Dict[str, Any]] = [
                 "names": ["agent1", "agent2"],
                 "personalities": {"en": ["cooperative", "selfish"]},
                 "llmServices": ["OpenAIGPT4o", "OpenAIGPT4o"],
-                "opponentPersonalityProbs": [0.7, 0.7],
+                "opponentPersonalityProb": [0.7, 0.7],
             },
             "payoffMatrix": _PD_MATRIX,
             "llm": "OpenAIGPT4o",
@@ -349,7 +358,7 @@ _SEED_CONFIGURATIONS: List[Dict[str, Any]] = [
                 "llmServices": [
                     "OpenAIGPT4o", "baseline:tit_for_tat", "baseline:always_defect",
                 ],
-                "opponentPersonalityProbs": [0, 0, 0],
+                "opponentPersonalityProb": [0, 0, 0],
             },
             "payoffMatrix": _PD_MATRIX,
             "llm": "OpenAIGPT4o",
@@ -358,19 +367,21 @@ _SEED_CONFIGURATIONS: List[Dict[str, Any]] = [
             "seed": 42,
         },
     ),
-    # 4. Game-theoretic extensions: mixed strategies (engine samples a
-    #    distribution from each agent each round), non-trivial discount,
+    # 4. Game-theoretic extensions: non-trivial discount,
     #    auto-equilibrium computation, declared Pareto optimum,
-    #    Fehr-Schmidt utility transform.
+    #    Fehr-Schmidt utility transform, multi-seed CIs. Mixed
+    #    strategies are intentionally OFF in this seed because the
+    #    shipped Stag Hunt template doesn't carry a {mixedChoose} block
+    #    — turning that on requires a template extension first (the
+    #    Beliefs / fully-featured template in docs/USER_GUIDE.md).
     _seed_configuration(
         "cfg_sh_advanced",
-        "4. Stag Hunt — mixed strategies + discount + auto Nash + Fehr-Schmidt",
+        "4. Stag Hunt — discount + auto Nash + Fehr-Schmidt + multi-seed CI",
         "tag_sh",
         ["en"],
         {
-            "nRounds": 8,
+            "nRounds": 4,
             "nRoundsIsKnown": True,
-            "mixedStrategies": True,
             "discountFactor": 0.9,
             "continuationProbability": 1.0,
             "equilibria": "auto",
@@ -379,7 +390,7 @@ _SEED_CONFIGURATIONS: List[Dict[str, Any]] = [
                 "names": ["agent1", "agent2"],
                 "personalities": {"en": ["bold", "cautious"]},
                 "llmServices": ["OpenAIGPT4o", "OpenAIGPT4o"],
-                "opponentPersonalityProbs": [0.3, 0.3],
+                "opponentPersonalityProb": [0.3, 0.3],
             },
             "payoffMatrix": _SH_MATRIX,
             "utility": {"type": "FehrSchmidt", "alpha": 0.4, "beta": 0.6},
@@ -405,7 +416,7 @@ _SEED_CONFIGURATIONS: List[Dict[str, Any]] = [
                 "names": ["agent1", "agent2"],
                 "personalities": {"en": ["cooperative", "selfish", "neutral"]},
                 "llmServices": ["OpenAIGPT4o", "OpenAIGPT4o"],
-                "opponentPersonalityProbs": [0, 0.5, 1],
+                "opponentPersonalityProb": [0, 0.5, 1],
             },
             "payoffMatrix": _PD_MATRIX,
             "llm": "OpenAIGPT4o",

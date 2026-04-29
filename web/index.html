@@ -1905,7 +1905,7 @@ Output ONLY the JSON.
           const lang0 = c.languages[0];
           const persons = (a.personalities && a.personalities[lang0]) || [];
           const llms = a.llmServices || [];
-          const probs = a.opponentPersonalityProbs || [];
+          const probs = a.opponentPersonalityProb || [];
 
           this.builder.personalityMode = cfg.allAgentPermutations ? 'pool' : 'per_agent';
           this.builder.tournamentMode = !!(cfg.tournament && (cfg.tournament === true || cfg.tournament.enabled));
@@ -2112,7 +2112,7 @@ Output ONLY the JSON.
           names: this.builder.agents.map(a => a.name),
           personalities,
           llmServices: this.builder.agents.map(a => a.llm),
-          opponentPersonalityProbs: isPool
+          opponentPersonalityProb: isPool
             ? (priorPool.length ? priorPool : [0])
             : this.builder.agents.map(a => a.opponentPersonalityPr || 0),
         };

@@ -147,5 +147,90 @@ class TestFairgameWeb(unittest.TestCase):
         self.assertIn("FAIRGAME", res.text)
 
 
+class TestSeedConfigurationsRunEndToEnd(unittest.TestCase):
+    """End-to-end smoke for every seed Configuration.
+
+    For each shipped configuration (one per canonical 2x2 game plus the
+    ToM and tournament showcases), POST /api/configurations/{id}/run in
+    demo mode and verify the engine returns a non-empty rows payload
+    with the columns the Results page expects to render. This catches
+    integration-level breakage: the template can't be resolved, the
+    payoff matrix doesn't validate, the engine's permutation expander
+    can't handle the shape, the result processor changed its column
+    contract, etc.
+
+    Demo mode keeps the test in-process — no live LLM calls.
+    """
+
+    EXPECTED_CONFIG_IDS = [
+        "cfg_pd_basic",
+        "cfg_pd_tom",
+        "cfg_pd_tournament",
+        "cfg_sh_advanced",
+        "cfg_pd_perms",
+    ]
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        import tempfile
+
+        cls._tmp = tempfile.mkdtemp(prefix="fg_seedrun_")
+        from fairgame_web import app
+        import fairgame_web
+
+        cls._real_runs_dir = fairgame_web.RUNS_DIR
+        fairgame_web.RUNS_DIR = Path(cls._tmp)
+        cls.client = TestClient(app)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        import fairgame_web
+
+        fairgame_web.RUNS_DIR = cls._real_runs_dir
+        if cls._tmp:
+            shutil.rmtree(cls._tmp, ignore_errors=True)
+
+    def tearDown(self) -> None:
+        from src.demo_connector import restore_real_connectors
+
+        restore_real_connectors()
+
+    def test_seed_configurations_are_present(self) -> None:
+        """Every expected seed id must be present in the library."""
+        body = self.client.get("/api/configurations").json()
+        ids = [c["id"] for c in body["configurations"]]
+        for cid in self.EXPECTED_CONFIG_IDS:
+            self.assertIn(cid, ids, f"Seed configuration {cid!r} missing")
+
+    def test_each_seed_configuration_runs_in_demo_mode(self) -> None:
+        """Each seed runs to completion and produces sensible rows."""
+        for cid in self.EXPECTED_CONFIG_IDS:
+            with self.subTest(configuration=cid):
+                res = self.client.post(
+                    f"/api/configurations/{cid}/run",
+                    params={"demo_mode": "true"},
+                )
+                self.assertEqual(res.status_code, 200, res.text)
+                body = res.json()
+                self.assertIn("id", body)
+                self.assertIsInstance(body["rows"], list)
+                self.assertGreater(
+                    len(body["rows"]), 0,
+                    f"{cid}: engine returned zero rows",
+                )
+                # Every row should describe at least one game with two
+                # named agents and per-round strategy lists.
+                first = body["rows"][0]
+                for column in (
+                    "game_id", "language",
+                    "agent1_name", "agent2_name",
+                    "agent1_strategies", "agent2_strategies",
+                ):
+                    self.assertIn(
+                        column, first,
+                        f"{cid}: missing column {column!r} in row 0",
+                    )
+
+
 if __name__ == "__main__":
     unittest.main()
