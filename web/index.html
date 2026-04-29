@@ -587,11 +587,16 @@ Output ONLY the JSON.
       <!-- ===== CONFIGURATIONS ===== -->
       <section x-show="activePage === 'configurations'">
         <h1 class="text-2xl font-semibold mb-1">⚙️ Configurations</h1>
-        <p class="text-slate-600 mb-6">Save runnable bundles of (template + game settings + languages) under your own names. Each configuration gets a stable id and timestamp, so you can re-run, edit, or batch-run later.</p>
+        <p class="text-slate-600 mb-6">Save runnable bundles of (template + game settings + languages) under your own names. Each configuration gets a stable id and timestamp. Configurations are <strong>built and saved here</strong>; running them is the <a class="text-blue-600 underline" @click.prevent="activePage='experiment'" href="#">Experiment</a> page's job.</p>
 
-        <!-- New / edit configuration: metadata + full builder form -->
+        <!-- ============= CREATE / EDIT ============= -->
+        <div class="mb-2 flex items-center justify-between">
+          <h2 class="text-xl font-semibold" x-text="configsPage.editing ? '✏️ Edit configuration' : '✨ Create new configuration'"></h2>
+          <button x-show="configsPage.editing" class="text-sm text-slate-600 hover:underline"
+                  @click="resetConfigDraft()">+ Start fresh instead</button>
+        </div>
         <div class="fg-card p-6 mb-4">
-          <h3 class="font-semibold mb-3" x-text="configsPage.editing ? 'Edit configuration' : '+ New configuration'"></h3>
+          <h3 class="text-xs uppercase tracking-wider text-slate-500 mb-3">Metadata</h3>
           <p class="fg-help mb-4">A configuration captures everything in the scenario builder below — agents, payoff matrix, theory of mind, game-theory settings, reproducibility — plus the metadata above (name, tag/variation/languages). Pick a tag + variation so the right prompt template is attached at run time.</p>
           <div class="grid md:grid-cols-2 gap-4">
             <div>
@@ -1063,20 +1068,15 @@ Output ONLY the JSON.
                     class="w-full border border-slate-300 rounded-md px-3 py-2 font-mono text-xs h-96"></textarea>
         </div>
 
-        <!-- SAVE / RUN BAR -->
+        <!-- SAVE BAR -->
         <div class="fg-card p-4 mt-4 flex items-center gap-3 flex-wrap">
           <button class="px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
                   :disabled="!configsPage_canSave"
                   @click="saveConfiguration()">
-            <span x-text="configsPage.editing ? '💾 Update configuration' : '💾 Save configuration'"></span>
+            <span x-text="configsPage.editing ? '💾 Update' : '💾 Save'"></span>
           </button>
           <button x-show="configsPage.editing" class="px-4 py-2 rounded-md border border-slate-300 text-sm"
                   @click="resetConfigDraft()">Cancel edit</button>
-          <button class="px-4 py-2 rounded-md border border-slate-300 text-sm hover:bg-slate-50"
-                  :disabled="!configsPage.editing"
-                  @click="runEditingConfiguration()" title="Save first, then run">
-            ▶ Run this configuration
-          </button>
           <button class="px-4 py-2 rounded-md border border-slate-300 text-sm hover:bg-slate-50"
                   @click="downloadJson(buildConfig(), (builder.cfg.name||'scenario')+'.json')">
             Download config JSON ↓
@@ -1087,17 +1087,10 @@ Output ONLY the JSON.
         <div x-show="configsPage.error" class="mt-3 p-3 bg-rose-50 border border-rose-200 rounded text-rose-800 text-sm" x-text="configsPage.error"></div>
 
         <!-- List of saved configurations -->
+        <!-- ============= SAVED LIST ============= -->
+        <h2 class="text-xl font-semibold mt-8 mb-2">📚 Saved configurations</h2>
+        <p class="text-slate-600 text-sm mb-3">Click <em>Edit</em> to load any of these into the form above (prefilled, ready to tweak). To actually run one, head to <a class="text-blue-600 underline" @click.prevent="activePage='experiment'" href="#">🧪 Experiment</a>.</p>
         <div class="fg-card p-6">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-lg font-semibold">Saved configurations</h2>
-            <button class="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
-                    :disabled="configsPage.selected.length === 0 || configsPage.batchRunning"
-                    @click="runConfigurationsBatch()">
-              <span x-show="!configsPage.batchRunning">▶ Run selected (<span x-text="configsPage.selected.length"></span>)</span>
-              <span x-show="configsPage.batchRunning">Running… <span x-text="configsPage.batchProgress"></span></span>
-            </button>
-          </div>
-
           <div x-show="configurations.length === 0" class="text-slate-500 italic text-sm">
             No saved configurations yet.
           </div>
@@ -1105,7 +1098,6 @@ Output ONLY the JSON.
           <div class="space-y-2">
             <template x-for="cfg in configurations" :key="cfg.id">
               <div class="border border-slate-200 rounded-md p-3 flex items-center gap-3">
-                <input type="checkbox" :value="cfg.id" x-model="configsPage.selected"/>
                 <div class="flex-1">
                   <div class="font-medium" x-text="cfg.name"></div>
                   <div class="text-xs text-slate-500">
@@ -1115,24 +1107,10 @@ Output ONLY the JSON.
                     · <span x-text="cfg.languages.map(l => languageFlag(l)).join(' ') + ' (' + cfg.languages.join(', ') + ')'"></span>
                   </div>
                 </div>
-                <button class="text-blue-600 hover:underline text-sm" @click="runOneConfiguration(cfg.id)">▶ Run</button>
                 <button class="text-blue-600 hover:underline text-sm" @click="loadConfigForEdit(cfg)">Edit</button>
                 <button class="text-rose-600 hover:underline text-sm" @click="deleteConfiguration(cfg.id)">Delete</button>
               </div>
             </template>
-          </div>
-
-          <div x-show="configsPage.lastBatchResults.length > 0" class="mt-4 p-3 bg-slate-50 rounded-md">
-            <h3 class="text-sm font-semibold mb-2">Last batch run</h3>
-            <ul class="space-y-1 text-sm">
-              <template x-for="r in configsPage.lastBatchResults" :key="r.configuration_id">
-                <li>
-                  <code x-text="r.configuration_id"></code>
-                  <span x-show="r.run_id"> → run <a class="text-blue-600 underline" @click.prevent="openRun(r.run_id)" href="#" x-text="r.run_id"></a> (<span x-text="r.n_rows + ' games'"></span>)</span>
-                  <span x-show="r.error" class="text-rose-700"> · <span x-text="r.error"></span></span>
-                </li>
-              </template>
-            </ul>
           </div>
         </div>
       </section>
@@ -1142,43 +1120,59 @@ Output ONLY the JSON.
       <section x-show="activePage === 'experiment'">
         <h1 class="text-2xl font-semibold mb-1">🧪 Experiment</h1>
         <p class="text-slate-600 mb-3">
-          Batch-run a selection of <strong>your saved Configurations</strong> back-to-back. Each
-          (configuration × iteration) becomes a separate Run with its own id, browseable in
+          Pick one of your saved <strong>Configurations</strong>, choose how many iterations to
+          run, and go. Each iteration becomes a separate Run with its own id, browseable in
           <a class="text-blue-600 underline" @click.prevent="activePage='results'" href="#">Results</a>.
         </p>
         <p class="text-slate-600 text-sm mb-6">
-          Don't see anything to pick? Save a configuration first in
+          Don't see what you want? Save a configuration first in
           <a class="text-blue-600 underline" @click.prevent="activePage='configurations'" href="#">⚙️ Configurations</a>.
         </p>
 
         <div class="fg-card p-6 mb-6">
-          <h3 class="font-semibold mb-2">1. Pick configurations to run</h3>
-          <p class="fg-help mb-3">Each ticked configuration is run from start to finish before the next one starts. Tick as many as you want.</p>
-          <div class="max-h-72 overflow-auto border border-slate-200 rounded-md p-2 mb-4 space-y-1.5">
-            <template x-for="cfg in configurations" :key="cfg.id">
-              <label class="flex items-start gap-2 text-sm py-0.5 cursor-pointer hover:bg-slate-50 rounded px-1">
-                <input type="checkbox" :value="cfg.id" x-model="experiment.selectedConfigs" class="mt-0.5"/>
-                <div class="flex-1">
-                  <div class="font-medium" x-text="cfg.name"></div>
-                  <div class="text-xs text-slate-500">
-                    <code x-text="cfg.id"></code>
-                    · <span x-text="tagName(cfg.tag_id) + ' / ' + cfg.variation"></span>
-                    · <span x-text="cfg.languages.map(l => languageFlag(l)).join(' ')"></span>
+          <h3 class="font-semibold mb-2">1. Pick a configuration</h3>
+          <div x-show="configurations.length === 0" class="text-sm text-slate-500 italic">
+            No saved configurations yet.
+          </div>
+          <div class="space-y-2">
+            <template x-for="(group, tagId) in configurationsByTag()" :key="tagId">
+              <div class="border border-slate-200 rounded-md">
+                <details open>
+                  <summary class="px-3 py-2 cursor-pointer bg-slate-50 rounded-t-md text-sm font-medium">
+                    <span x-text="tagName(tagId)"></span>
+                    <span class="text-slate-400 font-normal" x-text="'· ' + group.length + ' configuration' + (group.length === 1 ? '' : 's')"></span>
+                  </summary>
+                  <div class="p-2 space-y-1">
+                    <template x-for="cfg in group" :key="cfg.id">
+                      <label class="flex items-start gap-2 text-sm py-1.5 px-2 cursor-pointer rounded transition"
+                             :class="experiment.selectedConfig === cfg.id ? 'bg-blue-50 ring-2 ring-blue-300' : 'hover:bg-slate-50'">
+                        <input type="radio"
+                               name="exp-cfg"
+                               :value="cfg.id"
+                               x-model="experiment.selectedConfig"
+                               class="mt-0.5"/>
+                        <div class="flex-1">
+                          <div class="font-medium" x-text="cfg.name"></div>
+                          <div class="text-xs text-slate-500">
+                            <span x-text="cfg.variation"></span>
+                            · <span x-text="cfg.languages.map(l => languageFlag(l)).join(' ')"></span>
+                            · <code x-text="cfg.id"></code>
+                          </div>
+                        </div>
+                      </label>
+                    </template>
                   </div>
-                </div>
-              </label>
+                </details>
+              </div>
             </template>
-            <div x-show="configurations.length === 0" class="text-sm text-slate-500 italic px-2 py-1">
-              No saved configurations yet.
-            </div>
           </div>
 
-          <h3 class="font-semibold mb-2">2. Iterations</h3>
+          <h3 class="font-semibold mb-2 mt-6">2. Iterations</h3>
           <div class="md:w-1/2">
-            <label class="fg-label">Iterations per configuration</label>
+            <label class="fg-label">Number of iterations</label>
             <input type="number" min="1" x-model.number="experiment.nIterations" class="fg-input"/>
             <p class="fg-help">
-              How many times to run each ticked configuration. Each iteration is a fresh Run
+              How many times to run the selected configuration. Each iteration is a fresh Run
               with its own id. Anything else — seed, seed count, nRounds, agents, payoffs — is
               owned by the configuration itself; edit those on the
               <a class="text-blue-600 underline" @click.prevent="activePage='configurations'" href="#">Configurations</a> page.
@@ -1186,18 +1180,16 @@ Output ONLY the JSON.
           </div>
 
           <button class="mt-5 px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
-                  :disabled="experiment.selectedConfigs.length === 0 || experiment.running"
+                  :disabled="!experiment.selectedConfig || experiment.running"
                   @click="runExperiment()">
             <span x-show="!experiment.running">▶ Run experiment</span>
             <span x-show="experiment.running">Running…</span>
           </button>
 
-          <p class="fg-help mt-3" x-show="experiment.selectedConfigs.length > 0">
+          <p class="fg-help mt-3" x-show="experiment.selectedConfig">
             Will produce
-            <strong x-text="experiment.selectedConfigs.length * Math.max(1, experiment.nIterations || 1)"></strong>
-            Runs total
-            (<span x-text="experiment.selectedConfigs.length"></span> configurations
-            × <span x-text="Math.max(1, experiment.nIterations || 1)"></span> iterations).
+            <strong x-text="Math.max(1, experiment.nIterations || 1)"></strong>
+            Run<span x-text="(experiment.nIterations || 1) === 1 ? '' : 's'"></span>.
           </p>
 
           <div x-show="experiment.error" class="mt-4 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-sm" x-text="experiment.error"></div>
@@ -1206,7 +1198,7 @@ Output ONLY the JSON.
         <div x-show="experiment.results.length > 0" class="fg-card p-6">
           <h2 class="text-lg font-semibold mb-3">Generated runs</h2>
           <ul class="space-y-1 text-sm">
-            <template x-for="r in experiment.results" :key="r.run_id || (r.configuration_id + '_' + r.iteration)">
+            <template x-for="r in experiment.results" :key="r.run_id || ('err_' + r.iteration)">
               <li>
                 <span x-show="r.run_id">
                   <a class="text-blue-600 underline" @click.prevent="openRun(r.run_id)" href="#"
@@ -1215,7 +1207,7 @@ Output ONLY the JSON.
                   <span class="text-slate-500" x-text="' · ' + r.n_rows + ' games'"></span>
                 </span>
                 <span x-show="r.error" class="text-rose-700">
-                  <code x-text="r.configuration_id"></code> iteration <span x-text="r.iteration"></span> · error: <span x-text="r.error"></span>
+                  iteration <span x-text="r.iteration"></span> · error: <span x-text="r.error"></span>
                 </span>
               </li>
             </template>
@@ -1378,10 +1370,6 @@ Output ONLY the JSON.
         editing: null,
         draft: { name: '', tag_id: '', variation: '' },
         error: '',
-        selected: [],
-        batchRunning: false,
-        batchProgress: '',
-        lastBatchResults: [],
       },
 
       builder: {
@@ -1443,7 +1431,7 @@ Output ONLY the JSON.
 
 
       experiment: {
-        selectedConfigs: [],
+        selectedConfig: '',
         nIterations: 1,
         running: false, error: '', results: [],
       },
@@ -1700,55 +1688,12 @@ Output ONLY the JSON.
         } catch (e) { this.configsPage.error = String(e.message || e); }
       },
 
-      async runEditingConfiguration() {
-        if (!this.configsPage.editing) return;
-        await this.saveConfiguration();
-        if (!this.configsPage.error) {
-          await this.runOneConfiguration(this.configsPage.editing);
-        }
-      },
-
       async deleteConfiguration(id) {
         if (!confirm('Delete this configuration?')) return;
         try {
           await this.api(`/api/configurations/${id}`, { method: 'DELETE' });
           await this.loadConfigurations();
         } catch (e) { alert(e.message || e); }
-      },
-
-      async runOneConfiguration(id) {
-        try {
-          const res = await this.api(
-            `/api/configurations/${id}/run?demo_mode=${this.demoMode}`,
-            { method: 'POST' },
-          );
-          await this.loadRuns();
-          this.openRun(res.id);
-        } catch (e) { alert(e.message || e); }
-      },
-
-      async runConfigurationsBatch() {
-        this.configsPage.batchRunning = true;
-        this.configsPage.lastBatchResults = [];
-        this.configsPage.batchProgress = `0/${this.configsPage.selected.length}`;
-        try {
-          // The backend endpoint runs them sequentially; we don't get
-          // per-step progress, but we still show the count.
-          const result = await this.api('/api/configurations/run-batch', {
-            method: 'POST',
-            body: JSON.stringify({
-              configuration_ids: this.configsPage.selected,
-              demo_mode: this.demoMode,
-            }),
-          });
-          this.configsPage.lastBatchResults = result.results;
-          this.configsPage.selected = [];
-          await this.loadRuns();
-        } catch (e) { alert(e.message || e); }
-        finally {
-          this.configsPage.batchRunning = false;
-          this.configsPage.batchProgress = '';
-        }
       },
 
       async loadLanguages() {
@@ -2155,6 +2100,24 @@ Output ONLY the JSON.
 
       // ---- Experiment -----------------------------------------------
 
+      configurationsByTag() {
+        // {tag_id: [config, …]} — tags first in the order tags came back
+        // from /api/tags so the picker is stable across reloads.
+        const groups = {};
+        for (const tag of this.tags) {
+          const inTag = this.configurations.filter(c => c.tag_id === tag.id);
+          if (inTag.length) groups[tag.id] = inTag;
+        }
+        // Orphan configurations under unknown tags (rare but possible).
+        const knownTagIds = new Set(this.tags.map(t => t.id));
+        for (const c of this.configurations) {
+          if (!knownTagIds.has(c.tag_id)) {
+            (groups[c.tag_id] = groups[c.tag_id] || []).push(c);
+          }
+        }
+        return groups;
+      },
+
       async runExperiment() {
         this.experiment.running = true;
         this.experiment.error = '';
@@ -2163,7 +2126,7 @@ Output ONLY the JSON.
           const result = await this.api('/api/configurations/run-batch', {
             method: 'POST',
             body: JSON.stringify({
-              configuration_ids: this.experiment.selectedConfigs,
+              configuration_ids: [this.experiment.selectedConfig],
               demo_mode: this.demoMode,
               iterations: Math.max(1, this.experiment.nIterations || 1),
             }),
