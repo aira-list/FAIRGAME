@@ -17,3 +17,6 @@ gatherUsageStats = false
 [client]
 toolbarMode = "minimal"
 showErrorDetails = true
+
+[global]
+disableWidgetStateDuplicationWarning = true

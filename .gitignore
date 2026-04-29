@@ -16,3 +16,13 @@ __pycache__/
 
 # playground files
 __playground/
+
+# GUI / experiment runtime outputs
+results/
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Ad-hoc data dumps
+duplicates.csv
+merged.csv
