@@ -110,9 +110,10 @@ class ConfigModel(BaseModel):
     """If set, after the first round each subsequent round is played only
     with this probability — supports indefinite-horizon games."""
 
-    equilibria: List[str] = []
-    """Combination keys (e.g. ``"combination4"``) declared to be equilibria;
-    used by the analysis layer to compute equilibrium-distance metrics."""
+    equilibria: Union[List[str], str] = []
+    """Combination keys (e.g. ``"combination4"``) declared to be equilibria,
+    OR the literal string ``"auto"`` to compute pure-strategy Nash
+    equilibria via nashpy at validation time."""
 
     paretoOptimalSum: Optional[float] = None
     """Sum of payoffs at the Pareto-optimal outcome. When provided, the
@@ -125,6 +126,11 @@ class ConfigModel(BaseModel):
     mixedStrategies: bool = False
     """If true, the agent is asked for a probability distribution over
     strategies and the engine samples from it."""
+
+    reputationWindow: Optional[int] = None
+    """When set (>=1), per-opponent ``{coopRateN}`` and ``{reputationN}``
+    placeholders average only the most recent N rounds. Strategy1 is
+    treated as 'cooperate' by convention."""
 
     seed: Optional[int] = None
     """Master seed for deterministic replay. ``None`` = nondeterministic."""
@@ -317,7 +323,20 @@ class ConfigValidator:
         except KeyError:
             config_model = self._attempt_payoff_transform(config_data)
 
-        return config_model.model_dump()
+        result = config_model.model_dump()
+
+        # Expand ``equilibria: "auto"`` now that the payoff matrix is
+        # canonical. We do this here (post-validation) so we have the
+        # transformed matrix to feed nashpy.
+        if result.get("equilibria") == "auto":
+            from src.equilibrium import compute_nash_equilibria  # local import
+
+            language = (result.get("languages") or ["en"])[0]
+            result["equilibria"] = compute_nash_equilibria(
+                result["payoffMatrix"], language
+            )
+
+        return result
 
     def _attempt_payoff_transform(self, original_data: dict) -> ConfigModel:
         """Try to transform and re-validate the payoffMatrix if the first attempt failed."""

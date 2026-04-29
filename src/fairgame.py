@@ -47,6 +47,7 @@ class FairGame:
         equilibria: Optional[Sequence[str]] = None,
         pareto_optimal_sum: Optional[float] = None,
         mixed_strategies: bool = False,
+        reputation_window: Optional[int] = None,
         rng: Optional[random.Random] = None,
         seed: Optional[int] = None,
     ) -> None:
@@ -83,6 +84,9 @@ class FairGame:
         self.equilibria: List[str] = list(equilibria or [])
         self.pareto_optimal_sum = pareto_optimal_sum
         self.mixed_strategies = bool(mixed_strategies)
+        self.reputation_window = (
+            int(reputation_window) if reputation_window is not None else None
+        )
 
         # RNG: explicit instance > derived-from-seed > nondeterministic.
         self.seed = seed

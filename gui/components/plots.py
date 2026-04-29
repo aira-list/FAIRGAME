@@ -213,6 +213,82 @@ def brier_per_round(raw: Dict[str, Any]) -> Optional[go.Figure]:
     return _layout(fig, "Belief-accuracy (Brier) per round — lower is better")
 
 
+def overlay_cooperation_rate(runs: List[Dict[str, Any]]) -> Optional[go.Figure]:
+    """Overlay cooperation-rate-per-round from multiple runs on one chart.
+
+    ``runs`` is a list of ``{"label": str, "raw": dict}`` where ``raw`` is
+    the engine's per-game output. Returns ``None`` when nothing plottable.
+    """
+    rows: List[Dict[str, Any]] = []
+    for run in runs:
+        label = run["label"]
+        raw = run["raw"]
+        for game_id, game in raw.items():
+            desc = game.get("description", {})
+            history = game.get("history", {})
+            matrix_summary = desc.get("payoff_matrix_summary") or {}
+            strategies_per_lang = matrix_summary.get("strategies") or {}
+            labels = strategies_per_lang.get(desc.get("language") or "en") or {}
+            cooperate_label = labels.get("strategy1")
+            if not cooperate_label:
+                continue
+            for round_key, entries in history.items():
+                try:
+                    round_num = int(round_key.split("_")[1])
+                except (IndexError, ValueError):
+                    continue
+                for entry in entries:
+                    rows.append(
+                        {
+                            "run": label,
+                            "round": round_num,
+                            "cooperative": int(entry.get("strategy") == cooperate_label),
+                        }
+                    )
+    if not rows:
+        return None
+    df = pd.DataFrame(rows)
+    summary = (
+        df.groupby(["run", "round"], as_index=False)["cooperative"].mean()
+        .rename(columns={"cooperative": "rate"})
+    )
+    fig = px.line(
+        summary,
+        x="round",
+        y="rate",
+        color="run",
+        markers=True,
+        color_discrete_sequence=_PALETTE,
+    )
+    fig.update_yaxes(range=[-0.02, 1.02], tickformat=".0%")
+    return _layout(fig, "Cooperation rate per round (overlay)", height=420)
+
+
+def overlay_metric_bars(
+    runs: List[Dict[str, Any]], metric: str, title: str
+) -> Optional[go.Figure]:
+    """Bar chart of a scalar metric across multiple runs."""
+    pairs: List[tuple[str, float]] = []
+    for run in runs:
+        df = run.get("df")
+        if df is None or metric not in df.columns:
+            continue
+        series = pd.to_numeric(df[metric], errors="coerce").dropna()
+        if series.empty:
+            continue
+        pairs.append((run["label"], float(series.mean())))
+    if not pairs:
+        return None
+    fig = go.Figure(
+        go.Bar(
+            x=[p[0] for p in pairs],
+            y=[p[1] for p in pairs],
+            marker_color=_PALETTE,
+        )
+    )
+    return _layout(fig, title)
+
+
 def multi_seed_scores_with_ci(df: pd.DataFrame) -> Optional[go.Figure]:
     """Render mean ± CI for each agent's average score, when available."""
     cols = [c for c in df.columns if c.startswith("agent") and c.endswith("_scores_mean")]

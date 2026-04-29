@@ -243,6 +243,7 @@ class FairGameFactory:
             equilibria=list(config.get("equilibria", []) or []),
             pareto_optimal_sum=config.get("paretoOptimalSum"),
             mixed_strategies=bool(config.get("mixedStrategies", False)),
+            reputation_window=config.get("reputationWindow"),
             rng=rng,
             seed=seed,
         )
@@ -313,13 +314,16 @@ class FairGameFactory:
     # ----------------------------
     def _upload_output(self, game: FairGame, game_history, game_n: int) -> None:
         description = game.description
-        # Drop the verbose matrix but keep just enough metadata for downstream
-        # equilibrium / welfare analysis.
+        # Keep just enough metadata for downstream equilibrium / welfare /
+        # regret analysis. We retain the full four-block matrix because
+        # regret needs the weight-key matrix too; for a 2x2 game it's tiny.
         full_matrix = description.pop("payoff_matrix", None)
         if full_matrix:
             description["payoff_matrix_summary"] = {
-                "combinations": full_matrix.get("combinations"),
+                "weights": full_matrix.get("weights"),
                 "strategies": full_matrix.get("strategies"),
+                "combinations": full_matrix.get("combinations"),
+                "matrix": full_matrix.get("matrix"),
             }
         self.output_dict[f"game_{game_n}"] = {
             "description": description,

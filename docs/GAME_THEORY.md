@@ -19,13 +19,17 @@ design sketch, see [`ROADMAP.md`](ROADMAP.md).
 | Discount factor | `discountFactor: 0.9` | applies to every recorded score |
 | Indefinite horizon | `continuationProbability: 0.95` | rounds past the first end stochastically |
 | Utility transforms | `utilityTransform: { type: ..., ... }` | applies to recorded scores |
-| Equilibrium metrics | `equilibria: ["combination4", ...]` | `equilibrium_rate`, `equilibrium_per_round`, `first_equilibrium_round` |
+| Equilibrium metrics | `equilibria: ["combination4", ...]` or `"auto"` | `equilibrium_rate`, `equilibrium_per_round`, `first_equilibrium_round` |
 | Welfare metrics | (automatic) + `paretoOptimalSum` | `welfare_mean_sum`, `welfare_mean_min`, `welfare_mean_gini`, `welfare_efficiency`, `welfare_per_round` |
+| Regret tracking | (automatic) | `agentN_regret_per_round`, `agentN_regret_mean` |
+| Reputation placeholders | optional `reputationWindow: int`; template uses `{coopRateN}` / `{reputationN}` | rolling cooperation rate per opponent injected into the prompt |
+| Hypothesis testing | `compare_metric` / `compare_metrics` | Welch t-test + Mann-Whitney U for any two runs |
 | Canonical baselines | `llms: {agent: "Baseline:Name"}` | non-LLM agents used as controls / tournament entries |
 | Round-robin tournaments | `tournament: { enabled: true }` | NC2 pair games per scenario |
 | Deterministic replay | `seed: 42` | same seed → identical run |
 | Multi-seed + CIs | `seedCount: 5` (or `seeds: [...]`) | `<metric>_mean`, `<metric>_ci_half_width` (after `aggregate_seeds`) |
 | Experiment manifest | top-level `manifest.json` | per-config CSV + aggregated CSV + `manifest_summary.json` |
+| Cross-run comparison | GUI page **⚖️ Compare runs** | overlaid charts + per-metric Welch / Mann-Whitney p-values |
 
 ## 1 — Mixed strategies
 

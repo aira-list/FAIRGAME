@@ -38,6 +38,7 @@ class PromptCreator:
         payoff_matrix,
         *,
         tom_order: int = 1,
+        reputation_window: Optional[int] = None,
     ) -> None:
         self.language = lang
         self.prompt_template = prompt_template
@@ -45,6 +46,10 @@ class PromptCreator:
         self.n_rounds_known = n_rounds_known
         self.payoff_matrix = payoff_matrix
         self.tom_order = tom_order
+        # When set (>=1), per-opponent {coopRateN}/{reputationN} placeholders
+        # average only the most recent N rounds; otherwise they use the full
+        # history.
+        self.reputation_window = reputation_window
 
     # ---- Block helpers --------------------------------------------------
 
@@ -147,11 +152,69 @@ class PromptCreator:
         }
         for i, key in enumerate(strategies_keys):
             values[f"strategy{i+1}"] = self.payoff_matrix.strategies[key]
+
+        # Per-opponent reputation: rolling cooperation rate over their
+        # past plays. By convention strategy1 = "cooperate".
+        cooperate_label = self.payoff_matrix.strategies.get(strategies_keys[0]) if strategies_keys else None
+        for i, opp in enumerate(opponents, start=1):
+            rate = self._opponent_cooperation_rate(opp, history, cooperate_label)
+            if rate is not None:
+                values[f"coopRate{i}"] = f"{rate:.2f}"
+                values[f"reputation{i}"] = self._reputation_label(rate)
+            else:
+                values[f"coopRate{i}"] = "n/a"
+                values[f"reputation{i}"] = "unknown"
         for i, key in enumerate(weight_keys):
             values[f"weight{i+1}"] = self.payoff_matrix.weights[key]
         for i, opp in enumerate(opponents, start=1):
             values[f"opponent{i}"] = opp.name
         return values
+
+    # ---- Reputation helpers ---------------------------------------------
+
+    def _opponent_cooperation_rate(self, opponent, history: Dict, cooperate_label):
+        """Fraction of past rounds in which ``opponent`` played the cooperate label.
+
+        ``history`` is keyed by ``round_N`` and each value is a dict of
+        ``{agent_name: {strategy: ..., ...}}``. ``self.reputation_window``,
+        when set, restricts the average to the most recent N rounds.
+        """
+        if not history or cooperate_label is None:
+            return None
+        try:
+            sorted_keys = sorted(
+                history.keys(), key=lambda k: int(str(k).split("_")[1])
+            )
+        except (IndexError, ValueError):
+            return None
+        if self.reputation_window:
+            sorted_keys = sorted_keys[-int(self.reputation_window):]
+
+        total = 0
+        cooperated = 0
+        for key in sorted_keys:
+            entry = history[key].get(opponent.name) if isinstance(history[key], dict) else None
+            if not entry:
+                continue
+            strat = entry.get("strategy")
+            if strat is None:
+                continue
+            total += 1
+            if strat == cooperate_label:
+                cooperated += 1
+        if total == 0:
+            return None
+        return cooperated / total
+
+    @staticmethod
+    def _reputation_label(rate: float) -> str:
+        if rate >= 0.75:
+            return "highly cooperative"
+        if rate >= 0.5:
+            return "moderately cooperative"
+        if rate >= 0.25:
+            return "occasionally cooperative"
+        return "uncooperative"
 
     # ---- Phase routing --------------------------------------------------
 

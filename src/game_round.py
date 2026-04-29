@@ -141,6 +141,7 @@ class GameRound:
             self.game.n_rounds_known,
             self.game.payoff_matrix,
             tom_order=getattr(self.game, "tom_order", 1),
+            reputation_window=getattr(self.game, "reputation_window", None),
         )
         return prompt_creator.fill_template(
             agent,

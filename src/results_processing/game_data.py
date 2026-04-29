@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Sequence
 from src.results_processing.agent_info import AgentInfo
 from src.results_processing.belief_metrics import aggregate_metrics, per_round_metrics
 from src.results_processing.game_metrics import equilibrium_metrics, welfare_summary
+from src.results_processing.regret import regret_per_round
 
 
 class GameData:
@@ -94,11 +95,58 @@ class GameData:
                     self._belief_metrics_for(agent_name, all_agent_names, prefix)
                 )
 
+            row.update(self._regret_metrics_for(idx - 1, agent_name, prefix))
+
         # Game-level analyses ------------------------------------------------
         row.update(self._equilibrium_metrics_block())
         row.update(self._welfare_metrics_block())
 
         return row
+
+    # ---- Regret metrics -------------------------------------------------
+
+    def _regret_metrics_for(
+        self, agent_index: int, agent_name: str, prefix: str
+    ) -> Dict[str, Any]:
+        """Per-agent regret per round and the average."""
+        if not self.payoff_matrix_summary:
+            return {}
+        own = self.agents_round_data.get(agent_name, {})
+        own_strategies: List[str] = list(own.get("strategies", []) or [])
+        own_scores: List[Any] = list(own.get("scores", []) or [])
+        if not own_strategies:
+            return {}
+
+        # Build the *other-agents'* strategies list per round, in canonical order.
+        ordered_others = [a.name for a in self.agents if a.name != agent_name]
+        n_rounds = min(
+            len(own_strategies),
+            min(
+                (len(self.agents_round_data.get(n, {}).get("strategies", [])) for n in ordered_others),
+                default=len(own_strategies),
+            ),
+        )
+        others_per_round: List[List[str]] = []
+        for r in range(n_rounds):
+            others_per_round.append(
+                [
+                    self.agents_round_data[name]["strategies"][r]
+                    for name in ordered_others
+                ]
+            )
+
+        regret = regret_per_round(
+            self.payoff_matrix_summary,
+            self.language_for_matrix or "en",
+            agent_index,
+            own_strategies[:n_rounds],
+            own_scores[:n_rounds],
+            others_per_round,
+        )
+        valid = [v for v in regret if v is not None]
+        out: Dict[str, Any] = {f"{prefix}regret_per_round": regret}
+        out[f"{prefix}regret_mean"] = sum(valid) / len(valid) if valid else None
+        return out
 
     # ---- Belief metrics -------------------------------------------------
 

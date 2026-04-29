@@ -28,10 +28,11 @@ canonical reference for every field accepted by the validator
 | `tomOrder` | `0` \| `1` \| `2` | no | Theory-of-Mind order injected into prompts: `0` strips opponent info; `1` keeps it (default); `2` also keeps the `{secondOrder}` block. |
 | `typesAreCommonKnowledge` | bool | no | When `agents.types` is set, surface the *prior distribution* (not the realised type) to opponents. Default `false`. |
 | `mixedStrategies` | bool | no | Ask the agent for a probability distribution and sample. Default `false`. |
+| `reputationWindow` | int | no | Number of recent rounds used to compute `{coopRateN}` / `{reputationN}` template placeholders. Omit for full-history average. |
 | `discountFactor` | float | no | δ ∈ (0, 1] applied to payoffs each round. Default `1.0`. |
 | `continuationProbability` | float | no | Indefinite-horizon termination probability per round (after round 1). |
 | `utilityTransform` | object | no | Maps raw payoffs to utilities. See [`GAME_THEORY.md`](GAME_THEORY.md). |
-| `equilibria` | `list[str]` | no | Combination keys declared as equilibria; surfaced as analysis columns. |
+| `equilibria` | `list[str]` or `"auto"` | no | Combination keys declared as equilibria, or the string `"auto"` to compute pure-strategy Nash equilibria via nashpy at validation time. |
 | `paretoOptimalSum` | float | no | Reference sum used in the welfare-efficiency metric. |
 | `seed` | int | no | Master seed for deterministic replay. |
 | `seedCount` | int | no | Re-run the pipeline this many times with distinct seeds. |
