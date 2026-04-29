@@ -201,5 +201,25 @@ class TestBuildFromConfig(unittest.TestCase):
         self.assertAlmostEqual(t.offset, 5.0)
 
 
+class TestFehrSchmidtNormalisation(unittest.TestCase):
+    """The (n-1) divisor matters: dropping it would bias the per-other
+    average term, and using just n (not n-1) would systematically
+    under-penalise inequity in three+ player games."""
+
+    def test_three_agent_envy_uses_n_minus_one_divisor(self) -> None:
+        # With α=1.0, β=0, payoffs [0, 4, 8]:
+        #   agent 0 envy = (4 + 8) / (n-1) = 12 / 2 = 6.0 → utility = 0 - 6 = -6.0
+        # Mutation that uses /n=3 instead would yield -4.0; /1 (no divisor)
+        # would yield -12.0. Pinning -6.0 catches both.
+        u = FehrSchmidtTransform(alpha=1.0, beta=0.0).transform([0.0, 4.0, 8.0])
+        self.assertAlmostEqual(u[0], -6.0, places=9)
+
+    def test_three_agent_guilt_uses_n_minus_one_divisor(self) -> None:
+        # α=0, β=1, payoffs [0, 4, 8]:
+        #   agent 2 guilt = ((8-0) + (8-4)) / 2 = 6.0 → utility = 8 - 6 = 2.0
+        u = FehrSchmidtTransform(alpha=0.0, beta=1.0).transform([0.0, 4.0, 8.0])
+        self.assertAlmostEqual(u[2], 2.0, places=9)
+
+
 if __name__ == "__main__":
     unittest.main()

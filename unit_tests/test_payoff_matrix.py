@@ -194,5 +194,24 @@ class TestComboCache(unittest.TestCase):
         self.assertIsNone(pm._combo_by_strategies_cache)
 
 
+class TestAttributeScoresOrder(unittest.TestCase):
+    """attribute_scores pops weight_keys in agent order — pinning
+    asymmetric weights tests this. Existing tests use a symmetric PD
+    where (3, 5) on combo3 = (5, 3) on combo2, so a swap mutation
+    survives. This test uses an asymmetric configuration to detect it."""
+
+    def test_first_agent_gets_first_weight_second_gets_second(self) -> None:
+        # (strategy1, strategy2) → combo2 with weight_keys [w2, w3] = [5, 0].
+        # Agent order: a=strategy1, b=strategy2 → a:5, b:0. A loop that
+        # iterated in reverse, popped from the end, or zipped backwards
+        # would give the swapped pair (0, 5).
+        from src.payoff_matrix import PayoffMatrix
+        pm = PayoffMatrix(_pd_matrix(), "en")
+        a, b = _StubAgent(), _StubAgent()
+        pm.attribute_scores([a, b], ["strategy1", "strategy2"])
+        self.assertEqual(a.scores[-1], 5)
+        self.assertEqual(b.scores[-1], 0)
+
+
 if __name__ == "__main__":
     unittest.main()

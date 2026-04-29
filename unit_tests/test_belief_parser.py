@@ -201,5 +201,28 @@ class TestOutputInvariants(unittest.TestCase):
         self.assertAlmostEqual(sum(result.values()), 1.0, places=5)
 
 
+class TestToleranceBoundary(unittest.TestCase):
+    """The reject threshold is ``5 × sum_tolerance`` from 1.0. Two
+    fixtures land on each side of that boundary to pin the multiplier
+    down — a mutation that swaps 5 for any other small integer would
+    flip one of these."""
+
+    def test_sum_just_inside_5x_tolerance_is_accepted(self) -> None:
+        # default sum_tolerance = 0.05 → reject window |sum - 1| > 0.25.
+        # Sum = 1.24 is inside (0.24 < 0.25); should renormalise.
+        result = parse_belief(
+            '{"Cooperate": 0.74, "Defect": 0.50}', STRATEGIES, sum_tolerance=0.05
+        )
+        self.assertAlmostEqual(sum(result.values()), 1.0, places=5)
+
+    def test_sum_just_outside_5x_tolerance_is_rejected(self) -> None:
+        # Sum = 1.30 is outside the 0.25 window → reject.
+        from src.belief_parser import BeliefParseError
+        with self.assertRaises(BeliefParseError):
+            parse_belief(
+                '{"Cooperate": 0.80, "Defect": 0.50}', STRATEGIES, sum_tolerance=0.05
+            )
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -140,6 +140,27 @@ class TestEdgeCases(unittest.TestCase):
         out = aggregate_seeds(df)
         self.assertNotIn("agent1_strategies_mean", out.columns)
 
+    def test_partial_nan_numeric_column_takes_unique_branch(self) -> None:
+        # When a column has BOTH numeric and missing values, it should
+        # not be averaged (numeric.notna().all() is False) — instead the
+        # function falls into the unique-value branch. If all non-null
+        # values are equal, the bare column survives without _mean / _ci
+        # suffix; otherwise it's dropped. Pinning this prevents a
+        # mutation that flips notna().all() to notna().any().
+        df = pd.DataFrame(
+            {
+                "language": ["en", "en", "en"],
+                "seed": [1, 2, 3],
+                "patchy_metric": [3.0, None, 3.0],
+            }
+        )
+        out = aggregate_seeds(df)
+        self.assertNotIn("patchy_metric_mean", out.columns)
+        self.assertNotIn("patchy_metric_ci_half_width", out.columns)
+        # The unique non-null value (3.0) should be carried through as-is.
+        self.assertIn("patchy_metric", out.columns)
+        self.assertEqual(out["patchy_metric"].iloc[0], 3.0)
+
 
 if __name__ == "__main__":
     unittest.main()
