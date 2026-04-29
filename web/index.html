@@ -901,9 +901,13 @@ Output ONLY the JSON.
           <div class="fg-section mt-4">
             <h3>Per-agent opponent-prior probability</h3>
             <p class="fg-help mb-2">
-              Probability the opponent <em>truly</em> has the personality stated in the prompt
-              (0 = pure cheap-talk; 1 = the opponent's personality is common knowledge).
-              Surfaces in the prompt as <code>{opponentPersonalityProbability1}%</code>.
+              This is what each agent is <strong>told</strong> about its opponents. If you set
+              <em>agent1</em>'s value to <code>0.7</code> and <em>agent2</em>'s personality is
+              <em>"cooperative"</em>, agent1's prompt will read
+              <em>"agent2 has a 70% probability of being cooperative"</em>. So
+              <code>0</code> = pure cheap-talk (agent is told the label but trusts none of it),
+              <code>1</code> = common knowledge (agent is told the personality is certain). Drives
+              the <code>{opponentPersonalityProbability1}</code> placeholder in the prompt.
             </p>
             <div x-show="builder.personalityMode === 'pool'" class="text-xs text-slate-500 italic mb-2">
               Pool mode is on — these per-agent values are replaced by the
