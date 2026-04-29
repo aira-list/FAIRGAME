@@ -8,7 +8,7 @@ from unittest import mock
 
 from src.fairgame import FairGame
 from src.fairgame_factory import FakeCommunicationConfig
-from src.utility import CRRATransform, FehrSchmidtTransform, IdentityTransform
+from src.utility import FehrSchmidtTransform, IdentityTransform
 
 
 # ---------------------------------------------------------------------------
@@ -291,8 +291,6 @@ class TestCompoundDiscountWarning(unittest.TestCase):
 
     def test_no_warning_when_only_discount_set(self) -> None:
         # Pure discount factor → no warning.
-        import logging
-
         with mock.patch.object(
             __import__("src.fairgame", fromlist=["logger"]).logger,
             "warning",
@@ -301,8 +299,6 @@ class TestCompoundDiscountWarning(unittest.TestCase):
             warn.assert_not_called()
 
     def test_no_warning_when_only_continuation_set(self) -> None:
-        import logging
-
         with mock.patch.object(
             __import__("src.fairgame", fromlist=["logger"]).logger,
             "warning",
@@ -313,8 +309,6 @@ class TestCompoundDiscountWarning(unittest.TestCase):
     def test_no_warning_when_discount_is_one(self) -> None:
         # Discount=1.0 means no discounting — combining with continuation
         # is the canonical stochastic-horizon model and shouldn't warn.
-        import logging
-
         with mock.patch.object(
             __import__("src.fairgame", fromlist=["logger"]).logger,
             "warning",

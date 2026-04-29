@@ -138,16 +138,12 @@ class TestRandomChoice(unittest.TestCase):
 
     def test_explicit_rng_overrides_game_rng(self) -> None:
         game, a, _ = _two_agent_game(seed=7)
-        # Use a different RNG; the choice should track that one.
-        s = RandomChoice(rng=random.Random(99))
-        result = s.choose(a, game, 1)
-        # We can't assert a specific value reliably, but we can confirm
-        # that two distinct RandomChoice instances with different RNGs
+        # Two distinct RandomChoice instances with different RNGs should
         # produce distinct sequences when game.rng is unchanged.
+        s = RandomChoice(rng=random.Random(99))
         s2 = RandomChoice(rng=random.Random(100))
         seq1 = [s.choose(a, game, r) for r in range(20)]
         seq2 = [s2.choose(a, game, r) for r in range(20)]
-        # At least one element should differ.
         self.assertNotEqual(seq1, seq2)
 
 

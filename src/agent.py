@@ -128,27 +128,27 @@ class BaselineAgent(Agent):
     def __init__(
         self,
         name: str,
-        llm_service_or_strategy=None,
+        llm_service: Any = None,
         personality: str = "n/a",
         opponent_personality_prob: float = 0.0,
         agent_type: Optional[str] = None,
         baseline_strategy=None,
     ) -> None:
-        # Allow the second positional to be EITHER the LLM-service string
-        # (legacy layout, with baseline_strategy as kwarg) or the strategy
-        # object directly (compact layout).
-        if baseline_strategy is None and not isinstance(
-            llm_service_or_strategy, str
+        # The second positional may be EITHER the LLM-service string
+        # (legacy layout, baseline_strategy passed as kwarg) or the
+        # strategy object itself (compact layout). When called purely
+        # via kwargs from ``Agent(...)`` dispatch, ``llm_service`` is a
+        # plain string and ``baseline_strategy`` is set independently.
+        if baseline_strategy is None and llm_service is not None and not isinstance(
+            llm_service, str
         ):
-            baseline_strategy = llm_service_or_strategy
+            baseline_strategy = llm_service
+            llm_service = f"Baseline:{baseline_strategy.name}"
+        elif not llm_service:
             llm_service = (
                 f"Baseline:{baseline_strategy.name}"
                 if baseline_strategy is not None
                 else "Baseline:unknown"
-            )
-        else:
-            llm_service = llm_service_or_strategy or (
-                f"Baseline:{baseline_strategy.name}" if baseline_strategy else ""
             )
 
         super().__init__(

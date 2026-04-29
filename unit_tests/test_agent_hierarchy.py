@@ -94,6 +94,26 @@ class TestLegacyConstructor(unittest.TestCase):
         )
         self.assertIsInstance(a, BaselineAgent)
 
+    def test_agent_keyword_form_with_baseline_strategy(self) -> None:
+        # Some call sites build agents purely via kwargs (matches the
+        # Agent.__init__ signature); this must dispatch to BaselineAgent
+        # and not raise a TypeError on the renamed positional in
+        # BaselineAgent.__init__.
+        a = Agent(
+            name="a1",
+            llm_service="dummy",
+            personality="neutral",
+            opponent_personality_prob=0.0,
+            baseline_strategy=AlwaysCooperate(),
+        )
+        self.assertIsInstance(a, BaselineAgent)
+        self.assertEqual(a.name, "a1")
+        self.assertEqual(a.personality, "neutral")
+        # llm_service was provided explicitly — preserve it rather than
+        # auto-deriving "Baseline:AlwaysCooperate".
+        self.assertEqual(a.llm_service, "dummy")
+        self.assertIs(a.baseline_strategy.__class__, AlwaysCooperate)
+
 
 if __name__ == "__main__":
     unittest.main()

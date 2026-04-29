@@ -333,6 +333,104 @@ class TestRegretPerRound(unittest.TestCase):
         )
         self.assertEqual(regret, [])
 
+    def test_short_others_does_not_truncate_output(self) -> None:
+        # Three rounds of own play but only one round of opponent data.
+        # Rounds 1 and 2 have nothing to look up — they should resolve to
+        # None, but the output list MUST still have length 3 (one entry
+        # per own round). A short-circuit `break` would silently drop the
+        # tail, hiding the data gap from downstream aggregation.
+        regret = regret_per_round(
+            _pd_matrix(),
+            language="en",
+            agent_index=0,
+            own_strategies=["Cooperate", "Defect", "Cooperate"],
+            own_scores=[0, 2, 6],
+            others_strategies_per_round=[["Defect"]],
+        )
+        self.assertEqual(len(regret), 3)
+        self.assertIsNotNone(regret[0])
+        self.assertIsNone(regret[1])
+        self.assertIsNone(regret[2])
+
+    def test_unknown_opponent_label_does_not_truncate_subsequent_rounds(self) -> None:
+        # Round 0 has a bogus opponent label, so best=None and round 0's
+        # regret is None. Round 1 is a normal play and MUST still produce
+        # a numeric regret — the bad round must not break the loop.
+        regret = regret_per_round(
+            _pd_matrix(),
+            language="en",
+            agent_index=0,
+            own_strategies=["Cooperate", "Cooperate"],
+            own_scores=[0, 0],
+            others_strategies_per_round=[["Treason"], ["Defect"]],
+        )
+        self.assertEqual(len(regret), 2)
+        self.assertIsNone(regret[0])
+        self.assertEqual(regret[1], 2.0)
+
+    def test_non_numeric_score_does_not_truncate_subsequent_rounds(self) -> None:
+        # Round 0 has a non-numeric score (regret unrecoverable), but
+        # round 1 is well-formed. The bad round must record None and the
+        # loop MUST continue to round 1.
+        regret = regret_per_round(
+            _pd_matrix(),
+            language="en",
+            agent_index=0,
+            own_strategies=["Cooperate", "Cooperate"],
+            own_scores=["nope", 0],
+            others_strategies_per_round=[["Defect"], ["Defect"]],
+        )
+        self.assertEqual(len(regret), 2)
+        self.assertIsNone(regret[0])
+        self.assertEqual(regret[1], 2.0)
+
+
+# ---------------------------------------------------------------------------
+# best_response_payoff — corrupt-matrix edge cases (mutmut-driven coverage)
+# ---------------------------------------------------------------------------
+
+class TestBestResponseCorruptMatrix(unittest.TestCase):
+    def test_returns_none_when_weight_keys_shorter_than_agent_index(self) -> None:
+        # A combination's weight-keys row is too short for the given
+        # agent_index. The function MUST guard against indexing past the
+        # end (returning None) rather than allowing an IndexError. This
+        # covers the boundary ``agent_index == len(weight_keys)``.
+        m = _pd_matrix()
+        m["matrix"]["combination3"] = ["weight2"]  # length 1, not 2
+        # Agent 1 against opponent "Defect": needs combination3 (own=C
+        # opponent=D from agent 1's perspective is rows differently
+        # indexed). Use a setup that actually hits combination3.
+        m["matrix"]["combination4"] = ["weight4"]  # also length 1, force the path
+        result = best_response_payoff(m, "en", 1, ["Defect"])
+        self.assertIsNone(result)
+
+    def test_default_payoff_is_zero_when_weight_key_missing_from_weights(self) -> None:
+        # If a combination references a weight name that's not declared
+        # in ``weights``, that branch's payoff falls back to 0 — never to
+        # an arbitrary positive number that would inflate best-response.
+        m = {
+            "weights": {"w_lo": 0.5},  # no "w_missing"
+            "strategies": {"en": {"strategy1": "A", "strategy2": "B"}},
+            "combinations": {
+                "c_aa": ["strategy1", "strategy1"],
+                "c_ab": ["strategy1", "strategy2"],
+                "c_ba": ["strategy2", "strategy1"],
+                "c_bb": ["strategy2", "strategy2"],
+            },
+            "matrix": {
+                "c_aa": ["w_missing", "w_lo"],  # agent 0's A/A weight is missing
+                "c_ab": ["w_lo", "w_lo"],
+                "c_ba": ["w_lo", "w_lo"],
+                "c_bb": ["w_lo", "w_lo"],
+            },
+        }
+        # Against opponent A, agent 0's two options are:
+        #   A → weights.get("w_missing", 0) = 0.0
+        #   B → weights["w_lo"]            = 0.5
+        # The max MUST be 0.5, not 1.0 (which would be the case if the
+        # default were silently changed to a non-zero value).
+        self.assertEqual(best_response_payoff(m, "en", 0, ["A"]), 0.5)
+
 
 if __name__ == "__main__":
     unittest.main()
