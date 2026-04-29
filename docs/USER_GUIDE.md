@@ -88,7 +88,7 @@ payoff matrix, and the per-round state. The most useful ones:
 | `{personality}` | The agent's personality (in the active language) | `agents.personalities[lang][i]` |
 | `{opponent1}`, `{opponent2}`, … | Each opponent's name | `agents.names` |
 | `{opponentPersonality1}`, … | Each opponent's personality | as above |
-| `{opponentPersonalityProbability1}`, … | What this agent is told about its opponent: the % probability that the opponent really has the stated personality. E.g. agent1's `opponentPersonalityProb = 0.7` with agent2 personality "cooperative" → agent1's prompt reads "agent2 has a 70% probability of being cooperative". | `agents.opponentPersonalityProbs[i] * 100` |
+| `{opponentPersonalityProbability1}`, … | What this agent is told about its opponent: the % probability that the opponent really has the stated personality. E.g. agent1's `opponentPersonalityProb = 0.7` with agent2 personality "cooperative" → agent1's prompt reads "agent2 has a 70% probability of being cooperative". `0` strips the whole `{opponentIntro}` block — agent is told nothing about the opponent. `1` is common knowledge. | `agents.opponentPersonalityProbs[i] * 100` |
 | `{strategy1}`, `{strategy2}`, … | Display labels for strategies | `payoffMatrix.strategies[lang]` |
 | `{weight1}`, `{weight2}`, … | Numeric payoffs | `payoffMatrix.weights` |
 | `{nRounds}` | Total number of rounds | `nRounds` |

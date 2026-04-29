@@ -904,10 +904,17 @@ Output ONLY the JSON.
               This is what each agent is <strong>told</strong> about its opponents. If you set
               <em>agent1</em>'s value to <code>0.7</code> and <em>agent2</em>'s personality is
               <em>"cooperative"</em>, agent1's prompt will read
-              <em>"agent2 has a 70% probability of being cooperative"</em>. So
-              <code>0</code> = pure cheap-talk (agent is told the label but trusts none of it),
-              <code>1</code> = common knowledge (agent is told the personality is certain). Drives
-              the <code>{opponentPersonalityProbability1}</code> placeholder in the prompt.
+              <em>"agent2 has a 70% probability of being cooperative"</em>.
+            </p>
+            <ul class="fg-help list-disc pl-5 mb-2 space-y-1">
+              <li><code>0</code> — agent is told <strong>nothing</strong> about the opponent (the entire <code>{opponentIntro}</code> block is stripped).</li>
+              <li><code>0&lt;p&lt;1</code> — agent is told the opponent has personality X with probability p × 100%.</li>
+              <li><code>1</code> — common knowledge: agent is told the personality is certain.</li>
+            </ul>
+            <p class="fg-help mb-2">
+              Drives the <code>{opponentPersonalityProbability1}</code> placeholder in the prompt.
+              Setting all opponents to 0 has the same effect as <code>tomOrder = 0</code>: the
+              agent gets no opponent intro at all.
             </p>
             <div x-show="builder.personalityMode === 'pool'" class="text-xs text-slate-500 italic mb-2">
               Pool mode is on — these per-agent values are replaced by the
