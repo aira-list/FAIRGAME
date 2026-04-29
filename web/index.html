@@ -744,15 +744,14 @@ Output ONLY the JSON.
           <!-- Mode A: per-agent -->
           <div x-show="builder.personalityMode === 'per_agent'">
             <div class="grid grid-cols-12 gap-2 text-xs font-medium text-slate-600 mb-2">
-              <div class="col-span-3">Name</div>
+              <div class="col-span-4">Name</div>
               <div class="col-span-3">LLM / baseline</div>
-              <div class="col-span-3">Personality (en)</div>
-              <div class="col-span-2">Opp. prior</div>
+              <div class="col-span-4">Personality (en)</div>
               <div class="col-span-1"></div>
             </div>
             <template x-for="(agent, i) in builder.agents" :key="i">
               <div class="grid grid-cols-12 gap-2 mb-2">
-                <input type="text" x-model="agent.name" class="fg-input col-span-3"/>
+                <input type="text" x-model="agent.name" class="fg-input col-span-4"/>
                 <select x-model="agent.llm" class="fg-input col-span-3">
                   <optgroup label="LLMs">
                     <template x-for="m in llms" :key="m"><option :value="m" x-text="m"></option></template>
@@ -763,11 +762,11 @@ Output ONLY the JSON.
                     </template>
                   </optgroup>
                 </select>
-                <input type="text" x-model="agent.personality" class="fg-input col-span-3" placeholder="cooperative"/>
-                <input type="number" step="0.1" min="0" max="1" x-model.number="agent.opponentPersonalityPr" class="fg-input col-span-2"/>
+                <input type="text" x-model="agent.personality" class="fg-input col-span-4" placeholder="cooperative"/>
                 <button class="col-span-1 text-rose-600 hover:text-rose-800" @click="builder.agents.splice(i,1)" title="Remove">✕</button>
               </div>
             </template>
+            <p class="fg-help mt-1">Per-agent <strong>opponent-prior probability</strong> lives on the <em>Beliefs</em> tab — it's a belief-related setting, not an agent property.</p>
             <button class="mt-2 px-4 py-1.5 rounded-md border border-slate-300 text-sm hover:bg-slate-50"
                     @click="builder.agents.push({ name: 'agent'+(builder.agents.length+1), llm: llms[0]||'OpenAIGPT4o', personality: 'neutral', opponentPersonalityPr: 0.0 })">
               + Add agent
@@ -826,30 +825,103 @@ Output ONLY the JSON.
           </div>
         </div>
 
-        <!-- THEORY OF MIND -->
-        <div x-show="builder.tab === 'tom'" class="fg-card p-6">
+        <!-- HISTORY -->
+        <div x-show="builder.tab === 'history'" class="fg-card p-6">
+          <p class="text-sm text-slate-600 mb-4">Controls how much of past play the agent sees in its prompt.</p>
+
+          <div class="fg-section">
+            <h3>Full history (<code>{history}</code>)</h3>
+            <p class="fg-help">
+              The full per-round transcript is <strong>always injected</strong> via the
+              <code>{history}</code> placeholder for every round after the first. Agents have
+              episodic memory inside a Run — they can read every choice made so far, by every
+              agent, in order. There's nothing to toggle here; it's part of the engine.
+            </p>
+          </div>
+
+          <div class="fg-section">
+            <h3>Rolling reputation window</h3>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <label class="fg-label">Reputation window (rounds, optional)</label>
+                <input type="number" min="0" x-model.number="builder.cfg.reputationWindow" class="fg-input"/>
+                <p class="fg-help">
+                  When set, the placeholders <code>{coopRateN}</code> /
+                  <code>{reputationN}</code> average each opponent's behaviour over the last N
+                  rounds only. Leave 0 to use the full history.
+                </p>
+              </div>
+              <div class="self-end">
+                <label class="flex items-center gap-2 text-sm">
+                  <input type="checkbox" x-model="builder.cfg.reputationApplies"/>
+                  <span>Reputation labels apply (cooperate-rate framing)</span>
+                </label>
+                <p class="fg-help">
+                  Turn off for asymmetric coordination games (Battle of the Sexes), zero-sum
+                  games, or any setup where strategy1 doesn't mean "cooperate". When off, the
+                  reputation placeholders fill with <code>n/a</code> regardless of history.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="fg-section">
+            <h3>Cross-Run memory <span class="text-xs font-normal text-slate-400">— roadmap</span></h3>
+            <p class="fg-help">
+              Within one Run, agents see every past round through <code>{history}</code>.
+              Across separate Runs (different iterations or different Configurations) there is
+              <strong>no persistence</strong> today: every Run is a fresh start. Cross-Run
+              memory (online-learning / no-regret dynamics) is a planned engine extension; for
+              now use seed control + iterations to get reproducible replicates.
+            </p>
+          </div>
+        </div>
+
+        <!-- BELIEFS -->
+        <div x-show="builder.tab === 'beliefs'" class="fg-card p-6">
+          <p class="text-sm text-slate-600 mb-4">Controls what the agent reasons about its opponents and whether the engine elicits and scores those beliefs.</p>
+
           <div class="grid md:grid-cols-2 gap-4">
             <label class="flex items-center gap-2 text-sm md:col-span-2">
               <input type="checkbox" x-model="builder.cfg.elicitBeliefs"/>
-              <span>Elicit beliefs (probability the opponent picks each strategy)</span>
+              <span><strong>Elicit beliefs</strong> — agent emits a probability distribution over the opponent's strategies each round (Brier score is computed afterwards).</span>
             </label>
+
             <div>
               <label class="fg-label">ToM order</label>
               <select x-model.number="builder.cfg.tomOrder" class="fg-input">
-                <option :value="0">0 — no opponent reasoning</option>
-                <option :value="1">1 — first-order (default)</option>
-                <option :value="2">2 — second-order ("they think we…")</option>
+                <option :value="0">0 — opponent personality / prior is suppressed</option>
+                <option :value="1">1 — first-order (default; opponent intro shown)</option>
+                <option :value="2">2 — second-order ("they think we…" block kept)</option>
               </select>
+              <p class="fg-help">Order 0 strips <code>{opponentIntro}</code> entirely; order 2 keeps <code>{secondOrder}</code> too.</p>
             </div>
-            <div>
-              <label class="fg-label">Reputation window (rounds, optional)</label>
-              <input type="number" min="0" x-model.number="builder.cfg.reputationWindow" class="fg-input"/>
-              <p class="fg-help">Past N rounds shown as opponent reputation. Leave 0 to disable.</p>
+          </div>
+
+          <div class="fg-section mt-4">
+            <h3>Per-agent opponent-prior probability</h3>
+            <p class="fg-help mb-2">
+              Probability the opponent <em>truly</em> has the personality stated in the prompt
+              (0 = pure cheap-talk; 1 = the opponent's personality is common knowledge).
+              Surfaces in the prompt as <code>{opponentPersonalityProbability1}%</code>.
+            </p>
+            <div x-show="builder.personalityMode === 'pool'" class="text-xs text-slate-500 italic mb-2">
+              Pool mode is on — these per-agent values are replaced by the
+              <em>opponent-knowledge probability pool</em> on the Agents tab; the engine
+              permutes the pool across agent slots.
             </div>
-            <label class="flex items-center gap-2 text-sm md:col-span-2">
-              <input type="checkbox" x-model="builder.cfg.reputationApplies"/>
-              <span>Reputation labels apply (cooperate-rate framing)</span>
-            </label>
+            <div x-show="builder.personalityMode === 'per_agent'">
+              <div class="grid grid-cols-12 gap-2 text-xs font-medium text-slate-600 mb-2">
+                <div class="col-span-6">Agent</div>
+                <div class="col-span-6">Opponent prior (0..1)</div>
+              </div>
+              <template x-for="(agent, i) in builder.agents" :key="i">
+                <div class="grid grid-cols-12 gap-2 mb-2 items-center">
+                  <div class="col-span-6 text-sm" x-text="agent.name + ' (' + (agent.personality || '—') + ')'"></div>
+                  <input type="number" step="0.1" min="0" max="1" x-model.number="agent.opponentPersonalityPr" class="fg-input col-span-6"/>
+                </div>
+              </template>
+            </div>
           </div>
         </div>
 
@@ -1320,13 +1392,14 @@ Output ONLY the JSON.
         { id: 'results',        icon: '📊', label: 'Results' },
       ],
       builderTabs: [
-        { id: 'basics', label: 'General' },
-        { id: 'agents', label: 'Agents' },
-        { id: 'matrix', label: 'Payoff matrix' },
-        { id: 'theory', label: 'Game theory' },
-        { id: 'tom',    label: 'Theory of Mind' },
-        { id: 'repro',  label: 'Reproducibility' },
-        { id: 'json',   label: 'JSON view' },
+        { id: 'basics',   label: 'General' },
+        { id: 'agents',   label: 'Agents' },
+        { id: 'matrix',   label: 'Payoff matrix' },
+        { id: 'theory',   label: 'Game theory' },
+        { id: 'history',  label: 'History' },
+        { id: 'beliefs',  label: 'Beliefs' },
+        { id: 'repro',    label: 'Reproducibility' },
+        { id: 'json',     label: 'JSON view' },
       ],
 
       demoMode: true,
