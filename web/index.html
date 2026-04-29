@@ -260,35 +260,155 @@
         </details>
 
         <details class="fg-card p-4 mb-2">
-          <summary class="cursor-pointer font-medium">4. Annotated example: Prisoner's Dilemma</summary>
+          <summary class="cursor-pointer font-medium">4. Fully-featured PD template (every placeholder + every block)</summary>
           <div class="mt-3 text-sm text-slate-700 space-y-3">
-            <p>The English template that ships in the library:</p>
-            <pre class="text-xs bg-slate-100 rounded p-3 overflow-auto whitespace-pre-wrap">You are {currentPlayerName} and your opponent is {opponent1}.
-{intro}: [You are {personality}.]
-{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.]
+            <p>
+              The classic shipped template uses about half of what the engine recognises. Below is a
+              Prisoner's Dilemma template that exercises <strong>every</strong> placeholder and
+              <strong>every</strong> conditional block. Use it as the ceiling — most real templates
+              use a subset, but if you want to switch on Theory-of-Mind order 2 plus belief
+              elicitation plus a real communication phase plus reputation labels plus private types,
+              the prompt needs all of the corresponding markup or those features have nothing to
+              fill.
+            </p>
 
-You and {opponent1} are arrested for a crime and held in separate cells. You cannot communicate.
+            <pre class="text-xs bg-slate-100 rounded p-3 overflow-auto whitespace-pre-wrap">You are {currentPlayerName} and your opponent is {opponent1}.
+
+{intro}: [
+You are {personality}.
+{ownType}: [Your private type is {ownType}; this fact is not visible to {opponent1}.]
+]
+
+{opponentIntro}: [
+{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.
+{opponent1}'s rolling cooperation rate over recent rounds is {coopRate1}, which we summarise as: {reputation1}.
+The prior over types in this population is: {typeDistribution}.
+]
+
+{secondOrder}: [
+Be aware: {opponent1} is also reasoning about you, knows that you are reasoning about them, and may try to anticipate your move.
+]
+
+You and {opponent1} are arrested for a crime and held in separate cells.
 
 Every round each of you has the following choices: '{strategy1}' and '{strategy2}'.
-{gameLength}: [There are {nRounds} rounds to decide.]
+{gameLength}: [There are {nRounds} rounds in total.]
 The current round is number {currentRound}.
 
-If you both choose {strategy1}, you both get a penalty of {weight1}.
-If you choose {strategy1} and {opponent1} chooses {strategy2}, you get a penalty of {weight3} and {opponent1} gets a penalty of {weight2}.
-If you choose {strategy2} and {opponent1} chooses {strategy1}, you get a penalty of {weight2} and {opponent1} gets a penalty of {weight3}.
-If you both choose {strategy2}, you both get a penalty of {weight4}.
+If you both choose {strategy1}, you both get a payoff of {weight1}.
+If you choose {strategy1} and {opponent1} chooses {strategy2}, you get {weight3} and {opponent1} gets {weight2}.
+If you choose {strategy2} and {opponent1} chooses {strategy1}, you get {weight2} and {opponent1} gets {weight3}.
+If you both choose {strategy2}, you both get a payoff of {weight4}.
 
-Your goal is to minimize your penalty by making the best strategies based on the provided information.
 This is the history of the choices made so far: {history}.
+
+{communicate}: [
+Before choosing this round, send {opponent1} a short free-text message. They will see it before they choose.
+Output ONLY the message text.
+]
+
+{choose}: [
+Your goal is to maximise your payoff.
 Choose between {strategy1} and {strategy2}.
-Output ONLY the choice.</pre>
-            <p>Section by section:</p>
-            <ul class="list-disc pl-5 space-y-1.5">
-              <li><strong>Lines 1–3 — identity & opponent intro.</strong> <code>{intro}: […]</code> always survives. <code>{opponentIntro}: […]</code> is stripped at <code>tomOrder=0</code>, so a single Configuration toggle controls whether the agent knows anything about the opponent.</li>
-              <li><strong>Line 5 — cover story.</strong> Plain text, no placeholders.</li>
-              <li><strong>Lines 7–9 — strategies + horizon + round.</strong> <code>{strategy1}/{strategy2}</code> come from the payoff matrix's per-language labels. <code>{gameLength}: […]</code> only survives when <code>nRoundsIsKnown: true</code>, so <em>round-known</em> vs <em>round-not-known</em> is one config flag.</li>
-              <li><strong>Lines 11–14 — payoff statement.</strong> The four <code>{weightN}</code> references map to <code>payoffMatrix.weights</code>. By naming weights instead of inlining numbers, the same body is reused across the conventional / harsh / mild PD variants — only weight values change.</li>
-              <li><strong>Lines 16–19 — goal, history, choice prompt.</strong> <code>{history}</code> is engine-rendered. The final "Output ONLY the choice." is the format constraint the parser expects.</li>
+Output ONLY the choice.
+]
+
+{mixedChoose}: [
+Your goal is to maximise your expected payoff.
+Output a JSON object that gives the probability you assign to each strategy, summing to 1.
+Example: {"{strategy1}": 0.7, "{strategy2}": 0.3}
+Output ONLY the JSON.
+]
+
+{believe}: [
+Before you choose this round, predict what {opponent1} is about to do.
+Output a JSON object with the probability you assign to each of their strategies, summing to 1.
+Example: {"{strategy1}": 0.4, "{strategy2}": 0.6}
+Output ONLY the JSON.
+]</pre>
+
+            <p class="font-medium mt-3">Section-by-section breakdown</p>
+
+            <p class="font-medium mt-2">Identity (always kept)</p>
+            <ul class="list-disc pl-5 space-y-1">
+              <li><code>{currentPlayerName}</code> — the agent's own name (<code>agents.names[i]</code>).</li>
+              <li><code>{opponent1}</code>, <code>{opponent2}</code>, … — each other agent's name. Numbering is positional with respect to the active agent.</li>
+              <li>These are populated unconditionally; there is no toggle that hides them.</li>
+            </ul>
+
+            <p class="font-medium mt-2"><code>{intro}: […]</code> block — always kept, but its inner text is conditional</p>
+            <ul class="list-disc pl-5 space-y-1">
+              <li>Survives <em>unless</em> the agent's personality is the literal string <code>"None"</code> — in that case the engine strips the whole block.</li>
+              <li><code>{personality}</code> is the agent's personality string in the active language. Comes from <code>agents.personalities[lang][i]</code>. <strong>Only available inside this block</strong> — a bare <code>{personality}</code> elsewhere will <code>KeyError</code>.</li>
+              <li>The nested <code>{ownType}: […]</code> block is kept only when the Configuration assigned a private type to this agent (<code>agents.types</code>); used in Bayesian-game studies. <code>{ownType}</code> is the realised type label.</li>
+            </ul>
+
+            <p class="font-medium mt-2"><code>{opponentIntro}: […]</code> — Theory of Mind information</p>
+            <ul class="list-disc pl-5 space-y-1">
+              <li>The whole block is <strong>stripped at <code>tomOrder = 0</code></strong>. That's the entire point of order 0 — the agent gets no information about its opponent. At order 1 (default) and 2, the block survives.</li>
+              <li>It's also stripped if every opponent has <code>opponentPersonalityProb = 0</code> or personality <code>"None"</code>.</li>
+              <li>Per-opponent placeholders are numbered: <code>{opponent2}</code> / <code>{opponentPersonality2}</code> / <code>{opponentPersonalityProbability2}</code> / <code>{coopRate2}</code> / <code>{reputation2}</code>, etc.</li>
+              <li><code>{opponentPersonalityProbability1}</code> is the probability the opponent <em>truly</em> has the stated personality, expressed in <strong>0–100</strong> (the engine multiplies the 0–1 input by 100 for readability).</li>
+              <li><code>{coopRate1}</code> and <code>{reputation1}</code> come from history:
+                <ul class="list-disc pl-5">
+                  <li>If <code>reputationApplies = true</code> and history exists, <code>coopRate1</code> is the fraction (e.g. <code>"0.62"</code>) and <code>reputation1</code> is one of <em>highly cooperative</em>, <em>moderately cooperative</em>, <em>occasionally cooperative</em>, <em>uncooperative</em>.</li>
+                  <li>If <code>reputationWindow = N</code>, only the last N rounds are averaged.</li>
+                  <li>If <code>reputationApplies = false</code> (Battle of the Sexes, zero-sum) or there's no history yet, both render as <code>n/a</code> / <code>unknown</code>.</li>
+                </ul>
+              </li>
+              <li><code>{typeDistribution}</code> is filled when the Configuration sets <code>typesAreCommonKnowledge = true</code> and <code>agents.types</code> is set. Otherwise it'll appear literally — wrap it in another conditional if needed.</li>
+            </ul>
+
+            <p class="font-medium mt-2"><code>{secondOrder}: […]</code> — only at <code>tomOrder = 2</code></p>
+            <ul class="list-disc pl-5 space-y-1">
+              <li>Kept iff <code>tomOrder >= 2</code>.</li>
+              <li>No new placeholders inside — compose recursive "they think we think" reasoning out of the standard opponent placeholders.</li>
+            </ul>
+
+            <p class="font-medium mt-2">Cover story (plain text)</p>
+            <p>No conditionals; you control the framing here ("crime" → cooperative, "investment" → economic). The most studied source of bias in LLM PD prompts.</p>
+
+            <p class="font-medium mt-2">Strategies + horizon + round</p>
+            <ul class="list-disc pl-5 space-y-1">
+              <li><code>{strategy1}</code>, <code>{strategy2}</code>, <code>{strategy3}</code>… come from the payoff matrix's per-language label dict.</li>
+              <li><code>{gameLength}: […]</code> survives only when <code>nRoundsIsKnown: true</code>. Lets you study uncertain-horizon behaviour without rewriting the body.</li>
+              <li><code>{currentRound}</code> is per-round state, 1-indexed.</li>
+            </ul>
+
+            <p class="font-medium mt-2">Payoff statement</p>
+            <ul class="list-disc pl-5 space-y-1">
+              <li>The four <code>{weightN}</code> numbers come from <code>payoffMatrix.weights</code>. The body is reused across conventional / harsh / mild variants by changing only the weight values.</li>
+              <li>For 3+ strategies, reference <code>{weight5}</code>, <code>{weight6}</code>, … for additional weight keys.</li>
+            </ul>
+
+            <p class="font-medium mt-2"><code>{history}</code> — engine-rendered</p>
+            <p>Free-text summary of past rounds; no template-side control over how it renders.</p>
+
+            <p class="font-medium mt-2">Phase blocks — exactly ONE survives per render</p>
+            <ul class="list-disc pl-5 space-y-1">
+              <li><code>{communicate}: […]</code> — runs only when <code>agentsCommunicate: true</code>. Output becomes the logged message.</li>
+              <li><code>{choose}: […]</code> — strategy choice when <code>mixedStrategies: false</code>.</li>
+              <li><code>{mixedChoose}: […]</code> — replaces choose when <code>mixedStrategies: true</code>; output is JSON probabilities.</li>
+              <li><code>{believe}: […]</code> — runs only when <code>elicitBeliefs: true</code>; output is parsed into Brier-score input.</li>
+              <li>Include <strong>all blocks</strong> for every phase your Configuration might enable. If a block is missing and the phase fires, the engine sends an empty section — usually not what you want.</li>
+            </ul>
+
+            <p class="font-medium mt-2">What's NOT yet in this template</p>
+            <ul class="list-disc pl-5 space-y-1">
+              <li><strong>More than 2 agents</strong>: copy the per-opponent block for opponent 2, 3, … Add the matching rows in the payoff statement.</li>
+              <li><strong>More than 2 strategies</strong>: reference <code>{strategy3}</code>, <code>{strategy4}</code>, … in the payoff statement and phase blocks.</li>
+              <li><strong>More than 4 weights</strong>: reference <code>{weight5}</code>, <code>{weight6}</code>, …</li>
+              <li><strong>Stop conditions, continuation probability, discount factor</strong> — these don't inject any placeholder by default. If you want the agent to know about them, write the framing into prose yourself.</li>
+              <li><strong>Tournament mode</strong> — same template; the engine spins up one game per pair.</li>
+              <li><strong>Utility transforms</strong> (CRRA, Fehr-Schmidt) — applied numerically <em>after</em> the round; the agent sees raw payoffs in the prompt regardless. Add prose if you want this visible.</li>
+            </ul>
+
+            <p class="font-medium mt-2">Edge cases / footguns</p>
+            <ul class="list-disc pl-5 space-y-1">
+              <li><strong>Bare conditional placeholder.</strong> A bare <code>{ownType}</code> outside the surrounding <code>{ownType}: […]</code> block raises <code>KeyError</code> when no type is configured. Always wrap conditional placeholders in their conditional block.</li>
+              <li><strong>Missing phase block.</strong> If <code>elicitBeliefs: true</code> but the template has no <code>{believe}: […]</code> block, parsing will fail. Use the fully-featured template above as a safe default.</li>
+              <li><strong>Bare <code>{personality}</code>.</strong> Only set when the surrounding <code>{intro}: […]</code> block is kept; bare references will <code>KeyError</code>.</li>
+              <li><strong>First round.</strong> <code>{coopRate1}</code> is <code>n/a</code> on round 1. Phrase the surrounding sentence so it reads naturally even with <code>n/a</code>.</li>
             </ul>
           </div>
         </details>

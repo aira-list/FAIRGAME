@@ -282,74 +282,319 @@ For 3+ agents the JSON view tab lets you write the full schema by hand.
 
 ---
 
-## 4. Walkthrough: the 5 canonical templates
+## 4. Walkthrough — the FULLY-FEATURED Prisoner's Dilemma template
 
-The library auto-seeds with the five 2x2 games. Each `body` follows the
-same skeleton. Let's annotate the **Prisoner's Dilemma** template
-line-by-line.
-
-### 4.1 Prisoner's Dilemma — the annotated template
+The classic shipped template uses about half of what the engine
+recognises. Here is a Prisoner's Dilemma template that exercises
+**every** placeholder and **every** conditional block. Use it as the
+ceiling: a real-life template will usually use only a subset, but if
+you want to switch on (say) Theory-of-Mind order 2 plus belief
+elicitation plus a real communication phase plus reputation labels plus
+private types — the prompt needs all the corresponding markup or those
+features have nothing to fill.
 
 ```
 You are {currentPlayerName} and your opponent is {opponent1}.
-{intro}: [You are {personality}.]
-{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.]
+
+{intro}: [
+You are {personality}.
+{ownType}: [Your private type is {ownType}; this fact is not visible to {opponent1}.]
+]
+
+{opponentIntro}: [
+{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.
+{opponent1}'s rolling cooperation rate over recent rounds is {coopRate1}, which we summarise as: {reputation1}.
+The prior over types in this population is: {typeDistribution}.
+]
+
+{secondOrder}: [
+Be aware: {opponent1} is also reasoning about you, knows that you are reasoning about them, and may try to anticipate your move.
+]
+
+You and {opponent1} are arrested for a crime and held in separate cells.
+
+Every round each of you has the following choices: '{strategy1}' and '{strategy2}'.
+{gameLength}: [There are {nRounds} rounds in total.]
+The current round is number {currentRound}.
+
+If you both choose {strategy1}, you both get a payoff of {weight1}.
+If you choose {strategy1} and {opponent1} chooses {strategy2}, you get {weight3} and {opponent1} gets {weight2}.
+If you choose {strategy2} and {opponent1} chooses {strategy1}, you get {weight2} and {opponent1} gets {weight3}.
+If you both choose {strategy2}, you both get a payoff of {weight4}.
+
+This is the history of the choices made so far: {history}.
+
+{communicate}: [
+Before choosing this round, send {opponent1} a short free-text message that may help you coordinate. They will see it before they choose.
+Output ONLY the message text — no quotes, no labels.
+]
+
+{choose}: [
+Your goal is to maximise your payoff.
+Choose between {strategy1} and {strategy2}.
+Output ONLY the choice.
+]
+
+{mixedChoose}: [
+Your goal is to maximise your expected payoff.
+Output a JSON object that gives the probability you assign to each strategy, summing to 1.
+Example: {"{strategy1}": 0.7, "{strategy2}": 0.3}
+Output ONLY the JSON.
+]
+
+{believe}: [
+Before you choose this round, predict what {opponent1} is about to do.
+Output a JSON object with the probability you assign to each of their strategies, summing to 1.
+Example: {"{strategy1}": 0.4, "{strategy2}": 0.6}
+Output ONLY the JSON.
+]
 ```
 
-* **Line 1** — bare names. `{currentPlayerName}` is the agent's own
-  name (one of `agents.names`). `{opponent1}` is the first other agent.
-* **Line 2** — `{intro}: [...]` is always kept. Inside the brackets,
-  `{personality}` is the agent's personality string for the active
-  language.
-* **Line 3** — `{opponentIntro}: [...]` is **stripped at tomOrder=0**, so
-  in 0-th order ToM the agent is told nothing about the opponent.
-  `{opponentPersonality1}` and `{opponentPersonalityProbability1}` are
-  injected together so the prompt can hedge ("60% likely to be selfish").
+### 4.1 Section-by-section breakdown
+
+#### Identity (always kept)
 
 ```
-You and {opponent1} are arrested for a crime and held in separate cells. You cannot communicate.
+You are {currentPlayerName} and your opponent is {opponent1}.
 ```
 
-* The cover story. Plain text — no placeholders.
+| Placeholder | What it becomes | Source |
+|---|---|---|
+| `{currentPlayerName}` | the agent's own name, e.g. `"agent1"` | `agents.names[i]` |
+| `{opponent1}`, `{opponent2}`, … | each other agent's name | `agents.names` |
+
+These are populated unconditionally; there's no toggle that hides them.
+`{opponent2}`, `{opponent3}`, … exist when there are more than two
+players. The numbering is positional with respect to the *active* agent.
+
+#### `{intro}: […]` block — always kept, but its inner text is conditional
+
+```
+{intro}: [
+You are {personality}.
+{ownType}: [Your private type is {ownType}; this fact is not visible to {opponent1}.]
+]
+```
+
+* The outer `{intro}: […]` block survives **unless the agent's
+  personality is the literal string `"None"`** — in that case the engine
+  strips the whole block so the agent is told nothing about itself.
+* `{personality}` is the agent's personality string in the active
+  language. Comes from `agents.personalities[lang][i]`.
+* The nested `{ownType}: […]` block is **kept only when the
+  Configuration assigned a private type to this agent**
+  (`agents.types`). Used in Bayesian-game studies. `{ownType}` is the
+  realised type label.
+
+#### `{opponentIntro}: […]` — Theory of Mind information
+
+```
+{opponentIntro}: [
+{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.
+{opponent1}'s rolling cooperation rate over recent rounds is {coopRate1}, which we summarise as: {reputation1}.
+The prior over types in this population is: {typeDistribution}.
+]
+```
+
+* The whole block is **stripped at `tomOrder = 0`**. That is the entire
+  point of order-0 — the agent is given no information about its
+  opponent. At `tomOrder = 1` (default) and `tomOrder = 2`, the block
+  survives.
+* The block is **also stripped if every opponent has
+  `opponentPersonalityProb = 0` or personality `"None"`** — there's
+  nothing meaningful to say.
+* Inside, the per-opponent placeholders are numbered:
+  `{opponent2}` / `{opponentPersonality2}` /
+  `{opponentPersonalityProbability2}` / `{coopRate2}` / `{reputation2}`,
+  etc.
+* `{opponentPersonalityProbability1}` is the probability the opponent
+  *truly* has the stated personality, expressed in **0–100**
+  (the engine multiplies the 0–1 input by 100 for readability).
+* `{coopRate1}` and `{reputation1}` are filled from history:
+  - When `reputationApplies = true` and history exists for the opponent,
+    `coopRate1` is the fraction (e.g. `"0.62"`) and `reputation1` is one
+    of `highly cooperative` / `moderately cooperative` /
+    `occasionally cooperative` / `uncooperative`.
+  - When `reputationWindow = N`, only the last N rounds are averaged.
+  - When `reputationApplies = false` (Battle of the Sexes, zero-sum), or
+    there's no history yet, both fields render as `n/a` / `unknown`. Use
+    the false case for asymmetric games where strategy1 doesn't mean
+    "cooperate".
+* `{typeDistribution}` is filled only when the Configuration sets
+  `typesAreCommonKnowledge = true` and there's a `agents.types` block;
+  otherwise the placeholder will literally appear in the prompt as
+  `{typeDistribution}` unless you wrap it in another conditional.
+  (See *Edge cases*, §4.3.)
+
+#### `{secondOrder}: […]` — only at `tomOrder = 2`
+
+```
+{secondOrder}: [
+Be aware: {opponent1} is also reasoning about you, knows that you are reasoning about them, and may try to anticipate your move.
+]
+```
+
+* Kept iff `tomOrder >= 2`.
+* This is where you put any "they-think-we-think" framing. There are no
+  new placeholders inside — you compose the recursive reasoning out of
+  the same opponent-name placeholders.
+
+#### Cover story (plain text)
+
+```
+You and {opponent1} are arrested for a crime and held in separate cells.
+```
+
+No conditionals; substitute opponent names if you want, otherwise it's
+a frozen narrative. This is also where you control the framing
+("crime" → cooperative, "investment" → economic, …) that materially
+affects how LLMs respond — it's the most studied source of bias in PD
+prompts.
+
+#### Strategies + horizon + round
 
 ```
 Every round each of you has the following choices: '{strategy1}' and '{strategy2}'.
-{gameLength}: [There are {nRounds} rounds to decide.]
+{gameLength}: [There are {nRounds} rounds in total.]
 The current round is number {currentRound}.
 ```
 
-* `{strategy1}` / `{strategy2}` come from the payoff matrix
-  (`payoffMatrix.strategies[lang]`). Different languages → different
-  display labels but the same logical strategy keys.
-* `{gameLength}: [...]` is **kept only when `nRoundsIsKnown: true`**.
-  This lets you flip whether the agent knows the horizon by toggling a
-  single Configuration field.
-* `{currentRound}` is per-round state.
+* `{strategy1}` / `{strategy2}` / `{strategy3}` … come from the payoff
+  matrix's per-language label dict
+  (`payoffMatrix.strategies[lang]`). Same logical key, different
+  rendering per language — the engine pulls the row matching the active
+  language.
+* `{gameLength}: […]` survives **only when `nRoundsIsKnown: true`**.
+  Removing it lets you study uncertain-horizon behaviour without
+  rewriting the body.
+* `{currentRound}` is per-round state, 1-indexed.
+
+#### Payoff statement
 
 ```
-If you both choose {strategy1}, you both get a penalty of {weight1}.
-If you choose {strategy1} and {opponent1} chooses {strategy2}, you get a penalty of {weight3} and {opponent1} gets a penalty of {weight2}.
-If you choose {strategy2} and {opponent1} chooses {strategy1}, you get a penalty of {weight2} and {opponent1} gets a penalty of {weight3}.
-If you both choose {strategy2}, you both get a penalty of {weight4}.
+If you both choose {strategy1}, you both get a payoff of {weight1}.
+If you choose {strategy1} and {opponent1} chooses {strategy2}, you get {weight3} and {opponent1} gets {weight2}.
+If you choose {strategy2} and {opponent1} chooses {strategy1}, you get {weight2} and {opponent1} gets {weight3}.
+If you both choose {strategy2}, you both get a payoff of {weight4}.
 ```
 
-* The full payoff statement. The four `{weightN}` references map to
-  `payoffMatrix.weights`. By naming weights instead of inlining numbers,
-  the same template body is reused across the "conventional" / "harsh"
-  / "mild" PD variants — only the weight values change.
+* The four `{weightN}` numbers come straight from `payoffMatrix.weights`
+  (`weight1`..`weight4` are the engine's standard names for a 2x2). The
+  template body is reused across the conventional / harsh / mild
+  variants by changing only the weight values.
+* Notice the asymmetry: row gets `{weight3}` when row defects-against-
+  cooperator, while column gets `{weight2}`. This mirrors the canonical
+  PD payoff matrix shape; the matrix tab in the SPA generates this
+  symbolically.
+
+#### History
 
 ```
-Your goal is to minimize your penalty by making the best strategies based on the provided information.
 This is the history of the choices made so far: {history}.
-Choose between {strategy1} and {strategy2}.
-Output ONLY the choice.
 ```
 
-* `{history}` is engine-rendered text describing past rounds.
-* `Output ONLY the choice.` is the format constraint that the engine's
-  belief / strategy parser expects.
+`{history}` is **engine-rendered text** describing past rounds in
+human-readable form. There is no template-side control over how it
+renders; tweak the engine's history-formatting if you need a different
+shape.
 
-### 4.2 The other four games at a glance
+#### Phase blocks — exactly ONE survives per prompt render
+
+The engine fires up to three phases per round (communicate → believe →
+choose). Each phase fills the prompt template separately with only its
+matching `{phase}: [...]` block kept; the other phase blocks are
+stripped. That way a single Template handles every phase the engine
+might run.
+
+```
+{communicate}: [
+  ... message-emission instructions ...
+]
+{choose}: [
+  ... pure-strategy choice instructions ...
+]
+{mixedChoose}: [
+  ... probability-distribution instructions ...
+]
+{believe}: [
+  ... belief-elicitation JSON instructions ...
+]
+```
+
+* `{communicate}: […]` runs once per round before choosing, **only when
+  `agentsCommunicate: true`**. The output of this phase becomes the
+  message logged into history.
+* `{choose}: […]` is the strategy-choice prompt, used when
+  `mixedStrategies: false` (default).
+* `{mixedChoose}: […]` replaces `{choose}` when `mixedStrategies: true`:
+  the LLM returns a JSON probability distribution over strategies and
+  the engine samples from it.
+* `{believe}: […]` runs once per round before choosing, **only when
+  `elicitBeliefs: true`**. The output is parsed as a probability
+  distribution and used to compute Brier score later.
+
+You can include all four blocks in a single template; the engine picks
+which one to keep at each invocation. If a block isn't present and the
+phase fires, the engine will simply send a body with an empty phase
+section — usually not what you want, so always include the phase
+blocks for every phase your Configuration might enable.
+
+### 4.2 What's NOT yet in this template
+
+A handful of advanced setups need extra markup beyond what's above:
+
+* **More than 2 agents.** Add the equivalent
+  `{opponent2}`/`{opponentPersonality2}`/`{opponentPersonalityProbability2}`/
+  `{coopRate2}`/`{reputation2}` block (and so on for `{opponent3}`)
+  inside `{opponentIntro}: […]`. Same goes for the payoff statement —
+  you'll have a row per N-tuple of strategies.
+* **More than 2 strategies.** Reference `{strategy3}`, `{strategy4}` …
+  in the payoff statement and the phase blocks. The choose and belief
+  prompts also need updating to enumerate every strategy.
+* **More than 4 weight cells.** Reference `{weight5}`, `{weight6}` …
+  for additional weight keys defined in `payoffMatrix.weights`.
+* **Stop conditions / continuation probability framing.** These don't
+  inject any placeholder by default; if you want the agent to know the
+  game might end stochastically, write that into the cover story or
+  the `{gameLength}` block manually.
+* **Discount factor framing.** Same — the engine applies δ
+  numerically; if you want the agent to be told about it, mention it in
+  prose.
+* **Tournament mode** doesn't change template structure; the engine
+  spins up one game per pair and re-uses the same template.
+* **Utility transforms** (CRRA, Fehr-Schmidt) are applied on the raw
+  payoff *after* the round resolves; the agent sees the raw payoffs in
+  the prompt regardless. If you want the transform to be visible to
+  the agent, you have to phrase it in prose yourself.
+
+### 4.3 Edge cases / footguns
+
+* **Bare placeholder vs nested block.** A bare `{currentRound}` is
+  always substituted. A bare `{ownType}` (no surrounding `{ownType}: […]`
+  block) will throw a `KeyError` if no type is configured because the
+  engine only injects the value when the surrounding block is kept.
+  Always wrap conditional placeholders in their conditional block.
+* **Phase blocks must be present.** If your Configuration sets
+  `elicitBeliefs: true` but the template has no `{believe}: […]` block,
+  the belief-elicitation phase will send an unstructured prompt and
+  parsing will fail. The fully-featured template above is the safe
+  default; trim only what you're sure you'll never need.
+* **`{personality}` outside `{intro}: […]`.** The engine only sets
+  `personality` in the placeholder map after the intro block is
+  evaluated. A bare `{personality}` outside that block raises
+  `KeyError`.
+* **Opponent rep before history.** On round 1, `{coopRate1}` is `n/a`.
+  Phrase the surrounding sentence so it reads naturally even with
+  `n/a` ("rolling rate so far: n/a — no history yet"), or guard it with
+  prose ("If history is available, …").
+* **Mixed-strategy + believe both on.** Both `{mixedChoose}: […]` and
+  `{believe}: […]` will fire. Make sure neither prompt instructs the
+  LLM to "output ONLY a single label" in a way that contradicts the
+  JSON requirement of the other phase.
+
+---
+
+## 5. The other four canonical games at a glance
 
 | Game | Logical structure | Default payoff weights `(w1, w2, w3, w4)` mapped as `(R, S, T, P)` |
 |---|---|---|
@@ -365,7 +610,7 @@ differ — the placeholder structure is identical.
 
 ---
 
-## 5. Putting it together — example end-to-end
+## 6. Putting it together — example end-to-end
 
 1. **On the Templates page**, the 5 starter tags are pre-loaded. Open
    "Prisoner's Dilemma" → "classic, en" → click 🌍 **Translate** →
@@ -403,7 +648,7 @@ differ — the placeholder structure is identical.
 
 ---
 
-## 6. Troubleshooting
+## 7. Troubleshooting
 
 | Symptom | Cause | Fix |
 |---|---|---|
@@ -415,7 +660,7 @@ differ — the placeholder structure is identical.
 
 ---
 
-## 7. Where things live on disk
+## 8. Where things live on disk
 
 ```
 data/                     # User library (gitignored)
