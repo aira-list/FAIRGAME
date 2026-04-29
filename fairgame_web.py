@@ -53,6 +53,41 @@ WEB_DIR = PROJECT_ROOT / "web"
 RESOURCES_DIR = PROJECT_ROOT / "resources"
 RUNS_DIR = PROJECT_ROOT / "results" / "web"
 RUNS_DIR.mkdir(parents=True, exist_ok=True)
+DATA_DIR = PROJECT_ROOT / "data"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+
+# ---------------------------------------------------------------------------
+# Generic JSON-file store for the user-managed library
+# (tags, templates, configurations)
+# ---------------------------------------------------------------------------
+
+
+def _store_path(name: str) -> Path:
+    return DATA_DIR / f"{name}.json"
+
+
+def _load_store(name: str) -> List[Dict[str, Any]]:
+    path = _store_path(name)
+    if not path.is_file():
+        return []
+    try:
+        return json.loads(path.read_text())
+    except json.JSONDecodeError:
+        logger.warning("Corrupt store at %s; starting fresh.", path)
+        return []
+
+
+def _save_store(name: str, items: List[Dict[str, Any]]) -> None:
+    _store_path(name).write_text(json.dumps(items, indent=2))
+
+
+def _new_id() -> str:
+    return uuid.uuid4().hex[:12]
+
+
+def _now_iso() -> str:
+    return datetime.now().isoformat(timespec="seconds")
 
 
 # ---------------------------------------------------------------------------
@@ -515,6 +550,318 @@ class CompareBody(BaseModel):
     run_b: str
     metrics: Optional[List[str]] = None
     correction: str = Field(default="none")
+
+
+# ---------------------------------------------------------------------------
+# Tags + Templates library
+# ---------------------------------------------------------------------------
+
+
+class TagBody(BaseModel):
+    name: str
+    description: str = ""
+
+
+class TemplateBody(BaseModel):
+    tag_id: str
+    variation: str          # "conventional", "harsh", …
+    language: str           # ISO code, e.g. "en"
+    body: str
+    source_template_id: Optional[str] = None
+    source_language: Optional[str] = None
+
+
+class TemplateTranslateBody(BaseModel):
+    target_languages: List[str]
+    cosine_threshold: float = Field(default=0.6, ge=0.0, le=1.0)
+
+
+@app.get("/api/tags")
+def list_tags() -> Dict[str, Any]:
+    return {"tags": _load_store("tags")}
+
+
+@app.post("/api/tags")
+def create_tag(body: TagBody) -> Dict[str, Any]:
+    tags = _load_store("tags")
+    if any(t["name"].lower() == body.name.lower() for t in tags):
+        raise HTTPException(status_code=409, detail=f"Tag {body.name!r} already exists.")
+    tag = {
+        "id": _new_id(),
+        "name": body.name,
+        "description": body.description,
+        "created_at": _now_iso(),
+    }
+    tags.append(tag)
+    _save_store("tags", tags)
+    return tag
+
+
+@app.delete("/api/tags/{tag_id}")
+def delete_tag(tag_id: str) -> Dict[str, Any]:
+    tags = _load_store("tags")
+    new_tags = [t for t in tags if t["id"] != tag_id]
+    if len(new_tags) == len(tags):
+        raise HTTPException(status_code=404, detail=f"Tag {tag_id!r} not found.")
+    _save_store("tags", new_tags)
+    # Cascade: drop templates belonging to this tag.
+    templates = _load_store("templates")
+    _save_store("templates", [t for t in templates if t["tag_id"] != tag_id])
+    return {"deleted": tag_id}
+
+
+@app.get("/api/templates")
+def list_templates(tag_id: Optional[str] = None) -> Dict[str, Any]:
+    items = _load_store("templates")
+    if tag_id:
+        items = [t for t in items if t["tag_id"] == tag_id]
+    return {"templates": items}
+
+
+@app.post("/api/templates")
+def create_template(body: TemplateBody) -> Dict[str, Any]:
+    tags = _load_store("tags")
+    if not any(t["id"] == body.tag_id for t in tags):
+        raise HTTPException(status_code=404, detail=f"Tag {body.tag_id!r} not found.")
+    templates = _load_store("templates")
+    template = {
+        "id": _new_id(),
+        "tag_id": body.tag_id,
+        "variation": body.variation,
+        "language": body.language,
+        "body": body.body,
+        "source_template_id": body.source_template_id,
+        "source_language": body.source_language,
+        "created_at": _now_iso(),
+    }
+    templates.append(template)
+    _save_store("templates", templates)
+    return template
+
+
+@app.put("/api/templates/{template_id}")
+def update_template(template_id: str, body: TemplateBody) -> Dict[str, Any]:
+    templates = _load_store("templates")
+    for t in templates:
+        if t["id"] == template_id:
+            t["tag_id"] = body.tag_id
+            t["variation"] = body.variation
+            t["language"] = body.language
+            t["body"] = body.body
+            _save_store("templates", templates)
+            return t
+    raise HTTPException(status_code=404, detail=f"Template {template_id!r} not found.")
+
+
+@app.delete("/api/templates/{template_id}")
+def delete_template(template_id: str) -> Dict[str, Any]:
+    templates = _load_store("templates")
+    new_templates = [t for t in templates if t["id"] != template_id]
+    if len(new_templates) == len(templates):
+        raise HTTPException(status_code=404, detail=f"Template {template_id!r} not found.")
+    _save_store("templates", new_templates)
+    return {"deleted": template_id}
+
+
+@app.post("/api/templates/{template_id}/translate")
+def translate_template_into_languages(
+    template_id: str, body: TemplateTranslateBody
+) -> Dict[str, Any]:
+    """AI-translate one template into a list of target languages.
+
+    Each successful translation becomes a *new* template under the same
+    tag and variation, with ``source_template_id`` linking back to the
+    original. Skips a target if a template with the same (tag, variation,
+    language) already exists.
+    """
+    templates = _load_store("templates")
+    source = next((t for t in templates if t["id"] == template_id), None)
+    if source is None:
+        raise HTTPException(status_code=404, detail=f"Template {template_id!r} not found.")
+
+    created: List[Dict[str, Any]] = []
+    skipped: List[str] = []
+    errors: List[Dict[str, str]] = []
+    for target in body.target_languages:
+        if target == source["language"]:
+            skipped.append(f"{target} (same as source)")
+            continue
+        already = any(
+            t["tag_id"] == source["tag_id"]
+            and t["variation"] == source["variation"]
+            and t["language"] == target
+            for t in templates
+        )
+        if already:
+            skipped.append(f"{target} (already exists for this variation)")
+            continue
+        try:
+            translated = engine.template_translator.translate(
+                source["body"], target, cosine_threshold=body.cosine_threshold
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Translation to %s failed: %s", target, exc)
+            errors.append({"language": target, "error": str(exc)})
+            continue
+        new_template = {
+            "id": _new_id(),
+            "tag_id": source["tag_id"],
+            "variation": source["variation"],
+            "language": target,
+            "body": translated,
+            "source_template_id": source["id"],
+            "source_language": source["language"],
+            "created_at": _now_iso(),
+        }
+        templates.append(new_template)
+        created.append(new_template)
+    _save_store("templates", templates)
+    return {"created": created, "skipped": skipped, "errors": errors}
+
+
+# ---------------------------------------------------------------------------
+# Configurations library
+# ---------------------------------------------------------------------------
+
+
+class ConfigurationBody(BaseModel):
+    name: str
+    tag_id: str
+    variation: str
+    languages: List[str]
+    game_config: Dict[str, Any] = Field(default_factory=dict)
+
+
+class RunConfigurationsBody(BaseModel):
+    configuration_ids: List[str]
+    demo_mode: bool = True
+
+
+@app.get("/api/configurations")
+def list_configurations() -> Dict[str, Any]:
+    return {"configurations": _load_store("configurations")}
+
+
+@app.post("/api/configurations")
+def create_configuration(body: ConfigurationBody) -> Dict[str, Any]:
+    items = _load_store("configurations")
+    item = {
+        "id": _new_id(),
+        "name": body.name,
+        "tag_id": body.tag_id,
+        "variation": body.variation,
+        "languages": body.languages,
+        "game_config": body.game_config,
+        "created_at": _now_iso(),
+    }
+    items.append(item)
+    _save_store("configurations", items)
+    return item
+
+
+@app.put("/api/configurations/{config_id}")
+def update_configuration(config_id: str, body: ConfigurationBody) -> Dict[str, Any]:
+    items = _load_store("configurations")
+    for item in items:
+        if item["id"] == config_id:
+            item.update({
+                "name": body.name,
+                "tag_id": body.tag_id,
+                "variation": body.variation,
+                "languages": body.languages,
+                "game_config": body.game_config,
+            })
+            _save_store("configurations", items)
+            return item
+    raise HTTPException(status_code=404, detail=f"Configuration {config_id!r} not found.")
+
+
+@app.delete("/api/configurations/{config_id}")
+def delete_configuration(config_id: str) -> Dict[str, Any]:
+    items = _load_store("configurations")
+    remaining = [i for i in items if i["id"] != config_id]
+    if len(remaining) == len(items):
+        raise HTTPException(status_code=404, detail=f"Configuration {config_id!r} not found.")
+    _save_store("configurations", remaining)
+    return {"deleted": config_id}
+
+
+def _resolve_configuration_to_engine_config(item: Dict[str, Any]) -> Dict[str, Any]:
+    """Glue a saved Configuration into the engine's expected shape.
+
+    Looks up the matching template body for each requested language and
+    injects them as ``promptTemplate: {lang: body}``. Raises 400 when a
+    required (tag, variation, lang) template is missing.
+    """
+    templates = _load_store("templates")
+    body_by_lang: Dict[str, str] = {}
+    for lang in item["languages"]:
+        match = next(
+            (t for t in templates
+             if t["tag_id"] == item["tag_id"]
+             and t["variation"] == item["variation"]
+             and t["language"] == lang),
+            None,
+        )
+        if match is None:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"No template for tag={item['tag_id']!r} "
+                    f"variation={item['variation']!r} language={lang!r}. "
+                    f"Add or AI-translate one in the Templates page first."
+                ),
+            )
+        body_by_lang[lang] = match["body"]
+    cfg = dict(item["game_config"] or {})
+    cfg["name"] = item["name"]
+    cfg["languages"] = item["languages"]
+    cfg["promptTemplate"] = body_by_lang
+    return cfg
+
+
+@app.post("/api/configurations/{config_id}/run")
+def run_one_configuration(
+    config_id: str, demo_mode: bool = True
+) -> Dict[str, Any]:
+    items = _load_store("configurations")
+    item = next((i for i in items if i["id"] == config_id), None)
+    if item is None:
+        raise HTTPException(status_code=404, detail=f"Configuration {config_id!r} not found.")
+    cfg = _resolve_configuration_to_engine_config(item)
+    set_demo_mode(demo_mode)
+    try:
+        rows = engine.create_and_run_games(cfg)
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    run_id = _new_id()
+    _save_run(run_id, cfg, rows, demo_mode=demo_mode)
+    return {"id": run_id, "rows": rows, "configuration_id": config_id}
+
+
+@app.post("/api/configurations/run-batch")
+def run_configurations_batch(body: RunConfigurationsBody) -> Dict[str, Any]:
+    items = _load_store("configurations")
+    results: List[Dict[str, Any]] = []
+    set_demo_mode(body.demo_mode)
+    for cid in body.configuration_ids:
+        item = next((i for i in items if i["id"] == cid), None)
+        if item is None:
+            results.append({"configuration_id": cid, "error": "not found"})
+            continue
+        try:
+            cfg = _resolve_configuration_to_engine_config(item)
+            rows = engine.create_and_run_games(cfg)
+        except HTTPException as exc:
+            results.append({"configuration_id": cid, "error": exc.detail})
+            continue
+        except (ValueError, TypeError) as exc:
+            results.append({"configuration_id": cid, "error": str(exc)})
+            continue
+        run_id = _new_id()
+        _save_run(run_id, cfg, rows, demo_mode=body.demo_mode)
+        results.append({"configuration_id": cid, "run_id": run_id, "n_rows": len(rows)})
+    return {"results": results}
 
 
 @app.post("/api/runs/compare")

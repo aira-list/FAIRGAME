@@ -34,3 +34,4 @@ results/
 # Ad-hoc data dumps
 duplicates.csv
 merged.csv
+data/

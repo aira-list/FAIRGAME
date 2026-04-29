@@ -147,6 +147,310 @@
       </section>
 
 
+      <!-- ===== TEMPLATES ===== -->
+      <section x-show="activePage === 'templates'">
+        <h1 class="text-2xl font-semibold mb-1">🏷️ Templates</h1>
+        <p class="text-slate-600 mb-6">Tags group families of scenarios (e.g. "Prisoner's Dilemma"); each tag holds one or more <strong>variations</strong> (e.g. "conventional", "harsh"); each variation can ship in many languages. Use the AI button to translate a template into all the languages you need at once.</p>
+
+        <div class="grid md:grid-cols-3 gap-6">
+
+          <!-- Left: tag list + create form -->
+          <div class="md:col-span-1">
+            <div class="fg-card p-4 mb-4">
+              <h3 class="font-semibold text-sm mb-3">Tags</h3>
+              <ul class="space-y-1 mb-3">
+                <template x-for="tag in tags" :key="tag.id">
+                  <li>
+                    <button class="w-full text-left px-3 py-2 rounded-md text-sm flex items-center justify-between hover:bg-slate-100"
+                            :class="{ 'bg-blue-50 text-blue-800 font-medium': templatesPage.activeTag === tag.id }"
+                            @click="selectTag(tag.id)">
+                      <span x-text="tag.name"></span>
+                      <span class="text-xs text-slate-400"
+                            x-text="templatesByTagCount(tag.id) + ' tpl'"></span>
+                    </button>
+                  </li>
+                </template>
+                <li x-show="tags.length === 0" class="text-sm text-slate-500 italic">No tags yet.</li>
+              </ul>
+
+              <hr class="border-slate-200 my-3"/>
+              <h4 class="text-xs uppercase tracking-wider text-slate-500 mb-2">+ New tag</h4>
+              <input type="text" x-model="templatesPage.newTagName" class="fg-input mb-2" placeholder="Name (e.g. Prisoner's Dilemma)"/>
+              <input type="text" x-model="templatesPage.newTagDesc" class="fg-input mb-2" placeholder="Description (optional)"/>
+              <button class="w-full px-3 py-1.5 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
+                      :disabled="!templatesPage.newTagName"
+                      @click="createTag()">Create tag</button>
+            </div>
+          </div>
+
+          <!-- Right: templates of the selected tag -->
+          <div class="md:col-span-2">
+            <div x-show="!templatesPage.activeTag" class="text-slate-500 italic text-sm">
+              Select a tag on the left, or create one.
+            </div>
+
+            <div x-show="templatesPage.activeTag">
+              <div class="fg-card p-4 mb-4 flex items-center justify-between">
+                <div>
+                  <h3 class="font-semibold" x-text="templatesPage.activeTagName"></h3>
+                  <p class="text-xs text-slate-500" x-text="templatesPage.activeTagDesc || 'No description.'"></p>
+                </div>
+                <button class="text-rose-600 hover:text-rose-800 text-xs"
+                        @click="deleteTag(templatesPage.activeTag)">Delete tag</button>
+              </div>
+
+              <!-- New template form -->
+              <div class="fg-card p-4 mb-4">
+                <h4 class="text-xs uppercase tracking-wider text-slate-500 mb-2">+ New template</h4>
+                <div class="grid md:grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label class="fg-label">Variation name</label>
+                    <input type="text" x-model="templatesPage.newTpl.variation" class="fg-input" placeholder="conventional, harsh, with_communication, …"/>
+                  </div>
+                  <div>
+                    <label class="fg-label">Language</label>
+                    <select x-model="templatesPage.newTpl.language" class="fg-input">
+                      <template x-for="l in languages" :key="l.code">
+                        <option :value="l.code" x-text="l.flag + ' ' + l.name + ' (' + l.code + ')'"></option>
+                      </template>
+                    </select>
+                  </div>
+                </div>
+                <label class="fg-label">Body</label>
+                <textarea x-model="templatesPage.newTpl.body"
+                          class="w-full border border-slate-300 rounded-md px-3 py-2 font-mono text-xs h-40"
+                          placeholder="Prompt template body — supports the {placeholders} the engine recognises."></textarea>
+                <button class="mt-3 px-4 py-1.5 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
+                        :disabled="!templatesPage.newTpl.variation || !templatesPage.newTpl.body"
+                        @click="createTemplate()">Save template</button>
+                <span x-show="templatesPage.tplError" class="ml-3 text-rose-700 text-sm" x-text="templatesPage.tplError"></span>
+              </div>
+
+              <!-- Existing templates, grouped by variation -->
+              <template x-for="(group, variation) in templatesGroupedByVariation()" :key="variation">
+                <div class="fg-card p-4 mb-3">
+                  <div class="flex items-center justify-between mb-2">
+                    <h4 class="font-medium text-sm" x-text="variation"></h4>
+                    <span class="text-xs text-slate-500" x-text="group.length + ' language' + (group.length === 1 ? '' : 's')"></span>
+                  </div>
+                  <div class="space-y-2">
+                    <template x-for="tpl in group" :key="tpl.id">
+                      <div class="border border-slate-200 rounded-md p-3">
+                        <div class="flex items-center justify-between mb-2">
+                          <div class="text-sm">
+                            <span x-text="languageFlag(tpl.language) + ' ' + tpl.language"></span>
+                            <span class="text-xs text-slate-500" x-show="tpl.source_language" x-text="' · translated from ' + tpl.source_language"></span>
+                          </div>
+                          <div class="flex gap-2 text-xs">
+                            <button class="text-blue-600 hover:underline" @click="openTranslateDialog(tpl)">🌍 Translate</button>
+                            <button class="text-blue-600 hover:underline" @click="editingTemplate = (editingTemplate?.id === tpl.id) ? null : {...tpl}">✏️ Edit</button>
+                            <button class="text-rose-600 hover:underline" @click="deleteTemplate(tpl.id)">🗑 Delete</button>
+                          </div>
+                        </div>
+                        <div x-show="!editingTemplate || editingTemplate.id !== tpl.id"
+                             class="text-xs text-slate-700 whitespace-pre-wrap font-mono bg-slate-50 rounded p-2 max-h-32 overflow-auto"
+                             x-text="tpl.body"></div>
+                        <div x-show="editingTemplate && editingTemplate.id === tpl.id">
+                          <textarea x-model="editingTemplate.body"
+                                    class="w-full border border-slate-300 rounded-md px-3 py-2 font-mono text-xs h-40"></textarea>
+                          <button class="mt-2 px-3 py-1 rounded-md bg-blue-600 text-white text-xs"
+                                  @click="saveTemplateEdit()">Save</button>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- Translate dialog -->
+        <div x-show="templatesPage.translateDialog"
+             class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+             @click.self="templatesPage.translateDialog = null">
+          <div class="bg-white rounded-lg p-6 w-full max-w-lg">
+            <h3 class="font-semibold mb-2">🌍 AI translate template</h3>
+            <p class="text-sm text-slate-600 mb-4">
+              Source: <span x-text="languageFlag(templatesPage.translateDialog?.language) + ' ' + templatesPage.translateDialog?.language"></span> ·
+              variation <code x-text="templatesPage.translateDialog?.variation"></code>
+            </p>
+            <p class="text-sm font-medium mb-2">Target languages:</p>
+            <div class="grid grid-cols-3 gap-1 max-h-72 overflow-auto p-2 border border-slate-200 rounded-md mb-3">
+              <template x-for="l in languages" :key="l.code">
+                <label class="flex items-center gap-1.5 text-sm py-0.5 cursor-pointer">
+                  <input type="checkbox" :value="l.code" x-model="templatesPage.translateTargets"/>
+                  <span x-text="l.flag"></span>
+                  <span x-text="l.code"></span>
+                </label>
+              </template>
+            </div>
+            <p class="fg-help mb-3">⚠ This calls the configured translator LLM (set by <code>FAIRGAME_TRANSLATOR_MODEL</code>). Live LLM credentials are required; the demo connector cannot translate.</p>
+            <div x-show="templatesPage.translateError" class="mb-3 p-2 bg-rose-50 border border-rose-200 rounded text-sm text-rose-800" x-text="templatesPage.translateError"></div>
+            <div class="flex gap-2 justify-end">
+              <button class="px-4 py-2 rounded-md border border-slate-300 text-sm"
+                      @click="templatesPage.translateDialog = null">Cancel</button>
+              <button class="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
+                      :disabled="templatesPage.translateTargets.length === 0 || templatesPage.translateRunning"
+                      @click="runTranslate()">
+                <span x-show="!templatesPage.translateRunning">Translate</span>
+                <span x-show="templatesPage.translateRunning">Translating…</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ===== CONFIGURATIONS ===== -->
+      <section x-show="activePage === 'configurations'">
+        <h1 class="text-2xl font-semibold mb-1">⚙️ Configurations</h1>
+        <p class="text-slate-600 mb-6">Save runnable bundles of (template + game settings + languages) under your own names. Each configuration gets a stable id and timestamp, so you can re-run, edit, or batch-run later.</p>
+
+        <!-- New / edit configuration -->
+        <div class="fg-card p-6 mb-6">
+          <h3 class="font-semibold mb-3" x-text="configsPage.editing ? 'Edit configuration' : '+ New configuration'"></h3>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="fg-label">Configuration name</label>
+              <input type="text" x-model="configsPage.draft.name" class="fg-input" placeholder="e.g. PD harsh, English+French, 5 seeds"/>
+            </div>
+            <div>
+              <label class="fg-label">Tag</label>
+              <select x-model="configsPage.draft.tag_id" @change="configsPage.draft.variation = ''" class="fg-input">
+                <option value="">— pick a tag —</option>
+                <template x-for="tag in tags" :key="tag.id">
+                  <option :value="tag.id" x-text="tag.name"></option>
+                </template>
+              </select>
+            </div>
+            <div>
+              <label class="fg-label">Variation</label>
+              <select x-model="configsPage.draft.variation" class="fg-input" :disabled="!configsPage.draft.tag_id">
+                <option value="">— pick a variation —</option>
+                <template x-for="v in variationsForTag(configsPage.draft.tag_id)" :key="v">
+                  <option :value="v" x-text="v"></option>
+                </template>
+              </select>
+            </div>
+            <div>
+              <label class="fg-label">Languages</label>
+              <p class="fg-help">Only languages that have a template under (tag, variation) are runnable.</p>
+              <div class="border border-slate-200 rounded-md p-2 max-h-40 overflow-auto">
+                <template x-for="lang in availableLanguagesForConfigDraft()" :key="lang.code">
+                  <label class="flex items-center gap-2 text-sm py-0.5">
+                    <input type="checkbox" :value="lang.code" x-model="configsPage.draft.languages"/>
+                    <span x-text="lang.flag + ' ' + lang.name + ' (' + lang.code + ')'"></span>
+                  </label>
+                </template>
+                <div x-show="availableLanguagesForConfigDraft().length === 0" class="text-xs text-slate-500 italic">
+                  No templates yet for this (tag, variation). Add one in Templates first.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-3 gap-3 mt-4">
+            <div>
+              <label class="fg-label">nRounds</label>
+              <input type="number" min="1" x-model.number="configsPage.draft.game_config.nRounds" class="fg-input"/>
+            </div>
+            <div>
+              <label class="fg-label">nIterations</label>
+              <input type="number" min="1" x-model.number="configsPage.draft.game_config.nIterations" class="fg-input"/>
+            </div>
+            <div>
+              <label class="fg-label">Master seed</label>
+              <input type="number" x-model.number="configsPage.draft.game_config.seed" class="fg-input"/>
+            </div>
+            <div>
+              <label class="fg-label">Seed count</label>
+              <input type="number" min="1" x-model.number="configsPage.draft.game_config.seedCount" class="fg-input"/>
+            </div>
+            <div>
+              <label class="fg-label">Default LLM</label>
+              <select x-model="configsPage.draft.game_config.llm" class="fg-input">
+                <template x-for="m in llms" :key="m"><option :value="m" x-text="m"></option></template>
+              </select>
+            </div>
+            <label class="flex items-center gap-2 text-sm self-end">
+              <input type="checkbox" x-model="configsPage.draft.game_config.nRoundsIsKnown"/>
+              <span>Round count known</span>
+            </label>
+          </div>
+
+          <details class="mt-4">
+            <summary class="cursor-pointer text-sm text-blue-700">Advanced JSON overrides</summary>
+            <p class="fg-help">Anything you put here is merged on top of the basic fields above before running. Useful for `tomOrder`, `discountFactor`, custom `agents`, full `payoffMatrix`, etc.</p>
+            <textarea x-model="configsPage.advancedJson"
+                      @blur="syncAdvancedJson()"
+                      class="w-full border border-slate-300 rounded-md px-3 py-2 font-mono text-xs h-40 mt-2"></textarea>
+          </details>
+
+          <div class="mt-4 flex gap-2">
+            <button class="px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+                    :disabled="!configsPage.canSave"
+                    @click="saveConfiguration()">
+              <span x-text="configsPage.editing ? 'Update configuration' : 'Save configuration'"></span>
+            </button>
+            <button x-show="configsPage.editing" class="px-5 py-2 rounded-md border border-slate-300"
+                    @click="resetConfigDraft()">Cancel</button>
+          </div>
+          <div x-show="configsPage.error" class="mt-3 p-3 bg-rose-50 border border-rose-200 rounded text-rose-800 text-sm" x-text="configsPage.error"></div>
+        </div>
+
+        <!-- List of saved configurations -->
+        <div class="fg-card p-6">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold">Saved configurations</h2>
+            <button class="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
+                    :disabled="configsPage.selected.length === 0 || configsPage.batchRunning"
+                    @click="runConfigurationsBatch()">
+              <span x-show="!configsPage.batchRunning">▶ Run selected (<span x-text="configsPage.selected.length"></span>)</span>
+              <span x-show="configsPage.batchRunning">Running… <span x-text="configsPage.batchProgress"></span></span>
+            </button>
+          </div>
+
+          <div x-show="configurations.length === 0" class="text-slate-500 italic text-sm">
+            No saved configurations yet.
+          </div>
+
+          <div class="space-y-2">
+            <template x-for="cfg in configurations" :key="cfg.id">
+              <div class="border border-slate-200 rounded-md p-3 flex items-center gap-3">
+                <input type="checkbox" :value="cfg.id" x-model="configsPage.selected"/>
+                <div class="flex-1">
+                  <div class="font-medium" x-text="cfg.name"></div>
+                  <div class="text-xs text-slate-500">
+                    <code x-text="cfg.id"></code>
+                    · <span x-text="cfg.created_at"></span>
+                    · <span x-text="tagName(cfg.tag_id) + ' / ' + cfg.variation"></span>
+                    · <span x-text="cfg.languages.map(l => languageFlag(l)).join(' ') + ' (' + cfg.languages.join(', ') + ')'"></span>
+                  </div>
+                </div>
+                <button class="text-blue-600 hover:underline text-sm" @click="runOneConfiguration(cfg.id)">▶ Run</button>
+                <button class="text-blue-600 hover:underline text-sm" @click="loadConfigForEdit(cfg)">Edit</button>
+                <button class="text-rose-600 hover:underline text-sm" @click="deleteConfiguration(cfg.id)">Delete</button>
+              </div>
+            </template>
+          </div>
+
+          <div x-show="configsPage.lastBatchResults.length > 0" class="mt-4 p-3 bg-slate-50 rounded-md">
+            <h3 class="text-sm font-semibold mb-2">Last batch run</h3>
+            <ul class="space-y-1 text-sm">
+              <template x-for="r in configsPage.lastBatchResults" :key="r.configuration_id">
+                <li>
+                  <code x-text="r.configuration_id"></code>
+                  <span x-show="r.run_id"> → run <a class="text-blue-600 underline" @click.prevent="openRun(r.run_id)" href="#" x-text="r.run_id"></a> (<span x-text="r.n_rows + ' games'"></span>)</span>
+                  <span x-show="r.error" class="text-rose-700"> · <span x-text="r.error"></span></span>
+                </li>
+              </template>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+
       <!-- ===== QUICK START ===== -->
       <section x-show="activePage === 'quick'">
         <h1 class="text-2xl font-semibold mb-1">🚀 Quick start</h1>
@@ -866,13 +1170,15 @@
     return {
       activePage: 'home',
       pages: [
-        { id: 'home',       icon: '🏠', label: 'Home' },
-        { id: 'quick',      icon: '🚀', label: 'Quick start' },
-        { id: 'builder',    icon: '🛠️', label: 'Scenario builder' },
-        { id: 'tournament', icon: '🏆', label: 'Tournament' },
-        { id: 'experiment', icon: '🧪', label: 'Experiment' },
-        { id: 'results',    icon: '📊', label: 'Results' },
-        { id: 'compare',    icon: '⚖️', label: 'Compare runs' },
+        { id: 'home',           icon: '🏠', label: 'Home' },
+        { id: 'quick',          icon: '🚀', label: 'Quick start' },
+        { id: 'templates',      icon: '🏷️', label: 'Templates' },
+        { id: 'configurations', icon: '⚙️', label: 'Configurations' },
+        { id: 'builder',        icon: '🛠️', label: 'Scenario builder' },
+        { id: 'tournament',     icon: '🏆', label: 'Tournament' },
+        { id: 'experiment',     icon: '🧪', label: 'Experiment' },
+        { id: 'results',        icon: '📊', label: 'Results' },
+        { id: 'compare',        icon: '⚖️', label: 'Compare runs' },
       ],
       builderTabs: [
         { id: 'basics', label: 'Basics' },
@@ -893,6 +1199,47 @@
 
       runs: [],
       activeRun: null,
+
+      // ---- Templates page state -----
+      tags: [],
+      templates: [],
+      editingTemplate: null,
+      templatesPage: {
+        activeTag: '',
+        activeTagName: '',
+        activeTagDesc: '',
+        newTagName: '',
+        newTagDesc: '',
+        newTpl: { variation: '', language: 'en', body: '' },
+        tplError: '',
+        translateDialog: null,
+        translateTargets: [],
+        translateRunning: false,
+        translateError: '',
+      },
+
+      // ---- Configurations page state -----
+      configurations: [],
+      configsPage: {
+        editing: null,
+        draft: {
+          name: '',
+          tag_id: '',
+          variation: '',
+          languages: [],
+          game_config: { nRounds: 1, nIterations: 1, seed: 0, seedCount: 1, llm: 'OpenAIGPT4o', nRoundsIsKnown: true },
+        },
+        advancedJson: '',
+        error: '',
+        selected: [],
+        batchRunning: false,
+        batchProgress: '',
+        lastBatchResults: [],
+        get canSave() {
+          const d = this.draft;
+          return !!(d.name && d.tag_id && d.variation && d.languages.length > 0);
+        },
+      },
 
       quick: { preset: '', name: '', nRounds: 1, seed: 0, seedCount: 1, running: false, error: '', lastRun: null },
 
@@ -982,7 +1329,278 @@
           this.loadRuns(),
           this.loadModelLists(),
           this.loadLanguages(),
+          this.loadTags(),
+          this.loadTemplates(),
+          this.loadConfigurations(),
         ]);
+      },
+
+      // ---- Templates page -----------------------------------------
+
+      async loadTags() {
+        try { this.tags = (await this.api('/api/tags')).tags; }
+        catch (e) { console.error('loadTags', e); }
+      },
+
+      async loadTemplates() {
+        try { this.templates = (await this.api('/api/templates')).templates; }
+        catch (e) { console.error('loadTemplates', e); }
+      },
+
+      async loadConfigurations() {
+        try { this.configurations = (await this.api('/api/configurations')).configurations; }
+        catch (e) { console.error('loadConfigurations', e); }
+      },
+
+      templatesByTagCount(tagId) {
+        return this.templates.filter(t => t.tag_id === tagId).length;
+      },
+
+      selectTag(tagId) {
+        const tag = this.tags.find(t => t.id === tagId);
+        this.templatesPage.activeTag = tagId;
+        this.templatesPage.activeTagName = tag ? tag.name : '';
+        this.templatesPage.activeTagDesc = tag ? (tag.description || '') : '';
+        this.editingTemplate = null;
+      },
+
+      async createTag() {
+        try {
+          await this.api('/api/tags', {
+            method: 'POST',
+            body: JSON.stringify({
+              name: this.templatesPage.newTagName,
+              description: this.templatesPage.newTagDesc,
+            }),
+          });
+          this.templatesPage.newTagName = '';
+          this.templatesPage.newTagDesc = '';
+          await this.loadTags();
+        } catch (e) { alert(e.message || e); }
+      },
+
+      async deleteTag(tagId) {
+        if (!confirm('Delete this tag and all its templates?')) return;
+        try {
+          await this.api(`/api/tags/${tagId}`, { method: 'DELETE' });
+          if (this.templatesPage.activeTag === tagId) this.selectTag('');
+          await Promise.all([this.loadTags(), this.loadTemplates()]);
+        } catch (e) { alert(e.message || e); }
+      },
+
+      templatesGroupedByVariation() {
+        const groups = {};
+        for (const t of this.templates) {
+          if (t.tag_id !== this.templatesPage.activeTag) continue;
+          (groups[t.variation] = groups[t.variation] || []).push(t);
+        }
+        // Sort each group by language for stability.
+        for (const k of Object.keys(groups)) groups[k].sort((a, b) => a.language.localeCompare(b.language));
+        return groups;
+      },
+
+      async createTemplate() {
+        this.templatesPage.tplError = '';
+        try {
+          await this.api('/api/templates', {
+            method: 'POST',
+            body: JSON.stringify({
+              tag_id: this.templatesPage.activeTag,
+              variation: this.templatesPage.newTpl.variation,
+              language: this.templatesPage.newTpl.language,
+              body: this.templatesPage.newTpl.body,
+            }),
+          });
+          this.templatesPage.newTpl = { variation: '', language: 'en', body: '' };
+          await this.loadTemplates();
+        } catch (e) { this.templatesPage.tplError = String(e.message || e); }
+      },
+
+      async deleteTemplate(id) {
+        if (!confirm('Delete this template?')) return;
+        try {
+          await this.api(`/api/templates/${id}`, { method: 'DELETE' });
+          await this.loadTemplates();
+        } catch (e) { alert(e.message || e); }
+      },
+
+      async saveTemplateEdit() {
+        const t = this.editingTemplate;
+        try {
+          await this.api(`/api/templates/${t.id}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              tag_id: t.tag_id,
+              variation: t.variation,
+              language: t.language,
+              body: t.body,
+            }),
+          });
+          this.editingTemplate = null;
+          await this.loadTemplates();
+        } catch (e) { alert(e.message || e); }
+      },
+
+      openTranslateDialog(tpl) {
+        this.templatesPage.translateDialog = tpl;
+        this.templatesPage.translateTargets = [];
+        this.templatesPage.translateError = '';
+      },
+
+      async runTranslate() {
+        const tpl = this.templatesPage.translateDialog;
+        if (!tpl) return;
+        this.templatesPage.translateRunning = true;
+        this.templatesPage.translateError = '';
+        try {
+          const result = await this.api(`/api/templates/${tpl.id}/translate`, {
+            method: 'POST',
+            body: JSON.stringify({
+              target_languages: this.templatesPage.translateTargets,
+            }),
+          });
+          let msg = `Created ${result.created.length} translations.`;
+          if (result.skipped.length) msg += ` Skipped: ${result.skipped.join(', ')}.`;
+          if (result.errors.length) {
+            msg += ` Errors: ${result.errors.map(e => e.language + ' (' + e.error + ')').join('; ')}.`;
+          }
+          this.templatesPage.translateError = msg;
+          await this.loadTemplates();
+          if (result.errors.length === 0) this.templatesPage.translateDialog = null;
+        } catch (e) {
+          this.templatesPage.translateError = String(e.message || e);
+        } finally {
+          this.templatesPage.translateRunning = false;
+        }
+      },
+
+      languageFlag(code) {
+        const lang = (this.languages || []).find(l => l.code === code);
+        return lang ? lang.flag : '🏳️';
+      },
+
+      // ---- Configurations page ------------------------------------
+
+      tagName(tagId) {
+        const t = this.tags.find(x => x.id === tagId);
+        return t ? t.name : '(unknown tag)';
+      },
+
+      variationsForTag(tagId) {
+        if (!tagId) return [];
+        const set = new Set();
+        for (const t of this.templates) {
+          if (t.tag_id === tagId) set.add(t.variation);
+        }
+        return Array.from(set).sort();
+      },
+
+      availableLanguagesForConfigDraft() {
+        const d = this.configsPage.draft;
+        if (!d.tag_id || !d.variation) return [];
+        const langSet = new Set(
+          this.templates
+            .filter(t => t.tag_id === d.tag_id && t.variation === d.variation)
+            .map(t => t.language)
+        );
+        return this.languages.filter(l => langSet.has(l.code));
+      },
+
+      resetConfigDraft() {
+        this.configsPage.editing = null;
+        this.configsPage.draft = {
+          name: '',
+          tag_id: '',
+          variation: '',
+          languages: [],
+          game_config: { nRounds: 1, nIterations: 1, seed: 0, seedCount: 1, llm: 'OpenAIGPT4o', nRoundsIsKnown: true },
+        };
+        this.configsPage.advancedJson = '';
+        this.configsPage.error = '';
+      },
+
+      loadConfigForEdit(cfg) {
+        this.configsPage.editing = cfg.id;
+        this.configsPage.draft = JSON.parse(JSON.stringify(cfg));
+        this.configsPage.advancedJson = JSON.stringify(cfg.game_config || {}, null, 2);
+        this.configsPage.error = '';
+      },
+
+      syncAdvancedJson() {
+        try {
+          const parsed = JSON.parse(this.configsPage.advancedJson);
+          this.configsPage.draft.game_config = parsed;
+          this.configsPage.error = '';
+        } catch (e) {
+          this.configsPage.error = 'Advanced JSON is not valid JSON.';
+        }
+      },
+
+      async saveConfiguration() {
+        this.configsPage.error = '';
+        try {
+          if (this.configsPage.advancedJson) this.syncAdvancedJson();
+          const draft = this.configsPage.draft;
+          const path = this.configsPage.editing
+            ? `/api/configurations/${this.configsPage.editing}`
+            : '/api/configurations';
+          const method = this.configsPage.editing ? 'PUT' : 'POST';
+          await this.api(path, {
+            method,
+            body: JSON.stringify({
+              name: draft.name,
+              tag_id: draft.tag_id,
+              variation: draft.variation,
+              languages: draft.languages,
+              game_config: draft.game_config,
+            }),
+          });
+          this.resetConfigDraft();
+          await this.loadConfigurations();
+        } catch (e) { this.configsPage.error = String(e.message || e); }
+      },
+
+      async deleteConfiguration(id) {
+        if (!confirm('Delete this configuration?')) return;
+        try {
+          await this.api(`/api/configurations/${id}`, { method: 'DELETE' });
+          await this.loadConfigurations();
+        } catch (e) { alert(e.message || e); }
+      },
+
+      async runOneConfiguration(id) {
+        try {
+          const res = await this.api(
+            `/api/configurations/${id}/run?demo_mode=${this.demoMode}`,
+            { method: 'POST' },
+          );
+          await this.loadRuns();
+          this.openRun(res.id);
+        } catch (e) { alert(e.message || e); }
+      },
+
+      async runConfigurationsBatch() {
+        this.configsPage.batchRunning = true;
+        this.configsPage.lastBatchResults = [];
+        this.configsPage.batchProgress = `0/${this.configsPage.selected.length}`;
+        try {
+          // The backend endpoint runs them sequentially; we don't get
+          // per-step progress, but we still show the count.
+          const result = await this.api('/api/configurations/run-batch', {
+            method: 'POST',
+            body: JSON.stringify({
+              configuration_ids: this.configsPage.selected,
+              demo_mode: this.demoMode,
+            }),
+          });
+          this.configsPage.lastBatchResults = result.results;
+          this.configsPage.selected = [];
+          await this.loadRuns();
+        } catch (e) { alert(e.message || e); }
+        finally {
+          this.configsPage.batchRunning = false;
+          this.configsPage.batchProgress = '';
+        }
       },
 
       async loadLanguages() {
