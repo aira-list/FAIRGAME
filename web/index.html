@@ -307,14 +307,16 @@
         <h1 class="text-2xl font-semibold mb-1">⚙️ Configurations</h1>
         <p class="text-slate-600 mb-6">Save runnable bundles of (template + game settings + languages) under your own names. Each configuration gets a stable id and timestamp, so you can re-run, edit, or batch-run later.</p>
 
-        <!-- New / edit configuration -->
-        <div class="fg-card p-6 mb-6">
+        <!-- New / edit configuration: metadata + full builder form -->
+        <div class="fg-card p-6 mb-4">
           <h3 class="font-semibold mb-3" x-text="configsPage.editing ? 'Edit configuration' : '+ New configuration'"></h3>
+          <p class="fg-help mb-4">A configuration captures everything in the scenario builder below — agents, payoff matrix, theory of mind, game-theory settings, reproducibility — plus the metadata above (name, tag/variation/languages). Pick a tag + variation so the right prompt template is attached at run time.</p>
           <div class="grid md:grid-cols-2 gap-4">
             <div>
               <label class="fg-label">Configuration name</label>
               <input type="text" x-model="configsPage.draft.name" class="fg-input" placeholder="e.g. PD harsh, English+French, 5 seeds"/>
             </div>
+            <div></div>
             <div>
               <label class="fg-label">Tag</label>
               <select x-model="configsPage.draft.tag_id" @change="configsPage.draft.variation = ''" class="fg-input">
@@ -333,194 +335,31 @@
                 </template>
               </select>
             </div>
-            <div>
+            <div class="md:col-span-2">
               <label class="fg-label">Languages</label>
-              <p class="fg-help">Only languages that have a template under (tag, variation) are runnable.</p>
-              <div class="border border-slate-200 rounded-md p-2 max-h-40 overflow-auto">
-                <template x-for="lang in availableLanguagesForConfigDraft()" :key="lang.code">
-                  <label class="flex items-center gap-2 text-sm py-0.5">
-                    <input type="checkbox" :value="lang.code" x-model="configsPage.draft.languages"/>
-                    <span x-text="lang.flag + ' ' + lang.name + ' (' + lang.code + ')'"></span>
+              <p class="fg-help mb-2">✓ = a template exists for this (tag, variation). Green dot = a default template ships in <code>resources/game_templates/</code>.</p>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-1.5 max-h-56 overflow-auto p-2 border border-slate-200 rounded-md">
+                <template x-for="lang in languages" :key="lang.code">
+                  <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-slate-50 px-1.5 py-1 rounded">
+                    <input type="checkbox" :value="lang.code" x-model="builder.cfg.languages"/>
+                    <span class="text-base" x-text="lang.flag"></span>
+                    <span x-text="lang.name"></span>
+                    <span class="text-slate-400 text-xs" x-text="lang.code"></span>
+                    <span class="ml-auto flex items-center gap-1">
+                      <span x-show="hasTemplateFor(lang.code)" class="text-emerald-600 text-xs font-bold" title="Template exists for this (tag, variation)">✓</span>
+                      <span x-show="lang.shipped" class="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Default template shipped"></span>
+                    </span>
                   </label>
                 </template>
-                <div x-show="availableLanguagesForConfigDraft().length === 0" class="text-xs text-slate-500 italic">
-                  No templates yet for this (tag, variation). Add one in Templates first.
-                </div>
               </div>
+              <p class="fg-help mt-1">Selected: <span x-text="builder.cfg.languages.join(', ') || 'none'"></span></p>
             </div>
           </div>
-
-          <div class="grid md:grid-cols-3 gap-3 mt-4">
-            <div>
-              <label class="fg-label">nRounds</label>
-              <input type="number" min="1" x-model.number="configsPage.draft.game_config.nRounds" class="fg-input"/>
-            </div>
-            <div>
-              <label class="fg-label">nIterations</label>
-              <input type="number" min="1" x-model.number="configsPage.draft.game_config.nIterations" class="fg-input"/>
-            </div>
-            <div>
-              <label class="fg-label">Master seed</label>
-              <input type="number" x-model.number="configsPage.draft.game_config.seed" class="fg-input"/>
-            </div>
-            <div>
-              <label class="fg-label">Seed count</label>
-              <input type="number" min="1" x-model.number="configsPage.draft.game_config.seedCount" class="fg-input"/>
-            </div>
-            <div>
-              <label class="fg-label">Default LLM</label>
-              <select x-model="configsPage.draft.game_config.llm" class="fg-input">
-                <template x-for="m in llms" :key="m"><option :value="m" x-text="m"></option></template>
-              </select>
-            </div>
-            <label class="flex items-center gap-2 text-sm self-end">
-              <input type="checkbox" x-model="configsPage.draft.game_config.nRoundsIsKnown"/>
-              <span>Round count known</span>
-            </label>
-          </div>
-
-          <details class="mt-4">
-            <summary class="cursor-pointer text-sm text-blue-700">Advanced JSON overrides</summary>
-            <p class="fg-help">Anything you put here is merged on top of the basic fields above before running. Useful for `tomOrder`, `discountFactor`, custom `agents`, full `payoffMatrix`, etc.</p>
-            <textarea x-model="configsPage.advancedJson"
-                      @blur="syncAdvancedJson()"
-                      class="w-full border border-slate-300 rounded-md px-3 py-2 font-mono text-xs h-40 mt-2"></textarea>
-          </details>
-
-          <div class="mt-4 flex gap-2">
-            <button class="px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
-                    :disabled="!configsPage.canSave"
-                    @click="saveConfiguration()">
-              <span x-text="configsPage.editing ? 'Update configuration' : 'Save configuration'"></span>
-            </button>
-            <button x-show="configsPage.editing" class="px-5 py-2 rounded-md border border-slate-300"
-                    @click="resetConfigDraft()">Cancel</button>
-          </div>
-          <div x-show="configsPage.error" class="mt-3 p-3 bg-rose-50 border border-rose-200 rounded text-rose-800 text-sm" x-text="configsPage.error"></div>
         </div>
 
-        <!-- List of saved configurations -->
-        <div class="fg-card p-6">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-lg font-semibold">Saved configurations</h2>
-            <button class="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
-                    :disabled="configsPage.selected.length === 0 || configsPage.batchRunning"
-                    @click="runConfigurationsBatch()">
-              <span x-show="!configsPage.batchRunning">▶ Run selected (<span x-text="configsPage.selected.length"></span>)</span>
-              <span x-show="configsPage.batchRunning">Running… <span x-text="configsPage.batchProgress"></span></span>
-            </button>
-          </div>
-
-          <div x-show="configurations.length === 0" class="text-slate-500 italic text-sm">
-            No saved configurations yet.
-          </div>
-
-          <div class="space-y-2">
-            <template x-for="cfg in configurations" :key="cfg.id">
-              <div class="border border-slate-200 rounded-md p-3 flex items-center gap-3">
-                <input type="checkbox" :value="cfg.id" x-model="configsPage.selected"/>
-                <div class="flex-1">
-                  <div class="font-medium" x-text="cfg.name"></div>
-                  <div class="text-xs text-slate-500">
-                    <code x-text="cfg.id"></code>
-                    · <span x-text="cfg.created_at"></span>
-                    · <span x-text="tagName(cfg.tag_id) + ' / ' + cfg.variation"></span>
-                    · <span x-text="cfg.languages.map(l => languageFlag(l)).join(' ') + ' (' + cfg.languages.join(', ') + ')'"></span>
-                  </div>
-                </div>
-                <button class="text-blue-600 hover:underline text-sm" @click="runOneConfiguration(cfg.id)">▶ Run</button>
-                <button class="text-blue-600 hover:underline text-sm" @click="loadConfigForEdit(cfg)">Edit</button>
-                <button class="text-rose-600 hover:underline text-sm" @click="deleteConfiguration(cfg.id)">Delete</button>
-              </div>
-            </template>
-          </div>
-
-          <div x-show="configsPage.lastBatchResults.length > 0" class="mt-4 p-3 bg-slate-50 rounded-md">
-            <h3 class="text-sm font-semibold mb-2">Last batch run</h3>
-            <ul class="space-y-1 text-sm">
-              <template x-for="r in configsPage.lastBatchResults" :key="r.configuration_id">
-                <li>
-                  <code x-text="r.configuration_id"></code>
-                  <span x-show="r.run_id"> → run <a class="text-blue-600 underline" @click.prevent="openRun(r.run_id)" href="#" x-text="r.run_id"></a> (<span x-text="r.n_rows + ' games'"></span>)</span>
-                  <span x-show="r.error" class="text-rose-700"> · <span x-text="r.error"></span></span>
-                </li>
-              </template>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-
-      <!-- ===== QUICK START ===== -->
-      <section x-show="activePage === 'quick'">
-        <h1 class="text-2xl font-semibold mb-1">🚀 Quick start</h1>
-        <p class="text-slate-600 mb-6">Pick a shipped scenario, optionally tweak the basics, click Run.</p>
-
-        <div class="fg-card p-6 mb-6">
-          <div class="grid md:grid-cols-2 gap-4">
-            <div class="md:col-span-2">
-              <label class="fg-label">Scenario</label>
-              <select x-model="quick.preset" @change="loadPresetIntoQuick()" class="fg-input">
-                <option value="">— select a preset —</option>
-                <template x-for="(presets, category) in presetsByCategory" :key="category">
-                  <optgroup :label="category">
-                    <template x-for="p in presets" :key="p.id">
-                      <option :value="p.id" x-text="p.label || p.name"></option>
-                    </template>
-                  </optgroup>
-                </template>
-              </select>
-            </div>
-
-            <div>
-              <label class="fg-label">Run name (optional)</label>
-              <input type="text" x-model="quick.name" class="fg-input" placeholder="leave blank to use preset name"/>
-            </div>
-            <div>
-              <label class="fg-label">Number of rounds</label>
-              <input type="number" min="1" x-model.number="quick.nRounds" class="fg-input"/>
-            </div>
-            <div>
-              <label class="fg-label">Master seed</label>
-              <input type="number" x-model.number="quick.seed" class="fg-input"/>
-              <p class="fg-help">Same seed → same outcome. Used for type draws + mixed-strategy sampling.</p>
-            </div>
-            <div>
-              <label class="fg-label">Seed count (for confidence intervals)</label>
-              <input type="number" min="1" x-model.number="quick.seedCount" class="fg-input"/>
-              <p class="fg-help">>1 reruns the scenario with different seeds and aggregates with 95% CIs.</p>
-            </div>
-          </div>
-
-          <button class="mt-5 px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
-                  :disabled="!quick.preset || quick.running"
-                  @click="runQuick()">
-            <span x-show="!quick.running">▶ Run scenario</span>
-            <span x-show="quick.running">Running…</span>
-          </button>
-
-          <div x-show="quick.error" class="mt-4 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-sm" x-text="quick.error"></div>
-        </div>
-
-        <div x-show="quick.lastRun" class="fg-card p-6">
-          <div class="flex items-baseline justify-between mb-3">
-            <h2 class="text-lg font-semibold">Latest run</h2>
-            <a class="text-sm text-blue-600 hover:underline" :href="`/api/runs/${quick.lastRun?.id}/csv`">Download CSV ↓</a>
-          </div>
-          <p class="text-sm text-slate-500 mb-3">Run id: <code class="text-slate-700" x-text="quick.lastRun?.id"></code></p>
-          <div x-html="renderTable(quick.lastRun?.rows)"></div>
-        </div>
-      </section>
-
-
-      <!-- ===== BUILDER ===== -->
-      <section x-show="activePage === 'builder'">
-        <h1 class="text-2xl font-semibold mb-1">🛠️ Scenario builder</h1>
-        <p class="text-slate-600 mb-6">Form-based config builder. Tabs cover basics, agents, theory of mind, game theory, and reproducibility. The JSON view at the bottom lets you eyeball or download the generated config.</p>
-
-        <!-- Preset loader -->
+        <!-- Preset loader (optional bootstrap from a shipped scenario) -->
         <div class="fg-card p-4 mb-4">
-          <label class="fg-label">Start from preset (optional)</label>
+          <label class="fg-label">Bootstrap from a shipped preset (optional)</label>
           <div class="flex gap-2">
             <select x-model="builder.preset" class="fg-input">
               <option value="">— blank slate —</option>
@@ -536,7 +375,7 @@
           </div>
         </div>
 
-        <!-- Tabs -->
+        <!-- Builder tabs -->
         <div class="flex gap-1 border-b border-slate-200 mb-4">
           <template x-for="t in builderTabs" :key="t.id">
             <a class="fg-tab"
@@ -546,34 +385,16 @@
           </template>
         </div>
 
-        <!-- BASICS -->
+        <!-- BASICS (no languages — handled by metadata above) -->
         <div x-show="builder.tab === 'basics'" class="fg-card p-6">
           <div class="grid md:grid-cols-2 gap-4">
             <div>
-              <label class="fg-label">Scenario name</label>
+              <label class="fg-label">Scenario name (engine field — defaults to the configuration name)</label>
               <input type="text" x-model="builder.cfg.name" class="fg-input"/>
             </div>
             <div>
               <label class="fg-label">Number of rounds</label>
               <input type="number" min="1" x-model.number="builder.cfg.nRounds" class="fg-input"/>
-            </div>
-            <div class="md:col-span-2">
-              <label class="fg-label">Languages</label>
-              <p class="fg-help mb-2">Each language is a separate game; useful for cross-lingual bias studies. Languages with a green dot ship a default prompt template; the others would need to be auto-translated first.</p>
-              <div class="grid grid-cols-2 md:grid-cols-3 gap-1.5 max-h-56 overflow-auto p-2 border border-slate-200 rounded-md">
-                <template x-for="lang in languages" :key="lang.code">
-                  <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-slate-50 px-1.5 py-1 rounded">
-                    <input type="checkbox"
-                           :value="lang.code"
-                           x-model="builder.cfg.languages"/>
-                    <span class="text-base" x-text="lang.flag"></span>
-                    <span x-text="lang.name"></span>
-                    <span class="text-slate-400 text-xs" x-text="lang.code"></span>
-                    <span x-show="lang.shipped" class="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500" title="Template shipped"></span>
-                  </label>
-                </template>
-              </div>
-              <p class="fg-help mt-1">Currently selected: <span x-text="builder.cfg.languages.join(', ') || 'none'"></span></p>
             </div>
             <div>
               <label class="fg-label">Default LLM</label>
@@ -743,12 +564,6 @@
               <p class="fg-help">Sum of payoffs at the Pareto-optimal cell. Lets the welfare report emit an efficiency ratio.</p>
             </div>
 
-            <div>
-              <label class="fg-label">Reputation window (optional)</label>
-              <input type="number" min="0" x-model.number="builder.cfg.reputationWindow" class="fg-input"/>
-              <p class="fg-help">Mirrored from the ToM tab — rolling cooperate-rate window.</p>
-            </div>
-
             <div class="md:col-span-2 mt-3 p-3 rounded-md bg-slate-50 border border-slate-200">
               <h3 class="text-sm font-semibold mb-2">Baseline strategy semantics</h3>
               <p class="fg-help mb-2">Tells canonical baselines (Tit-for-Tat, GrimTrigger, …) which strategy keys to read as "cooperate" and "defect". Required when you use baselines in non-PD games.</p>
@@ -857,13 +672,19 @@
                     class="w-full border border-slate-300 rounded-md px-3 py-2 font-mono text-xs h-96"></textarea>
         </div>
 
-        <!-- RUN BAR -->
-        <div class="fg-card p-4 mt-4 flex items-center gap-4">
+        <!-- SAVE / RUN BAR -->
+        <div class="fg-card p-4 mt-4 flex items-center gap-3 flex-wrap">
           <button class="px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
-                  :disabled="builder.running"
-                  @click="runBuilder()">
-            <span x-show="!builder.running">▶ Run scenario</span>
-            <span x-show="builder.running">Running…</span>
+                  :disabled="!configsPage_canSave"
+                  @click="saveConfiguration()">
+            <span x-text="configsPage.editing ? '💾 Update configuration' : '💾 Save configuration'"></span>
+          </button>
+          <button x-show="configsPage.editing" class="px-4 py-2 rounded-md border border-slate-300 text-sm"
+                  @click="resetConfigDraft()">Cancel edit</button>
+          <button class="px-4 py-2 rounded-md border border-slate-300 text-sm hover:bg-slate-50"
+                  :disabled="!configsPage.editing"
+                  @click="runEditingConfiguration()" title="Save first, then run">
+            ▶ Run this configuration
           </button>
           <button class="px-4 py-2 rounded-md border border-slate-300 text-sm hover:bg-slate-50"
                   @click="downloadJson(buildConfig(), (builder.cfg.name||'scenario')+'.json')">
@@ -872,14 +693,118 @@
           <span class="text-xs text-slate-500 ml-auto" x-text="agentSummary()"></span>
         </div>
 
-        <div x-show="builder.error" class="mt-4 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-sm" x-text="builder.error"></div>
+        <div x-show="configsPage.error" class="mt-3 p-3 bg-rose-50 border border-rose-200 rounded text-rose-800 text-sm" x-text="configsPage.error"></div>
 
-        <div x-show="builder.lastRun" class="fg-card p-6 mt-4">
+        <!-- List of saved configurations -->
+        <div class="fg-card p-6">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold">Saved configurations</h2>
+            <button class="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
+                    :disabled="configsPage.selected.length === 0 || configsPage.batchRunning"
+                    @click="runConfigurationsBatch()">
+              <span x-show="!configsPage.batchRunning">▶ Run selected (<span x-text="configsPage.selected.length"></span>)</span>
+              <span x-show="configsPage.batchRunning">Running… <span x-text="configsPage.batchProgress"></span></span>
+            </button>
+          </div>
+
+          <div x-show="configurations.length === 0" class="text-slate-500 italic text-sm">
+            No saved configurations yet.
+          </div>
+
+          <div class="space-y-2">
+            <template x-for="cfg in configurations" :key="cfg.id">
+              <div class="border border-slate-200 rounded-md p-3 flex items-center gap-3">
+                <input type="checkbox" :value="cfg.id" x-model="configsPage.selected"/>
+                <div class="flex-1">
+                  <div class="font-medium" x-text="cfg.name"></div>
+                  <div class="text-xs text-slate-500">
+                    <code x-text="cfg.id"></code>
+                    · <span x-text="cfg.created_at"></span>
+                    · <span x-text="tagName(cfg.tag_id) + ' / ' + cfg.variation"></span>
+                    · <span x-text="cfg.languages.map(l => languageFlag(l)).join(' ') + ' (' + cfg.languages.join(', ') + ')'"></span>
+                  </div>
+                </div>
+                <button class="text-blue-600 hover:underline text-sm" @click="runOneConfiguration(cfg.id)">▶ Run</button>
+                <button class="text-blue-600 hover:underline text-sm" @click="loadConfigForEdit(cfg)">Edit</button>
+                <button class="text-rose-600 hover:underline text-sm" @click="deleteConfiguration(cfg.id)">Delete</button>
+              </div>
+            </template>
+          </div>
+
+          <div x-show="configsPage.lastBatchResults.length > 0" class="mt-4 p-3 bg-slate-50 rounded-md">
+            <h3 class="text-sm font-semibold mb-2">Last batch run</h3>
+            <ul class="space-y-1 text-sm">
+              <template x-for="r in configsPage.lastBatchResults" :key="r.configuration_id">
+                <li>
+                  <code x-text="r.configuration_id"></code>
+                  <span x-show="r.run_id"> → run <a class="text-blue-600 underline" @click.prevent="openRun(r.run_id)" href="#" x-text="r.run_id"></a> (<span x-text="r.n_rows + ' games'"></span>)</span>
+                  <span x-show="r.error" class="text-rose-700"> · <span x-text="r.error"></span></span>
+                </li>
+              </template>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ===== QUICK START ===== -->
+      <section x-show="activePage === 'quick'">
+        <h1 class="text-2xl font-semibold mb-1">🚀 Quick start</h1>
+        <p class="text-slate-600 mb-6">Pick a shipped scenario, optionally tweak the basics, click Run.</p>
+
+        <div class="fg-card p-6 mb-6">
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+              <label class="fg-label">Scenario</label>
+              <select x-model="quick.preset" @change="loadPresetIntoQuick()" class="fg-input">
+                <option value="">— select a preset —</option>
+                <template x-for="(presets, category) in presetsByCategory" :key="category">
+                  <optgroup :label="category">
+                    <template x-for="p in presets" :key="p.id">
+                      <option :value="p.id" x-text="p.label || p.name"></option>
+                    </template>
+                  </optgroup>
+                </template>
+              </select>
+            </div>
+
+            <div>
+              <label class="fg-label">Run name (optional)</label>
+              <input type="text" x-model="quick.name" class="fg-input" placeholder="leave blank to use preset name"/>
+            </div>
+            <div>
+              <label class="fg-label">Number of rounds</label>
+              <input type="number" min="1" x-model.number="quick.nRounds" class="fg-input"/>
+            </div>
+            <div>
+              <label class="fg-label">Master seed</label>
+              <input type="number" x-model.number="quick.seed" class="fg-input"/>
+              <p class="fg-help">Same seed → same outcome. Used for type draws + mixed-strategy sampling.</p>
+            </div>
+            <div>
+              <label class="fg-label">Seed count (for confidence intervals)</label>
+              <input type="number" min="1" x-model.number="quick.seedCount" class="fg-input"/>
+              <p class="fg-help">>1 reruns the scenario with different seeds and aggregates with 95% CIs.</p>
+            </div>
+          </div>
+
+          <button class="mt-5 px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+                  :disabled="!quick.preset || quick.running"
+                  @click="runQuick()">
+            <span x-show="!quick.running">▶ Run scenario</span>
+            <span x-show="quick.running">Running…</span>
+          </button>
+
+          <div x-show="quick.error" class="mt-4 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-sm" x-text="quick.error"></div>
+        </div>
+
+        <div x-show="quick.lastRun" class="fg-card p-6">
           <div class="flex items-baseline justify-between mb-3">
             <h2 class="text-lg font-semibold">Latest run</h2>
-            <a class="text-sm text-blue-600 hover:underline" :href="`/api/runs/${builder.lastRun?.id}/csv`">Download CSV ↓</a>
+            <a class="text-sm text-blue-600 hover:underline" :href="`/api/runs/${quick.lastRun?.id}/csv`">Download CSV ↓</a>
           </div>
-          <div x-html="renderTable(builder.lastRun?.rows)"></div>
+          <p class="text-sm text-slate-500 mb-3">Run id: <code class="text-slate-700" x-text="quick.lastRun?.id"></code></p>
+          <div x-html="renderTable(quick.lastRun?.rows)"></div>
         </div>
       </section>
 
@@ -1174,7 +1099,6 @@
         { id: 'quick',          icon: '🚀', label: 'Quick start' },
         { id: 'templates',      icon: '🏷️', label: 'Templates' },
         { id: 'configurations', icon: '⚙️', label: 'Configurations' },
-        { id: 'builder',        icon: '🛠️', label: 'Scenario builder' },
         { id: 'tournament',     icon: '🏆', label: 'Tournament' },
         { id: 'experiment',     icon: '🧪', label: 'Experiment' },
         { id: 'results',        icon: '📊', label: 'Results' },
@@ -1219,26 +1143,22 @@
       },
 
       // ---- Configurations page state -----
+      // The Configuration form *is* the Scenario Builder form plus the
+      // metadata fields below. Source of truth for the engine config is
+      // the existing ``builder`` state object; ``configsPage.draft``
+      // only holds metadata that lives outside the engine config
+      // (display name, tag/variation pointer used to look up the
+      // template at run time). Languages live on ``builder.cfg`` so
+      // the metadata picker and the rest of the form stay in sync.
       configurations: [],
       configsPage: {
         editing: null,
-        draft: {
-          name: '',
-          tag_id: '',
-          variation: '',
-          languages: [],
-          game_config: { nRounds: 1, nIterations: 1, seed: 0, seedCount: 1, llm: 'OpenAIGPT4o', nRoundsIsKnown: true },
-        },
-        advancedJson: '',
+        draft: { name: '', tag_id: '', variation: '' },
         error: '',
         selected: [],
         batchRunning: false,
         batchProgress: '',
         lastBatchResults: [],
-        get canSave() {
-          const d = this.draft;
-          return !!(d.name && d.tag_id && d.variation && d.languages.length > 0);
-        },
       },
 
       quick: { preset: '', name: '', nRounds: 1, seed: 0, seedCount: 1, running: false, error: '', lastRun: null },
@@ -1486,6 +1406,21 @@
         return t ? t.name : '(unknown tag)';
       },
 
+      get configsPage_canSave() {
+        const d = this.configsPage.draft;
+        return !!(d.name && d.tag_id && d.variation && this.builder.cfg.languages.length > 0);
+      },
+
+      hasTemplateFor(langCode) {
+        const d = this.configsPage.draft;
+        if (!d.tag_id || !d.variation) return false;
+        return this.templates.some(
+          t => t.tag_id === d.tag_id
+            && t.variation === d.variation
+            && t.language === langCode
+        );
+      },
+
       variationsForTag(tagId) {
         if (!tagId) return [];
         const set = new Set();
@@ -1495,51 +1430,47 @@
         return Array.from(set).sort();
       },
 
-      availableLanguagesForConfigDraft() {
-        const d = this.configsPage.draft;
-        if (!d.tag_id || !d.variation) return [];
-        const langSet = new Set(
-          this.templates
-            .filter(t => t.tag_id === d.tag_id && t.variation === d.variation)
-            .map(t => t.language)
-        );
-        return this.languages.filter(l => langSet.has(l.code));
-      },
-
       resetConfigDraft() {
         this.configsPage.editing = null;
-        this.configsPage.draft = {
-          name: '',
-          tag_id: '',
-          variation: '',
-          languages: [],
-          game_config: { nRounds: 1, nIterations: 1, seed: 0, seedCount: 1, llm: 'OpenAIGPT4o', nRoundsIsKnown: true },
-        };
-        this.configsPage.advancedJson = '';
+        this.configsPage.draft = { name: '', tag_id: '', variation: '' };
         this.configsPage.error = '';
+        // Wipe the embedded builder back to defaults so a stale
+        // configuration doesn't leak into the next "+ New configuration".
+        this.applyConfigToBuilder({});
+        this.builder.cfg.languages = [];
       },
 
       loadConfigForEdit(cfg) {
         this.configsPage.editing = cfg.id;
-        this.configsPage.draft = JSON.parse(JSON.stringify(cfg));
-        this.configsPage.advancedJson = JSON.stringify(cfg.game_config || {}, null, 2);
+        this.configsPage.draft = {
+          name: cfg.name,
+          tag_id: cfg.tag_id,
+          variation: cfg.variation,
+        };
         this.configsPage.error = '';
-      },
-
-      syncAdvancedJson() {
-        try {
-          const parsed = JSON.parse(this.configsPage.advancedJson);
-          this.configsPage.draft.game_config = parsed;
-          this.configsPage.error = '';
-        } catch (e) {
-          this.configsPage.error = 'Advanced JSON is not valid JSON.';
-        }
+        // Hydrate the full builder form from the saved game_config.
+        const full = JSON.parse(JSON.stringify(cfg.game_config || {}));
+        full.name = cfg.name;
+        full.languages = cfg.languages;
+        this.applyConfigToBuilder(full);
       },
 
       async saveConfiguration() {
         this.configsPage.error = '';
+        if (!this.configsPage_canSave) {
+          this.configsPage.error = 'Need a name, tag, variation, and at least one language.';
+          return;
+        }
         try {
-          if (this.configsPage.advancedJson) this.syncAdvancedJson();
+          // Build the full engine config from the Builder state.
+          const game_config = this.buildConfig();
+          // The saved Configuration owns name/languages/promptTemplate at
+          // run time, so don't double-store them in game_config.
+          delete game_config.name;
+          delete game_config.languages;
+          delete game_config.promptTemplate;
+          delete game_config.templateFilename;
+
           const draft = this.configsPage.draft;
           const path = this.configsPage.editing
             ? `/api/configurations/${this.configsPage.editing}`
@@ -1551,13 +1482,21 @@
               name: draft.name,
               tag_id: draft.tag_id,
               variation: draft.variation,
-              languages: draft.languages,
-              game_config: draft.game_config,
+              languages: this.builder.cfg.languages,
+              game_config,
             }),
           });
-          this.resetConfigDraft();
           await this.loadConfigurations();
+          if (!this.configsPage.editing) this.resetConfigDraft();
         } catch (e) { this.configsPage.error = String(e.message || e); }
+      },
+
+      async runEditingConfiguration() {
+        if (!this.configsPage.editing) return;
+        await this.saveConfiguration();
+        if (!this.configsPage.error) {
+          await this.runOneConfiguration(this.configsPage.editing);
+        }
       },
 
       async deleteConfiguration(id) {
