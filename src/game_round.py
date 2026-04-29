@@ -55,13 +55,24 @@ class GameRound:
             )
 
     def run(self) -> List[str]:
-        """Execute one full round and return the strategy keys chosen."""
-        if self.game.agents_communicate:
-            self._execute_communication_phase()
+        """Execute one full round and return the strategy keys chosen.
 
-        if getattr(self.game, "elicit_beliefs", False):
-            self._execute_belief_phase()
+        Delegates to a list of :class:`Phase` objects, in fixed order:
+        communication (if enabled) → belief elicitation (if enabled) →
+        choose (always). Only the choose phase produces a value the
+        engine cares about; the others are pure side-effects on history.
+        """
+        from src.phases import ChoosePhase, phases_for_game  # local: avoid cycles
 
+        result: List[str] = []
+        for phase in phases_for_game(self.game):
+            output = phase.run(self)
+            if isinstance(phase, ChoosePhase):
+                result = output  # type: ignore[assignment]
+        return result
+
+    # Backwards-compatible entry for ChoosePhase to delegate into.
+    def _execute_choose_phase(self) -> List[str]:
         choose_phase = "mixedChoose" if self.game.mixed_strategies else "choose"
         round_strategies: List[str] = []
         for agent in self.game.agents.values():
@@ -173,10 +184,14 @@ class GameRound:
         return [a for a in self.game.agents.values() if a != agent]
 
     def _execute_agent_strategy(self, agent, prompt: str) -> str:
-        # Baseline (non-LLM) agents short-circuit: they decide from game state.
-        baseline = getattr(agent, "baseline_strategy", None)
-        if baseline is not None:
-            strategy_key = baseline.choose(agent, self.game, self.round_number)
+        # Polymorphic dispatch: BaselineAgent picks via its strategy
+        # object, LLMAgent goes through the LLM call.
+        from src.agent import BaselineAgent  # local import to avoid cycle
+
+        if isinstance(agent, BaselineAgent):
+            strategy_key = agent.baseline_strategy.choose(
+                agent, self.game, self.round_number
+            )
             agent.add_strategy(self.game.payoff_matrix.strategies[strategy_key])
             return strategy_key
 

@@ -1,14 +1,26 @@
-"""Factory: load configs, expand permutations, build and run :class:`FairGame`s."""
+"""Factory: load configs, expand permutations, build and run :class:`FairGame`s.
+
+The factory orchestrates two collaborators:
+
+* :class:`PermutationExpander` — owns the personality / opponent-prior /
+  agent / language permutation DataFrame.
+* :class:`TournamentBuilder` — generates per-pair configs for round-robin
+  tournaments.
+
+This file keeps the high-level orchestration (multi-seed loop,
+agent construction, FairGame instantiation) and delegates the
+combinatorial work to its collaborators.
+"""
 
 from __future__ import annotations
 
-import itertools
 import random
 from typing import Any, Dict, List, Optional, Sequence
 
 import pandas as pd
 
 from src.agent import Agent
+from src.factory import PermutationExpander, TournamentBuilder
 from src.fairgame import FairGame
 from src.io_managers.io_manager import IoManager
 from src.utils.logger import get_logger
@@ -50,158 +62,41 @@ class FairGameFactory:
         self.config_all_langs_df = pd.DataFrame()
         self.games: List[FairGame] = []
         self.output_dict: Dict[str, Any] = {}
+        self._expander = PermutationExpander()
+        self._tournament = TournamentBuilder()
 
     # ----------------------------
-    # LLM resolution helpers
+    # LLM resolution (delegates)
     # ----------------------------
     def _resolve_llms_for_agents(
         self, full_config: Any, agents: Sequence[str]
     ) -> List[str]:
-        n_agents = len(agents)
-        # Accept a bare LLM identifier for callers that still pass the legacy
-        # third-arg shape (e.g. older test fixtures).
-        if isinstance(full_config, str):
-            return [full_config] * n_agents
-        llms = full_config.get("llms")
-
-        if isinstance(llms, dict):
-            return [llms[name] for name in agents]
-
-        if isinstance(llms, (list, tuple)):
-            llms_list = list(llms)
-            if len(llms_list) != n_agents:
-                raise ValueError(
-                    f"config['llms'] length ({len(llms_list)}) "
-                    f"must equal number of agents ({n_agents})."
-                )
-            return llms_list
-
-        single = full_config.get("llm")
-        if isinstance(single, str):
-            return [single] * n_agents
-
-        raise ValueError(
-            "Missing LLM configuration: provide 'llm', 'llms' list, or 'llms' dict."
-        )
-
-    def _uses_same_llm_for_all_agents(
-        self, full_config: Dict[str, Any], agent_names: Sequence[str]
-    ) -> bool:
-        try:
-            llms = self._resolve_llms_for_agents(full_config, agent_names)
-        except Exception:
-            return False
-        return len(set(llms)) == 1
-
-    def _attach_llm_columns(
-        self, df: pd.DataFrame, full_config: Dict[str, Any]
-    ) -> pd.DataFrame:
-        if df.empty:
-            return df
-
-        agent_cols = sorted(
-            (c for c in df.columns if c.startswith("Agent")),
-            key=lambda x: int(x.replace("Agent", "")),
-        )
-        llm_cols = [f"LLM{i}" for i in range(1, len(agent_cols) + 1)]
-        for col in llm_cols:
-            if col not in df.columns:
-                df[col] = None
-
-        for idx, row in df.iterrows():
-            agents = [row[c] for c in agent_cols]
-            llms = self._resolve_llms_for_agents(full_config, agents)
-            for i, llm in enumerate(llms, start=1):
-                df.at[idx, f"LLM{i}"] = llm
-
-        return df
+        return self._expander.resolve_llms(full_config, agents)
 
     # ----------------------------
-    # Permutation generation
+    # Permutation generation (delegates)
     # ----------------------------
     def _generate_language_config_df(
         self, config: Dict[str, Any], lang: str
     ) -> pd.DataFrame:
-        if config["allAgentPermutations"]:
-            return self.compute_all_game_configurations(lang, config["agents"], config)
-        return self.compute_configuration(lang, config["agents"], config)
-
-    def _compute_agent_configurations(
-        self, lang: str, config_agents: Dict[str, Any], full_config: Dict[str, Any]
-    ):
-        n_agents = len(config_agents["names"])
-        agent_combinations = [config_agents["names"]]
-
-        use_combinations = self._uses_same_llm_for_all_agents(
-            full_config, config_agents["names"]
-        )
-        permute = itertools.combinations_with_replacement if use_combinations else itertools.product
-        if use_combinations:
-            personality_permutations = list(
-                permute(config_agents["personalities"][lang], n_agents)
-            )
-            knowledge_permutations = list(
-                permute(config_agents["opponentPersonalityProb"], n_agents)
-            )
-        else:
-            personality_permutations = list(
-                permute(config_agents["personalities"][lang], repeat=n_agents)
-            )
-            knowledge_permutations = list(
-                permute(config_agents["opponentPersonalityProb"], repeat=n_agents)
-            )
-
-        return agent_combinations, personality_permutations, knowledge_permutations
-
-    def _generate_full_permutations(
-        self, agent_combinations, personality_permutations, knowledge_permutations
-    ) -> pd.DataFrame:
-        rows = []
-        for agents in agent_combinations:
-            n_agents = len(agents)
-            for pers_tuple, know_tuple in itertools.product(
-                personality_permutations, knowledge_permutations
-            ):
-                rows.append(
-                    {
-                        **{f"Agent{i+1}": agents[i] for i in range(n_agents)},
-                        **{f"Personality{i+1}": pers_tuple[i] for i in range(n_agents)},
-                        **{
-                            f"OpponentPersonalityProb{i+1}": know_tuple[i]
-                            for i in range(n_agents)
-                        },
-                    }
-                )
-        return pd.DataFrame(rows)
+        return self._expander.expand(config, lang)
 
     def compute_all_game_configurations(
         self, lang: str, config_agents: Dict[str, Any], full_config: Dict[str, Any]
     ) -> pd.DataFrame:
-        agent_combinations, pers_perms, knowledge_perms = self._compute_agent_configurations(
-            lang, config_agents, full_config
-        )
-        df = self._generate_full_permutations(agent_combinations, pers_perms, knowledge_perms)
-        df["Language"] = lang
-        return self._attach_llm_columns(df, full_config)
+        # Backward-compat shim. Older callers passed ``config_agents``
+        # separately; the expander only needs the full config.
+        return self._expander.expand(full_config, lang)
 
     def compute_configuration(
         self, lang: str, config_agents: Dict[str, Any], full_config: Dict[str, Any]
     ) -> pd.DataFrame:
-        n_agents = len(config_agents["names"])
-        row = {
-            **{f"Agent{i+1}": config_agents["names"][i] for i in range(n_agents)},
-            **{
-                f"Personality{i+1}": config_agents["personalities"][lang][i]
-                for i in range(n_agents)
-            },
-            **{
-                f"OpponentPersonalityProb{i+1}": config_agents["opponentPersonalityProb"][i]
-                for i in range(n_agents)
-            },
-            "Language": lang,
-        }
-        df = pd.DataFrame([row])
-        return self._attach_llm_columns(df, full_config)
+        # Backward-compat shim. The expander handles single-vs-permutation
+        # internally based on full_config["allAgentPermutations"].
+        cfg = dict(full_config) if isinstance(full_config, dict) else {}
+        cfg["allAgentPermutations"] = False
+        cfg.setdefault("agents", config_agents)
+        return self._expander.expand(cfg, lang)
 
     # ----------------------------
     # Game creation
@@ -221,18 +116,18 @@ class FairGameFactory:
         if types_config is not None:
             self._assign_agent_types(agents, types_config, rng=rng)
 
+        from src.game_config import GameConfig
         from src.utility import build_utility_transform  # local import to avoid cycles
 
-        game = FairGame(
-            config["name"],
-            game_config_row["Language"],
-            agents,
-            config["nRounds"],
-            config["nRoundsIsKnown"],
-            payoff_matrix,
-            prompt_template,
-            config["stopGameWhen"],
-            config["agentsCommunicate"],
+        game_cfg = GameConfig(
+            name=config["name"],
+            language=game_config_row["Language"],
+            n_rounds=config["nRounds"],
+            n_rounds_known=config["nRoundsIsKnown"],
+            payoff_matrix_data=payoff_matrix,
+            prompt_template=prompt_template,
+            stop_conditions=list(config["stopGameWhen"]),
+            agents_communicate=bool(config["agentsCommunicate"]),
             elicit_beliefs=bool(config.get("elicitBeliefs", False)),
             tom_order=int(config.get("tomOrder", 1)),
             types_config=types_config,
@@ -248,6 +143,7 @@ class FairGameFactory:
             rng=rng,
             seed=seed,
         )
+        game = FairGame.from_config(game_cfg, agents)
         game.fake_communication_config = FakeCommunicationConfig.from_config(config)
         # Surface baseline semantics on the game so non-LLM strategies know
         # which key counts as "cooperate" vs "defect".
@@ -370,36 +266,19 @@ class FairGameFactory:
     def _create_tournament_games(self, config: Dict[str, Any]) -> List[FairGame]:
         """Round-robin: one game per unordered pair of agents.
 
-        Each pair-game inherits the full top-level config but rewrites
-        ``agents.names``, ``agents.personalities[lang]`` and any ``llms``
-        list/dict to a 2-element slice for the chosen pair. Other config
-        axes (languages, permutations, etc.) still apply within each pair.
+        Delegates pair generation and per-pair config slicing to
+        :class:`TournamentBuilder`; the factory still owns the
+        per-language permutation expansion and FairGame instantiation.
         """
         block = config.get("tournament") or {}
         mode = block.get("mode", "round_robin")
-        if mode != "round_robin":
-            raise ValueError(f"Unsupported tournament mode {mode!r}.")
         symmetric = bool(block.get("symmetric", True))
-
         names = list(config["agents"]["names"])
-        if len(names) < 2:
-            raise ValueError("Tournament needs at least 2 agents.")
+        pairs = self._tournament.pairs(names, mode=mode, symmetric=symmetric)
 
-        pairs: List[tuple[str, str]] = []
-        for i, ai in enumerate(names):
-            for j, aj in enumerate(names):
-                if ai == aj:
-                    continue
-                if symmetric and j <= i:
-                    continue
-                pairs.append((ai, aj))
-
-        # Build each pair's config once and pair df-rows with their config
-        # so we can't lose track of which pair a row belongs to even if
-        # subsequent code reorders rows.
         self.games = []
         for pair_idx, pair in enumerate(pairs):
-            pair_config = self._build_pair_config(config, pair, pair_idx)
+            pair_config = self._tournament.build_pair_config(config, pair, pair_idx)
             pair_df = pd.DataFrame()
             for lang in pair_config["languages"]:
                 lang_df = self._generate_language_config_df(pair_config, lang)

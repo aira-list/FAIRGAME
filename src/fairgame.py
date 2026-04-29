@@ -25,6 +25,38 @@ logger = get_logger(__name__)
 class FairGame:
     """Coordinates rounds, payoff scoring, and stop conditions for one game."""
 
+    @classmethod
+    def from_config(cls, config, agents) -> "FairGame":
+        """Construct from a :class:`GameConfig` plus the agent dict.
+
+        Preferred over the multi-kwarg ``__init__`` for new code.
+        """
+        return cls(
+            name=config.name,
+            language=config.language,
+            agents=agents,
+            n_rounds=config.n_rounds,
+            n_rounds_known=config.n_rounds_known,
+            payoff_matrix_data=config.payoff_matrix_data,
+            prompt_template=config.prompt_template,
+            stop_conditions=list(config.stop_conditions),
+            agents_communicate=config.agents_communicate,
+            elicit_beliefs=config.elicit_beliefs,
+            tom_order=config.tom_order,
+            types_config=config.types_config,
+            types_common_knowledge=config.types_common_knowledge,
+            utility_transform=config.utility_transform,
+            discount_factor=config.discount_factor,
+            continuation_probability=config.continuation_probability,
+            equilibria=config.equilibria,
+            pareto_optimal_sum=config.pareto_optimal_sum,
+            mixed_strategies=config.mixed_strategies,
+            reputation_window=config.reputation_window,
+            reputation_applies=config.reputation_applies,
+            rng=config.rng,
+            seed=config.seed,
+        )
+
     def __init__(
         self,
         name: str,
