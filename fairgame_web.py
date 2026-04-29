@@ -948,12 +948,18 @@ class ConfigurationBody(BaseModel):
 
 
 class RunConfigurationsBody(BaseModel):
+    """Batch payload for the Experiment page.
+
+    The configuration owns its own seed, seedCount, agents, payoffs and
+    rounds — anything that isn't ``iterations`` belongs there, not here.
+    Each iteration calls the engine with a fresh seed offset
+    (``configuration.seed + iteration_index``) so independent
+    iterations actually differ when the engine consumes randomness.
+    """
+
     configuration_ids: List[str]
     demo_mode: bool = True
-    iterations: int = 1               # how many times to run each config
-    master_seed: Optional[int] = None  # used as base; iteration k → seed = base + k
-    n_rounds_override: Optional[int] = None  # global override across this batch
-    seed_count: Optional[int] = None  # per-run engine-side multi-seed averaging
+    iterations: int = 1
 
 
 @app.get("/api/configurations")
@@ -1072,12 +1078,10 @@ def run_configurations_batch(body: RunConfigurationsBody) -> Dict[str, Any]:
         for it in range(iterations):
             try:
                 cfg = _resolve_configuration_to_engine_config(item)
-                if body.master_seed is not None:
-                    cfg["seed"] = int(body.master_seed) + it
-                if body.n_rounds_override is not None and body.n_rounds_override > 0:
-                    cfg["nRounds"] = int(body.n_rounds_override)
-                if body.seed_count is not None and body.seed_count > 1:
-                    cfg["seedCount"] = int(body.seed_count)
+                # Offset the configuration's own seed so independent
+                # iterations actually consume different randomness.
+                if iterations > 1 and "seed" in cfg and cfg["seed"] is not None:
+                    cfg["seed"] = int(cfg["seed"]) + it
                 rows = engine.create_and_run_games(cfg)
             except HTTPException as exc:
                 results.append({

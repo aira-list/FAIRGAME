@@ -1005,15 +1005,61 @@ Output ONLY the JSON.
 
         <!-- REPRODUCIBILITY -->
         <div x-show="builder.tab === 'repro'" class="fg-card p-6">
+          <p class="fg-help mb-4">
+            These fields only matter when something in the configuration is
+            <strong>actually stochastic</strong>. The list below highlights which of your current
+            settings consume randomness — if none of them are on, the engine is fully
+            deterministic and seed / seed count are no-ops.
+          </p>
+          <div class="mb-4 p-3 rounded-md bg-slate-50 border border-slate-200 text-sm">
+            <div class="font-medium mb-1">Stochastic features in this configuration</div>
+            <ul class="space-y-0.5">
+              <li :class="builder.personalityMode === 'pool' ? 'text-emerald-700 font-medium' : 'text-slate-400'">
+                <span x-text="builder.personalityMode === 'pool' ? '✓' : '○'"></span>
+                Personality permutations across the pool
+              </li>
+              <li :class="builder.cfg.mixedStrategies ? 'text-emerald-700 font-medium' : 'text-slate-400'">
+                <span x-text="builder.cfg.mixedStrategies ? '✓' : '○'"></span>
+                Mixed strategies (engine samples from the LLM's distribution)
+              </li>
+              <li :class="builder.commStyle?.startsWith('fake') ? 'text-emerald-700 font-medium' : 'text-slate-400'">
+                <span x-text="builder.commStyle?.startsWith('fake') ? '✓' : '○'"></span>
+                Fake-message generation (random base-10 / base-16 sequences)
+              </li>
+              <li :class="(builder.cfg.continuationProbability || 1) < 1 ? 'text-emerald-700 font-medium' : 'text-slate-400'">
+                <span x-text="(builder.cfg.continuationProbability || 1) < 1 ? '✓' : '○'"></span>
+                Stochastic horizon (continuation probability &lt; 1)
+              </li>
+              <li :class="builder.tournamentMode ? 'text-emerald-700 font-medium' : 'text-slate-400'">
+                <span x-text="builder.tournamentMode ? '✓' : '○'"></span>
+                Tournament pair scheduling
+              </li>
+              <li :class="builder._raw?.agents?.types ? 'text-emerald-700 font-medium' : 'text-slate-400'">
+                <span x-text="builder._raw?.agents?.types ? '✓' : '○'"></span>
+                Bayesian-game type draws
+              </li>
+            </ul>
+          </div>
+
           <div class="grid md:grid-cols-2 gap-4">
             <div>
               <label class="fg-label">Master seed</label>
               <input type="number" x-model.number="builder.cfg.seed" class="fg-input"/>
+              <p class="fg-help">
+                Anchors the random number generator. Same seed → same outcome. The Experiment
+                page offsets this per iteration (<code>seed + iteration_index</code>) so independent
+                iterations differ deterministically.
+              </p>
             </div>
             <div>
               <label class="fg-label">Seed count</label>
               <input type="number" min="1" x-model.number="builder.cfg.seedCount" class="fg-input"/>
-              <p class="fg-help">Reruns the same config N times with N different seeds; outputs aggregated mean ± 95% CI.</p>
+              <p class="fg-help">
+                Engine-side multi-seed averaging within a single Run. Set to N&gt;1 and the
+                engine reruns internally with N child seeds, emitting aggregated
+                <code>mean ± 95% CI</code> columns. Distinct from the Experiment page's
+                <em>iterations</em> (which produce N separate Runs).
+              </p>
             </div>
           </div>
         </div>
@@ -1136,47 +1182,16 @@ Output ONLY the JSON.
             </div>
           </div>
 
-          <h3 class="font-semibold mb-2">2. Repetition controls</h3>
-          <div class="grid md:grid-cols-4 gap-4">
-            <div>
-              <label class="fg-label">Iterations per configuration</label>
-              <input type="number" min="1" x-model.number="experiment.nIterations" class="fg-input"/>
-              <p class="fg-help">
-                <strong>How many times to run each configuration end-to-end.</strong>
-                Each iteration is a fresh Run (new id). Useful when you want N independent
-                replicates of the same setup. With seed below, iteration k uses seed (master + k)
-                so the iterations differ.
-              </p>
-            </div>
-            <div>
-              <label class="fg-label">Seed count per run</label>
-              <input type="number" min="1" x-model.number="experiment.seedCount" class="fg-input"/>
-              <p class="fg-help">
-                <strong>Engine-side multi-seed averaging within a single Run.</strong>
-                Set to N>1 and the engine reruns the same configuration internally with N child
-                seeds and emits aggregated mean ± 95% CI columns (good for confidence intervals
-                in a paper). Different from iterations: this stays inside one Run.
-              </p>
-            </div>
-            <div>
-              <label class="fg-label">Master seed</label>
-              <input type="number" x-model.number="experiment.seed" class="fg-input"/>
-              <p class="fg-help">
-                <strong>Anchors the random number generator.</strong>
-                Same master seed → identical outcome (LLM responses are deterministic in demo
-                mode and seeded in live mode for sampling steps). Iteration k uses
-                <code>master + k</code>; leave blank to let the engine pick non-deterministically.
-              </p>
-            </div>
-            <div>
-              <label class="fg-label">Override nRounds</label>
-              <input type="number" min="0" x-model.number="experiment.nRoundsOverride" class="fg-input"/>
-              <p class="fg-help">
-                <strong>Temporarily overrides each configuration's <code>nRounds</code> for this batch only.</strong>
-                Use this when, say, you want to compare 5 configurations <em>all at 10 rounds</em>
-                without permanently editing each one. <code>0</code> = use each config's own nRounds.
-              </p>
-            </div>
+          <h3 class="font-semibold mb-2">2. Iterations</h3>
+          <div class="md:w-1/2">
+            <label class="fg-label">Iterations per configuration</label>
+            <input type="number" min="1" x-model.number="experiment.nIterations" class="fg-input"/>
+            <p class="fg-help">
+              How many times to run each ticked configuration. Each iteration is a fresh Run
+              with its own id. Anything else — seed, seed count, nRounds, agents, payoffs — is
+              owned by the configuration itself; edit those on the
+              <a class="text-blue-600 underline" @click.prevent="activePage='configurations'" href="#">Configurations</a> page.
+            </p>
           </div>
 
           <button class="mt-5 px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
@@ -1270,19 +1285,27 @@ Output ONLY the JSON.
             <div class="grid md:grid-cols-2 gap-6">
               <div>
                 <h3 class="text-sm font-semibold mb-2">Cooperation rate per round (per agent)</h3>
-                <canvas id="chart-cooperation" class="border rounded-md p-2"></canvas>
+                <div class="border rounded-md p-2 relative" style="height: 280px;">
+                  <canvas id="chart-cooperation"></canvas>
+                </div>
               </div>
               <div>
                 <h3 class="text-sm font-semibold mb-2">Score per round (per agent)</h3>
-                <canvas id="chart-score" class="border rounded-md p-2"></canvas>
+                <div class="border rounded-md p-2 relative" style="height: 280px;">
+                  <canvas id="chart-score"></canvas>
+                </div>
               </div>
               <div>
                 <h3 class="text-sm font-semibold mb-2">Welfare per game (sum / min / Gini)</h3>
-                <canvas id="chart-welfare" class="border rounded-md p-2"></canvas>
+                <div class="border rounded-md p-2 relative" style="height: 280px;">
+                  <canvas id="chart-welfare"></canvas>
+                </div>
               </div>
               <div>
                 <h3 class="text-sm font-semibold mb-2">Equilibrium rate per game</h3>
-                <canvas id="chart-equilibrium" class="border rounded-md p-2"></canvas>
+                <div class="border rounded-md p-2 relative" style="height: 280px;">
+                  <canvas id="chart-equilibrium"></canvas>
+                </div>
               </div>
             </div>
           </div>
@@ -1431,9 +1454,6 @@ Output ONLY the JSON.
       experiment: {
         selectedConfigs: [],
         nIterations: 1,
-        seedCount: 1,
-        seed: 0,
-        nRoundsOverride: 0,
         running: false, error: '', results: [],
       },
 
@@ -1789,8 +1809,13 @@ Output ONLY the JSON.
           this.activeRun = await this.api(`/api/runs/${runId}`);
           this.results.tab = 'table';
           this.activePage = 'results';
-          await this.$nextTick();
-          this.renderCharts();
+          // Tear down any chart instances from the previous run so they
+          // don't leak into the next render. Charts re-build lazily when
+          // the user clicks the Charts tab.
+          for (const id of Object.keys(this._charts)) {
+            try { this._charts[id]?.destroy(); } catch {}
+            delete this._charts[id];
+          }
         } catch (e) { console.error('openRun', e); }
       },
 
@@ -2150,11 +2175,6 @@ Output ONLY the JSON.
               configuration_ids: this.experiment.selectedConfigs,
               demo_mode: this.demoMode,
               iterations: Math.max(1, this.experiment.nIterations || 1),
-              master_seed: this.experiment.seed,
-              n_rounds_override: this.experiment.nRoundsOverride > 0
-                ? this.experiment.nRoundsOverride : null,
-              seed_count: this.experiment.seedCount > 1
-                ? this.experiment.seedCount : null,
             }),
           });
           this.experiment.results = result.results;
@@ -2166,9 +2186,18 @@ Output ONLY the JSON.
       // ---- Results charts -------------------------------------------
 
       renderCharts() {
+        // Switch the tab first; canvases live inside x-show=...charts and
+        // are display:none until then. Chart.js cannot measure a hidden
+        // canvas, so wait for the next frame after the tab is visible
+        // before building any chart instances.
         this.results.tab = 'charts';
         if (!this.activeRun || !this.activeRun.rows) return;
-        const rows = this.activeRun.rows;
+        this.$nextTick(() => {
+          requestAnimationFrame(() => this._renderChartsNow(this.activeRun.rows));
+        });
+      },
+
+      _renderChartsNow(rows) {
         // Each row is one game. Build Chart.js datasets.
 
         // Cooperation rate per round, averaged over games per agent.
@@ -2269,9 +2298,13 @@ Output ONLY the JSON.
       _mkChart(canvasId, type, data, scaleOpts) {
         const el = document.getElementById(canvasId);
         if (!el) return;
-        if (this._charts[canvasId]) this._charts[canvasId].destroy();
+        if (this._charts[canvasId]) {
+          try { this._charts[canvasId].destroy(); } catch {}
+          delete this._charts[canvasId];
+        }
         if (data.datasets.length === 0) {
-          el.getContext('2d').clearRect(0, 0, el.width, el.height);
+          const ctx = el.getContext('2d');
+          if (ctx) ctx.clearRect(0, 0, el.width, el.height);
           return;
         }
         this._charts[canvasId] = new Chart(el, {
@@ -2279,6 +2312,10 @@ Output ONLY the JSON.
           data,
           options: {
             responsive: true,
+            // Without a fixed aspect ratio Chart.js will keep its own
+            // intrinsic 2:1 from the first measurement, which (when the
+            // canvas was briefly hidden) leads to a stuck small chart.
+            maintainAspectRatio: false,
             scales: scaleOpts,
             plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } },
           },
