@@ -109,18 +109,3 @@ def compute_nash_equilibria(matrix_block: Dict[str, Any], language: str = "en") 
     return equilibria
 
 
-def expand_auto_equilibria(config: Dict[str, Any]) -> Dict[str, Any]:
-    """Replace ``equilibria: "auto"`` in ``config`` with the resolved list.
-
-    Returns the (possibly mutated) config — intended to be called *after*
-    payoff-matrix transformation but *before* the rest of the validator.
-    Leaves the config alone if ``equilibria`` is anything other than the
-    string ``"auto"``.
-    """
-    if config.get("equilibria") != "auto":
-        return config
-    matrix_block = config.get("payoffMatrix") or {}
-    languages = config.get("languages") or ["en"]
-    language = languages[0]
-    config["equilibria"] = compute_nash_equilibria(matrix_block, language)
-    return config

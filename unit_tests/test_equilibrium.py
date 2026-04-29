@@ -205,5 +205,133 @@ class TestMissingNashpy(unittest.TestCase):
             self.assertIn("nashpy", str(exc.exception).lower())
 
 
+# ---------------------------------------------------------------------------
+# mutmut-driven coverage
+# ---------------------------------------------------------------------------
+
+class TestPartialBlockMismatch(unittest.TestCase):
+    def test_combinations_present_but_weight_matrix_missing_a_key(self) -> None:
+        # All four canonical combination keys are declared in
+        # ``combinations``, but ``matrix`` is missing one of them. The
+        # function MUST detect this asymmetry and bail out (return []).
+        # The completeness check has to use ``and`` (both blocks contain
+        # the key), not ``or`` (either contains it) — otherwise the
+        # function later KeyErrors looking up the missing entry.
+        cfg = _load("prisoner_dilemma/prisoner_dilemma_round_known_conventional.json")
+        matrix = json.loads(json.dumps(cfg["payoffMatrix"]))  # deep copy
+        del matrix["matrix"]["combination4"]
+        self.assertEqual(compute_nash_equilibria(matrix), [])
+
+    def test_weight_matrix_present_but_combinations_missing_a_key(self) -> None:
+        cfg = _load("prisoner_dilemma/prisoner_dilemma_round_known_conventional.json")
+        matrix = json.loads(json.dumps(cfg["payoffMatrix"]))
+        del matrix["combinations"]["combination4"]
+        self.assertEqual(compute_nash_equilibria(matrix), [])
+
+
+class TestMissingWeightKeyDefaults(unittest.TestCase):
+    """A weight key referenced in ``matrix`` but absent from ``weights``
+    must contribute 0.0 to the payoff arrays — never an arbitrary
+    non-zero default that would distort the NE computation."""
+
+    def _matrix_with_unique_eq_at(self, combo_idx: int) -> dict:
+        """Build a 2x2 game whose unique pure NE is at the given (i,j).
+
+        ``combo_idx`` is 0..3 mapping to combination1..4 in row-major
+        order: 0=(0,0), 1=(0,1), 2=(1,0), 3=(1,1).
+        """
+        # Diagonal-dominance trick: row's dominant strategy = i, col's = j.
+        i, j = divmod(combo_idx, 2)
+        # Row prefers strategy `i` regardless of col.
+        # Col prefers strategy `j` regardless of row.
+        a = [[5 if r == i else 0 for c in range(2)] for r in range(2)]
+        b = [[5 if c == j else 0 for c in range(2)] for r in range(2)]
+        return {
+            "weights": {"hi": 5, "lo": 0},
+            "strategies": {"en": {"strategy1": "X", "strategy2": "Y"}},
+            "combinations": {
+                "combination1": ["strategy1", "strategy1"],
+                "combination2": ["strategy1", "strategy2"],
+                "combination3": ["strategy2", "strategy1"],
+                "combination4": ["strategy2", "strategy2"],
+            },
+            "matrix": {
+                "combination1": ["hi" if a[0][0] else "lo", "hi" if b[0][0] else "lo"],
+                "combination2": ["hi" if a[0][1] else "lo", "hi" if b[0][1] else "lo"],
+                "combination3": ["hi" if a[1][0] else "lo", "hi" if b[1][0] else "lo"],
+                "combination4": ["hi" if a[1][1] else "lo", "hi" if b[1][1] else "lo"],
+            },
+        }
+
+    def test_player_zero_weight_default_is_zero(self) -> None:
+        # Game with NE at combination1 (both prefer s1). Now corrupt the
+        # row-player slot at (0,0) by referencing a weight key that
+        # doesn't exist in ``weights``. Default=0 keeps row indifferent
+        # at col=s1 → both combination1 and combination3 become NE.
+        # Default=1 (the surviving mutant) breaks the tie in s1's favour
+        # → only combination1, missing combination3. We assert the
+        # presence of combination3 to pin the default down.
+        m = self._matrix_with_unique_eq_at(0)
+        m["matrix"]["combination1"] = ["w_missing_for_row", "hi"]
+        self.assertIn("combination3", compute_nash_equilibria(m))
+
+    def test_player_one_weight_default_is_zero(self) -> None:
+        # Symmetric variant: corrupt the col-player slot at (0,0).
+        # Default=0 → combination2 becomes a tied NE. Default=1 → only
+        # combination1 survives.
+        m = self._matrix_with_unique_eq_at(0)
+        m["matrix"]["combination1"] = ["hi", "w_missing_for_col"]
+        self.assertIn("combination2", compute_nash_equilibria(m))
+
+
+class TestComboForPureMappings(unittest.TestCase):
+    """The combo_for_pure dict must map each (i, j) to the right combination.
+
+    Every existing fixture has its NE at combination1 or combination4 —
+    so mutating combination2's or combination3's entry survived. These
+    tests pin those two diagonals down with games whose unique pure NE
+    sits at combination2 / combination3.
+    """
+
+    def _dominance_game(self, row_dom: int, col_dom: int) -> dict:
+        # Row pays 5 only when it plays `row_dom`; col pays 5 only when
+        # it plays `col_dom`. Unique NE at (row_dom, col_dom).
+        def w(player_dom: int, idx: int) -> str:
+            return "hi" if idx == player_dom else "lo"
+
+        return {
+            "weights": {"hi": 5, "lo": 0},
+            "strategies": {"en": {"strategy1": "X", "strategy2": "Y"}},
+            "combinations": {
+                "combination1": ["strategy1", "strategy1"],
+                "combination2": ["strategy1", "strategy2"],
+                "combination3": ["strategy2", "strategy1"],
+                "combination4": ["strategy2", "strategy2"],
+            },
+            "matrix": {
+                "combination1": [w(row_dom, 0), w(col_dom, 0)],
+                "combination2": [w(row_dom, 0), w(col_dom, 1)],
+                "combination3": [w(row_dom, 1), w(col_dom, 0)],
+                "combination4": [w(row_dom, 1), w(col_dom, 1)],
+            },
+        }
+
+    def test_unique_ne_at_combination2(self) -> None:
+        # Row dominant on s1 (=index 0), col dominant on s2 (=index 1).
+        # NE = (0, 1) → combination2.
+        self.assertEqual(
+            compute_nash_equilibria(self._dominance_game(row_dom=0, col_dom=1)),
+            ["combination2"],
+        )
+
+    def test_unique_ne_at_combination3(self) -> None:
+        # Row dominant on s2, col dominant on s1.
+        # NE = (1, 0) → combination3.
+        self.assertEqual(
+            compute_nash_equilibria(self._dominance_game(row_dom=1, col_dom=0)),
+            ["combination3"],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
