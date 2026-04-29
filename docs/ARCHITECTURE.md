@@ -23,9 +23,10 @@ framework — for end-user instructions see [`../README.md`](../README.md).
 Two parallel paths drive the engine:
 
 * **CLI** (`main.py`): loads a JSON config + a prompt template, calls the
-  factory directly (`local`) or via HTTP (`api`).
-* **HTTP** (`api.py`): a Flask application factory exposing the same factory
-  behind `/create_and_run_games`, plus translation and health endpoints.
+  factory directly (`local`) or via HTTP (`web`).
+* **Web** (`fairgame_web.py`): a FastAPI app exposing the engine behind
+  `/api/runs` (plus presets, run history, CSV download, translation,
+  health) and serving a vanilla SPA from `web/` at `/`.
 
 ## Module responsibilities
 
@@ -112,8 +113,8 @@ If the legacy `[strategy, weight]` matrix shape is passed in, the
 All modules log via `src.utils.logger.get_logger(__name__)`. The first call
 configures the root logger at the level of `FAIRGAME_LOG_LEVEL` (default
 `INFO`) and silences noisy third-party loggers (`urllib3`, `botocore`,
-`httpx`, …). Application entry points (`api.py`, `main.py`) call
-`configure_logging()` explicitly to lock in the format early.
+`httpx`, …). Application entry points (`fairgame_web.py`, `main.py`)
+call `configure_logging()` explicitly to lock in the format early.
 
 There are no `print` statements left in the runtime path.
 

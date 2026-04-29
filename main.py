@@ -21,7 +21,7 @@ def load_env_variables() -> str:
     Defaults to a local URL if FAIRGAME_URL is not set.
     """
     load_dotenv()
-    return os.getenv("FAIRGAME_URL", "http://127.0.0.1:5003/create_and_run_games")
+    return os.getenv("FAIRGAME_URL", "http://127.0.0.1:8000/api/runs")
 
 
 class GamesRunner:

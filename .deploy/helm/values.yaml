@@ -6,7 +6,7 @@ image:
 
 service:
   type: ClusterIP
-  port: 5003
+  port: 8000
 
 ingress:
   enabled: true
@@ -74,7 +74,7 @@ tolerations: []
 affinity: {}
 
 application:
-  health: /health
+  health: /api/health
   env: |
     - name: ENVIRONMENT
       value: "production"

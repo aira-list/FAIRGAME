@@ -29,17 +29,19 @@ Institute of Science and Technology — part of the
   metrics, multi-seed runs with confidence intervals, and an experiment
   manifest runner. See [`docs/GAME_THEORY.md`](docs/GAME_THEORY.md).
 * **Production hardened** — Pydantic-validated config, structured logging,
-  retry/timeout on LLM calls, gunicorn-served Flask API, hardened Dockerfile,
-  Helm chart.
-* **Streamlit GUI** — design experiments via guided forms, run them on
-  real or simulated agents, and explore the results with interactive
-  Plotly charts. Demo mode lets you preview every feature without a
-  single API key. See [`docs/GUI.md`](docs/GUI.md).
+  retry/timeout on LLM calls, FastAPI/uvicorn HTTP layer, hardened
+  Dockerfile, Helm chart.
+* **Web app + REST API** — FastAPI backend at `/api/*` plus a vanilla
+  Tailwind+Alpine SPA at `/`. Design experiments without writing JSON,
+  run them on real or simulated agents, and download results. Demo
+  mode lets you preview every feature without a single API key. See
+  [`docs/GUI.md`](docs/GUI.md).
 
 ## Repository layout
 
 ```
-api.py                # Flask application factory (gunicorn entry point)
+fairgame_web.py       # FastAPI app: REST + static SPA mount
+web/index.html        # Single-file vanilla SPA (Tailwind + Alpine via CDN)
 main.py               # CLI runner (local or via API)
 Dockerfile            # Production container, runs as non-root with healthcheck
 pyproject.toml        # Packaging + tool config (ruff, mypy, pytest)
@@ -72,21 +74,36 @@ pip install -e '.[server,test]'
 cp .env.example .env
 # Fill in API_KEY_OPENAI, API_KEY_ANTHROPIC, API_KEY_MISTRAL as needed.
 
-# Three ways to drive FAIRGAME:
+# Two ways to drive FAIRGAME:
 
-# 1) The GUI (recommended for non-technical users):
-streamlit run gui/app.py
-# -> Demo mode is ON by default, so you can play without API keys.
+# 1) Web app — FastAPI backend + vanilla SPA (recommended for everyone):
+uvicorn fairgame_web:app --reload
+# Then open http://localhost:8000.
+# Demo mode is on by default — no API keys needed to explore.
 
 # 2) The CLI:
 python main.py local
-
-# 3) The HTTP API:
-python api.py
-curl -X POST http://localhost:5003/create_and_run_games \
-     -H 'Content-Type: application/json' \
-     -d @resources/config/prisoner_dilemma/prisoner_dilemma_round_known_conventional.json
 ```
+
+The web app exposes the same engine as a REST API, so you can drive it
+programmatically too:
+
+```bash
+curl -X POST http://localhost:8000/api/runs \
+     -H 'Content-Type: application/json' \
+     -d '{"preset": "prisoner_dilemma/prisoner_dilemma_round_known_conventional", "demo_mode": true}'
+```
+
+| Endpoint | Method | Purpose |
+| --- | --- | --- |
+| `/api/health` | GET | Liveness probe |
+| `/api/presets` | GET | List shipped scenarios, grouped by category |
+| `/api/presets/{id}` | GET | Load a preset's full JSON config |
+| `/api/runs` | POST | Run a config (inline or by preset id) and persist results |
+| `/api/runs` | GET | List past runs |
+| `/api/runs/{id}` | GET | Detail for one run (metadata + rows) |
+| `/api/runs/{id}/csv` | GET | Download the run's CSV |
+| `/api/translate` | POST | Translate a prompt template into a target language |
 
 ## Tests
 

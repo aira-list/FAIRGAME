@@ -13,7 +13,6 @@ from pathlib import Path
 
 import pytest
 
-from api import app
 from src.io_managers.io_manager import IoManager
 from src.template_translation.template_translator import TemplateTranslator
 
@@ -33,8 +32,6 @@ class TestTranslation(unittest.TestCase):
     def setUp(self) -> None:
         self.io_manager = IoManager()
         self._translator = None
-        self.client = app.test_client()
-        app.testing = True
 
     @property
     def template_translator(self) -> TemplateTranslator:

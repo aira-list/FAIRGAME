@@ -12,11 +12,11 @@ pip install -e '.[server,test]'
 cp .env.example .env       # fill in API_KEY_OPENAI / etc.
 ```
 
-Run the API:
+Run the web app (FastAPI + SPA):
 
 ```bash
-python api.py              # dev server on :5003
-gunicorn api:app --bind 0.0.0.0:5003 --workers 2 --threads 4 --timeout 300
+uvicorn fairgame_web:app --reload                   # dev server on :8000
+uvicorn fairgame_web:app --host 0.0.0.0 --port 8000 --workers 2  # production
 ```
 
 Or invoke the engine directly:

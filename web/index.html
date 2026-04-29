@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FAIRGAME · Multi-agent game-theoretic studio</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='52' font-size='52'%3E%F0%9F%8E%AF%3C/text%3E%3C/svg%3E" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+
+  <style>
+    [x-cloak] { display: none !important; }
+    body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .fg-hero {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #06b6d4 100%);
+    }
+    .fg-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+    }
+    .fg-card:hover {
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    }
+    /* Sidebar nav active/hover. */
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.55rem 0.9rem;
+      border-radius: 8px;
+      color: #cbd5e1;
+      cursor: pointer;
+      font-size: 0.93rem;
+    }
+    .nav-link:hover { background: #1e293b; color: #f8fafc; }
+    .nav-link.active { background: #1e3a8a; color: #fff; }
+    /* Banner. */
+    .fg-banner {
+      padding: 0.7rem 0.9rem;
+      border-radius: 10px;
+      font-size: 0.86rem;
+      font-weight: 500;
+    }
+    .fg-banner-demo { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .fg-banner-live { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+  </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800" x-data="fairgame()" x-init="init()" x-cloak>
+
+  <!-- Layout: dark sidebar (left) + main column (right). -->
+  <div class="flex min-h-screen">
+
+    <!-- ============= SIDEBAR ============= -->
+    <aside class="w-64 shrink-0 bg-slate-900 text-slate-100 px-4 py-6 flex flex-col">
+      <div class="flex items-center gap-2 px-2 mb-6">
+        <span class="text-2xl">🎯</span>
+        <span class="font-semibold tracking-tight">FAIRGAME</span>
+      </div>
+
+      <nav class="flex flex-col gap-1">
+        <template x-for="page in pages" :key="page.id">
+          <a class="nav-link"
+             :class="{ 'active': activePage === page.id }"
+             @click.prevent="activePage = page.id; window.scrollTo(0, 0)">
+            <span x-text="page.icon"></span>
+            <span x-text="page.label"></span>
+          </a>
+        </template>
+      </nav>
+
+      <div class="border-t border-slate-700 my-5"></div>
+
+      <!-- Demo-mode toggle -->
+      <div class="px-2">
+        <div class="text-xs uppercase tracking-wider text-slate-400 mb-1">Mode</div>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" x-model="demoMode" @change="syncDemoMode()"
+                 class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"/>
+          <span class="text-sm">Demo mode <span class="text-slate-400">(no API calls)</span></span>
+        </label>
+
+        <div class="mt-3 fg-banner" :class="demoMode ? 'fg-banner-demo' : 'fg-banner-live'">
+          <template x-if="demoMode">
+            <span>Demo mode is on. Results are illustrative — no provider API is called.</span>
+          </template>
+          <template x-if="!demoMode">
+            <span>Live mode. Provider APIs will be billed for each agent action.</span>
+          </template>
+        </div>
+      </div>
+
+      <div class="mt-auto text-xs text-slate-500 px-2 pt-4">
+        Bias recognition for AI agents through game theory.
+      </div>
+    </aside>
+
+
+    <!-- ============= MAIN ============= -->
+    <main class="flex-1 px-8 py-8 max-w-6xl mx-auto">
+
+      <!-- HOME ............................... -->
+      <section x-show="activePage === 'home'">
+        <div class="fg-hero rounded-2xl p-8 text-white shadow-lg mb-8">
+          <h1 class="text-3xl font-semibold tracking-tight mb-2">FAIRGAME · Multi-agent game-theoretic studio</h1>
+          <p class="text-white/90">Design experiments, run them on real or simulated LLM agents, and explore the behavioural results — all without writing a single line of code.</p>
+        </div>
+
+        <h2 class="text-xl font-semibold mb-3">Get started</h2>
+        <div class="grid md:grid-cols-3 gap-4 mb-8">
+          <div class="fg-card p-5 cursor-pointer transition" @click="activePage='quick'">
+            <h3 class="font-semibold mb-1">🚀 Quick start</h3>
+            <p class="text-sm text-slate-600">Pick a shipped scenario and run it in one click.</p>
+          </div>
+          <div class="fg-card p-5 cursor-pointer transition" @click="activePage='builder'">
+            <h3 class="font-semibold mb-1">🛠️ Scenario builder</h3>
+            <p class="text-sm text-slate-600">Custom personality / payoff / model setups via guided forms.</p>
+          </div>
+          <div class="fg-card p-5 cursor-pointer transition" @click="activePage='results'">
+            <h3 class="font-semibold mb-1">📊 Explore results</h3>
+            <p class="text-sm text-slate-600">Browse past runs, view tables and interactive charts.</p>
+          </div>
+        </div>
+
+        <h2 class="text-xl font-semibold mb-3">📖 Guide</h2>
+        <details class="fg-card p-4 mb-2">
+          <summary class="cursor-pointer font-medium">What is FAIRGAME?</summary>
+          <p class="mt-3 text-sm text-slate-700">
+            FAIRGAME is a virtual laboratory for putting AI agents (GPT-4o, Claude, Mistral) into classical
+            game-theory scenarios — Prisoner's Dilemma, Stag Hunt, Battle of the Sexes — and observing how they
+            behave. Use it to ask questions like: do LLMs cooperate? Does the answer change in French versus
+            English? Can a stronger model exploit a weaker one in one shot?
+          </p>
+        </details>
+        <details class="fg-card p-4 mb-2">
+          <summary class="cursor-pointer font-medium">The three big switches</summary>
+          <ul class="mt-3 text-sm text-slate-700 space-y-2">
+            <li><strong>🟢 Demo mode</strong> — on by default. LLM calls are answered by a deterministic stub.</li>
+            <li><strong>🎯 Pick a game</strong> — Prisoner's Dilemma, Stag Hunt, Snowdrift, Harmony, Battle of the Sexes, Zero-Sum, Volunteer's Dilemma — plus tournament and ToM variants.</li>
+            <li><strong>📊 Read the results</strong> — table of choices and scores per game; interactive charts.</li>
+          </ul>
+        </details>
+        <details class="fg-card p-4 mb-2">
+          <summary class="cursor-pointer font-medium">Glossary</summary>
+          <ul class="mt-3 text-sm text-slate-700 space-y-1.5">
+            <li><strong>Agent</strong> — one participant; LLM by default, or a baseline like Tit-for-Tat.</li>
+            <li><strong>Strategy</strong> — what the agent picks each round (e.g. Cooperate, Defect).</li>
+            <li><strong>Payoff matrix</strong> — points each agent earns for every strategy combination.</li>
+            <li><strong>Equilibrium</strong> — strategy combination where no agent regrets its move.</li>
+            <li><strong>Theory of Mind</strong> — the agent reasoning about its opponent's choice (belief elicitation, ToM order ablation).</li>
+            <li><strong>Brier score</strong> — how well-calibrated the agent's predictions were (lower = better).</li>
+            <li><strong>Discount factor (δ)</strong> — multiplies each round's payoff by δ^(round-1).</li>
+            <li><strong>Tournament</strong> — round-robin between every pair of agents.</li>
+            <li><strong>Seed</strong> — pins random choices so a run is reproducible.</li>
+          </ul>
+        </details>
+      </section>
+
+
+      <!-- QUICK START ............................... -->
+      <section x-show="activePage === 'quick'">
+        <h1 class="text-2xl font-semibold mb-1">🚀 Quick start</h1>
+        <p class="text-slate-600 mb-6">Pick a shipped scenario and click <strong>Run</strong>. Demo mode is on by default — no API keys needed.</p>
+
+        <div class="fg-card p-6 mb-6">
+          <label class="block text-sm font-medium mb-1">Scenario</label>
+          <select x-model="quick.preset" class="w-full border border-slate-300 rounded-md px-3 py-2 mb-4 bg-white">
+            <option value="">— select a preset —</option>
+            <template x-for="(presets, category) in presetsByCategory" :key="category">
+              <optgroup :label="category">
+                <template x-for="p in presets" :key="p.id">
+                  <option :value="p.id" x-text="p.name"></option>
+                </template>
+              </optgroup>
+            </template>
+          </select>
+
+          <button class="px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+                  :disabled="!quick.preset || quick.running"
+                  @click="runQuick()">
+            <span x-show="!quick.running">▶ Run scenario</span>
+            <span x-show="quick.running">Running…</span>
+          </button>
+
+          <div x-show="quick.error" class="mt-4 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-sm" x-text="quick.error"></div>
+        </div>
+
+        <div x-show="quick.lastRun" class="fg-card p-6">
+          <div class="flex items-baseline justify-between mb-3">
+            <h2 class="text-lg font-semibold">Latest run</h2>
+            <a class="text-sm text-blue-600 hover:underline" :href="`/api/runs/${quick.lastRun?.id}/csv`">Download CSV ↓</a>
+          </div>
+          <p class="text-sm text-slate-500 mb-3">Run id: <code class="text-slate-700" x-text="quick.lastRun?.id"></code></p>
+          <div x-html="renderTable(quick.lastRun?.rows)"></div>
+        </div>
+      </section>
+
+
+      <!-- RESULTS ............................... -->
+      <section x-show="activePage === 'results'">
+        <h1 class="text-2xl font-semibold mb-1">📊 Results</h1>
+        <p class="text-slate-600 mb-6">Every run that's ever happened on this machine.</p>
+
+        <button class="text-sm text-blue-600 hover:underline mb-4" @click="loadRuns()">Refresh</button>
+
+        <div x-show="runs.length === 0" class="text-slate-500 italic">
+          No runs yet — go to <a class="text-blue-600 underline" @click.prevent="activePage='quick'" href="#">Quick start</a> to create one.
+        </div>
+
+        <div class="grid gap-3 mb-6">
+          <template x-for="run in runs" :key="run.id">
+            <div class="fg-card p-4 cursor-pointer hover:shadow-md transition"
+                 :class="{ 'ring-2 ring-blue-400': activeRun?.id === run.id }"
+                 @click="openRun(run.id)">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="font-medium" x-text="run.name"></div>
+                  <div class="text-xs text-slate-500">
+                    <span x-text="run.timestamp"></span> ·
+                    <span x-text="run.n_rows + ' games'"></span> ·
+                    <span x-text="run.demo_mode ? 'demo' : 'live'"></span>
+                  </div>
+                </div>
+                <code class="text-xs text-slate-400" x-text="run.id"></code>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <div x-show="activeRun" class="fg-card p-6">
+          <h2 class="text-lg font-semibold mb-3" x-text="activeRun?.name"></h2>
+          <div x-html="renderTable(activeRun?.rows)"></div>
+        </div>
+      </section>
+
+
+      <!-- BUILDER (placeholder for now) ............................... -->
+      <section x-show="activePage === 'builder'">
+        <h1 class="text-2xl font-semibold mb-1">🛠️ Scenario builder</h1>
+        <p class="text-slate-600 mb-6">Edit a preset's JSON inline and run it. (Form-based builder coming soon.)</p>
+
+        <div class="fg-card p-6 mb-6">
+          <label class="block text-sm font-medium mb-1">Start from preset</label>
+          <select x-model="builder.preset" @change="loadPresetIntoBuilder()" class="w-full border border-slate-300 rounded-md px-3 py-2 mb-4 bg-white">
+            <option value="">— select a preset —</option>
+            <template x-for="(presets, category) in presetsByCategory" :key="category">
+              <optgroup :label="category">
+                <template x-for="p in presets" :key="p.id">
+                  <option :value="p.id" x-text="p.name"></option>
+                </template>
+              </optgroup>
+            </template>
+          </select>
+
+          <label class="block text-sm font-medium mb-1">Config (JSON)</label>
+          <textarea x-model="builder.json"
+                    class="w-full border border-slate-300 rounded-md px-3 py-2 font-mono text-xs h-80"></textarea>
+
+          <button class="mt-4 px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+                  :disabled="builder.running"
+                  @click="runBuilder()">
+            <span x-show="!builder.running">▶ Run</span>
+            <span x-show="builder.running">Running…</span>
+          </button>
+
+          <div x-show="builder.error" class="mt-4 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-sm" x-text="builder.error"></div>
+        </div>
+
+        <div x-show="builder.lastRun" class="fg-card p-6">
+          <div class="flex items-baseline justify-between mb-3">
+            <h2 class="text-lg font-semibold">Latest run</h2>
+            <a class="text-sm text-blue-600 hover:underline" :href="`/api/runs/${builder.lastRun?.id}/csv`">Download CSV ↓</a>
+          </div>
+          <div x-html="renderTable(builder.lastRun?.rows)"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+
+  <script>
+  function fairgame() {
+    return {
+      // Sidebar / nav
+      activePage: 'home',
+      pages: [
+        { id: 'home',    icon: '🏠', label: 'Home' },
+        { id: 'quick',   icon: '🚀', label: 'Quick start' },
+        { id: 'builder', icon: '🛠️', label: 'Scenario builder' },
+        { id: 'results', icon: '📊', label: 'Results' },
+      ],
+
+      // Demo mode
+      demoMode: true,
+
+      // Presets
+      presets: [],
+      presetsByCategory: {},
+
+      // Run history
+      runs: [],
+      activeRun: null,
+
+      // Quick-start state
+      quick: { preset: '', running: false, error: '', lastRun: null },
+
+      // Builder state
+      builder: { preset: '', json: '', running: false, error: '', lastRun: null },
+
+      async init() {
+        await this.loadPresets();
+        await this.loadRuns();
+      },
+
+      // ---- Networking helpers ---------------------------------------
+
+      async api(path, options = {}) {
+        const res = await fetch(path, {
+          headers: { 'Content-Type': 'application/json' },
+          ...options,
+        });
+        const ct = res.headers.get('content-type') || '';
+        const body = ct.includes('json') ? await res.json() : await res.text();
+        if (!res.ok) {
+          const detail = (body && body.detail) || body || res.statusText;
+          throw new Error(detail);
+        }
+        return body;
+      },
+
+      async loadPresets() {
+        try {
+          const data = await this.api('/api/presets');
+          this.presets = data.presets;
+          this.presetsByCategory = data.by_category;
+        } catch (e) {
+          console.error('loadPresets failed', e);
+        }
+      },
+
+      async loadRuns() {
+        try {
+          const data = await this.api('/api/runs');
+          this.runs = data.runs;
+        } catch (e) {
+          console.error('loadRuns failed', e);
+        }
+      },
+
+      async openRun(runId) {
+        try {
+          this.activeRun = await this.api(`/api/runs/${runId}`);
+        } catch (e) {
+          console.error('openRun failed', e);
+        }
+      },
+
+      syncDemoMode() {
+        // Persisted client-side only; the server applies it per-request via /api/runs.
+        localStorage.setItem('fg_demo', this.demoMode ? '1' : '0');
+      },
+
+      // ---- Quick start ----------------------------------------------
+
+      async runQuick() {
+        this.quick.running = true;
+        this.quick.error = '';
+        try {
+          const result = await this.api('/api/runs', {
+            method: 'POST',
+            body: JSON.stringify({ preset: this.quick.preset, demo_mode: this.demoMode }),
+          });
+          this.quick.lastRun = result;
+          await this.loadRuns();
+        } catch (e) {
+          this.quick.error = String(e.message || e);
+        } finally {
+          this.quick.running = false;
+        }
+      },
+
+      // ---- Builder --------------------------------------------------
+
+      async loadPresetIntoBuilder() {
+        if (!this.builder.preset) return;
+        try {
+          const cfg = await this.api(`/api/presets/${this.builder.preset}`);
+          this.builder.json = JSON.stringify(cfg, null, 2);
+        } catch (e) {
+          this.builder.error = String(e.message || e);
+        }
+      },
+
+      async runBuilder() {
+        this.builder.running = true;
+        this.builder.error = '';
+        try {
+          const config = JSON.parse(this.builder.json);
+          const result = await this.api('/api/runs', {
+            method: 'POST',
+            body: JSON.stringify({ config, demo_mode: this.demoMode }),
+          });
+          this.builder.lastRun = result;
+          await this.loadRuns();
+        } catch (e) {
+          this.builder.error = String(e.message || e);
+        } finally {
+          this.builder.running = false;
+        }
+      },
+
+      // ---- Rendering helpers ----------------------------------------
+
+      renderTable(rows) {
+        if (!rows || rows.length === 0) return '<p class="text-slate-500 italic">No data.</p>';
+        const cols = Object.keys(rows[0]);
+        const head = cols.map(c => `<th class="text-left px-3 py-2 bg-slate-100 border-b text-xs font-semibold text-slate-700">${c}</th>`).join('');
+        const body = rows.map(r =>
+          '<tr>' + cols.map(c => `<td class="px-3 py-2 text-sm border-b text-slate-700">${this.fmt(r[c])}</td>`).join('') + '</tr>'
+        ).join('');
+        return `<div class="overflow-auto rounded-md border border-slate-200">
+          <table class="min-w-full text-sm"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>
+        </div>`;
+      },
+
+      fmt(v) {
+        if (v === null || v === undefined) return '—';
+        if (typeof v === 'number') return Number.isInteger(v) ? v : v.toFixed(3);
+        if (typeof v === 'object') return JSON.stringify(v);
+        return String(v);
+      },
+    };
+  }
+  </script>
+
+</body>
+</html>

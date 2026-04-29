@@ -23,14 +23,13 @@ RUN useradd --create-home --shell /usr/sbin/nologin fairgame \
  && chown -R fairgame:fairgame /app
 USER fairgame
 
-EXPOSE 5003
+EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD python -c "import urllib.request,sys; \
-sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:5003/health', timeout=3).status==200 else 1)"
+sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3).status==200 else 1)"
 
-# Production server (single worker, async LLM workloads -> long timeouts).
-CMD ["gunicorn", "--bind", "0.0.0.0:5003", "--workers", "2", \
-     "--threads", "4", "--timeout", "300", \
-     "--access-logfile", "-", "--error-logfile", "-", \
-     "api:app"]
+# Production server: uvicorn with multiple workers for concurrent LLM
+# requests; long --timeout via UVICORN env vars / app code.
+CMD ["uvicorn", "fairgame_web:app", "--host", "0.0.0.0", "--port", "8000", \
+     "--workers", "2", "--log-level", "info"]

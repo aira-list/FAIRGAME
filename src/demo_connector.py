@@ -1,4 +1,4 @@
-"""Deterministic in-process LLM used when *Demo mode* is on in the GUI.
+"""Deterministic in-process LLM used when *Demo mode* is on.
 
 The real LLM connectors (OpenAI / Anthropic / Mistral) call paid APIs.
 For preview / demo / no-credentials runs we install a fake connector that
@@ -6,8 +6,10 @@ inspects the prompt for known strategy labels and returns a sensible
 canonical response.
 
 State is kept in module globals so toggling demo mode is trivially
-reversible: the original ``MODEL_PROVIDER_MAP`` is captured at import time
-and restored when the user turns demo mode off.
+reversible: the original ``MODEL_PROVIDER_MAP`` is captured at import
+time and restored when the user turns demo mode off.
+
+Used by the FastAPI backend (``fairgame_web.py``) and the test suite.
 """
 
 from __future__ import annotations
@@ -19,8 +21,13 @@ from src.llm_connectors import llm_factory_connector
 from src.llm_connectors.abstract_connector import AbstractConnector
 
 
-# Snapshot the original registry so we can roll back from demo to live.
-_ORIGINAL_MAP = dict(llm_factory_connector.MODEL_PROVIDER_MAP)
+# The snapshot of the registry from BEFORE the demo connector replaced
+# anything is taken lazily on the first ``install_demo_connector`` call,
+# not at module import time. Test harnesses (``unit_tests/conftest.py``)
+# may register their own fake connectors after this module is imported;
+# capturing eagerly would discard those registrations on the first
+# demo-mode round-trip.
+_ORIGINAL_MAP: "dict | None" = None
 _DEMO_INSTALLED = False
 
 
@@ -82,7 +89,12 @@ _TARGET_MODELS: List[str] = [
 
 def install_demo_connector() -> None:
     """Replace every shipped model with the deterministic fake."""
-    global _DEMO_INSTALLED
+    global _DEMO_INSTALLED, _ORIGINAL_MAP
+    if _ORIGINAL_MAP is None:
+        # Capture *current* registry state — this is what we'll roll back
+        # to. Doing it lazily means the test-only fake connectors that
+        # conftest installs at session start survive a demo-mode toggle.
+        _ORIGINAL_MAP = dict(llm_factory_connector.MODEL_PROVIDER_MAP)
     for name in _TARGET_MODELS:
         llm_factory_connector.MODEL_PROVIDER_MAP[name] = (
             (lambda cls=_DemoConnector: cls),
@@ -92,10 +104,11 @@ def install_demo_connector() -> None:
 
 
 def restore_real_connectors() -> None:
-    """Roll back the registry to the entries captured at import time."""
+    """Roll back the registry to the snapshot captured before install."""
     global _DEMO_INSTALLED
-    llm_factory_connector.MODEL_PROVIDER_MAP.clear()
-    llm_factory_connector.MODEL_PROVIDER_MAP.update(_ORIGINAL_MAP)
+    if _ORIGINAL_MAP is not None:
+        llm_factory_connector.MODEL_PROVIDER_MAP.clear()
+        llm_factory_connector.MODEL_PROVIDER_MAP.update(_ORIGINAL_MAP)
     _DEMO_INSTALLED = False
 
 
