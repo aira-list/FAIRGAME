@@ -252,6 +252,116 @@ class TestMultipleComparisonCorrection(unittest.TestCase):
         self.assertIn("mannwhitney_p_adjusted", out_bon.columns)
 
 
+class TestStatsMutmutCoverage(unittest.TestCase):
+    """Targeted coverage for behaviours mutmut found unexercised."""
+
+    @staticmethod
+    def _heterogeneous_inputs() -> tuple:
+        # Three metrics with a deliberately wide spread of effect sizes,
+        # so Bonferroni and Holm produce different adjusted p-values.
+        df_a = pd.DataFrame(
+            {
+                # Big effect → tiny raw p.
+                "strong": [10, 11, 12, 13, 14, 15, 16, 17],
+                # Small effect → moderate raw p.
+                "mild": [1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7],
+                # No effect → near-1.0 raw p.
+                "null": [5, 5, 5, 5, 5, 5, 5, 5],
+            }
+        )
+        df_b = pd.DataFrame(
+            {
+                "strong": [1, 2, 3, 4, 5, 6, 7, 8],
+                "mild": [1.0, 1.1, 1.2, 1.3, 1.5, 1.6, 1.7, 1.8],
+                "null": [5, 5, 5, 5, 5, 5, 5, 5],
+            }
+        )
+        return df_a, df_b
+
+    def test_mannwhitney_statistic_is_finite_for_normal_inputs(self) -> None:
+        # The U statistic must be a real number, not None — assigning
+        # the float() cast keeps regressions from silently dropping it.
+        df_a = pd.DataFrame({"x": [1, 2, 3, 4, 5, 6, 7, 8]})
+        df_b = pd.DataFrame({"x": [10, 11, 12, 13, 14, 15, 16, 17]})
+        result = compare_metric(df_a, df_b, "x")
+        self.assertIsNotNone(result.mannwhitney_u)
+        self.assertIsNotNone(result.mannwhitney_p)
+
+    def test_mannwhitney_p_adjusted_is_filled_in(self) -> None:
+        # mannwhitney_p_adjusted must carry the corrected p — never None
+        # for inputs whose raw mannwhitney_p is itself a real number.
+        df_a, df_b = self._heterogeneous_inputs()
+        out = compare_metrics(df_a, df_b, ["strong", "mild"], correction="bonferroni")
+        for adj in out["mannwhitney_p_adjusted"]:
+            self.assertIsNotNone(adj)
+
+    def test_correction_column_carries_method_name(self) -> None:
+        df_a, df_b = self._heterogeneous_inputs()
+        for method in ("none", "bonferroni", "holm"):
+            out = compare_metrics(df_a, df_b, ["strong", "mild", "null"], correction=method)
+            self.assertIn("correction", out.columns)
+            for value in out["correction"]:
+                self.assertEqual(value, method)
+
+    def test_holm_diverges_from_bonferroni_for_heterogeneous_pvalues(self) -> None:
+        # Direct unit test of the adjustment helper, bypassing the
+        # Welch-noise sensitivity that makes constructing precise
+        # raw p-values from DataFrames brittle.
+        #
+        # With raw = [0.001, 0.1, 0.3] (n=3):
+        #   Bonferroni: [0.003, 0.3, 0.9]
+        #   Holm:       [0.003, 0.2, 0.3]
+        # The two methods diverge wherever a p is not the smallest in
+        # its set — that's the whole point of step-down vs step-uniform.
+        from src.results_processing.stats import _adjust_pvalues
+
+        raw = [0.001, 0.1, 0.3]
+        bon = _adjust_pvalues(raw, "bonferroni")
+        holm = _adjust_pvalues(raw, "holm")
+        # Smallest p gets multiplied by n in both methods → identical.
+        self.assertAlmostEqual(bon[0], holm[0], places=9)
+        # Middle and largest must be strictly smaller under Holm.
+        self.assertLess(holm[1], bon[1] - 1e-9)
+        self.assertLess(holm[2], bon[2] - 1e-9)
+        # Sanity: holm preserves the input order (i.e. is not sorted).
+        self.assertAlmostEqual(holm[0], 0.003, places=9)
+        self.assertAlmostEqual(holm[1], 0.2, places=9)
+        self.assertAlmostEqual(holm[2], 0.3, places=9)
+
+    def test_holm_recovers_input_order_after_internal_sort(self) -> None:
+        # If Holm sorted by index instead of by p (or skipped sorting
+        # entirely), the largest of the three raw inputs would land in
+        # position 0 of the adjusted output. Pinning the position of
+        # each adjusted value catches that mutation.
+        from src.results_processing.stats import _adjust_pvalues
+
+        raw = [0.3, 0.001, 0.1]  # raw[0] is largest; raw[1] is smallest
+        holm = _adjust_pvalues(raw, "holm")
+        # Position 1 (smallest raw) gets multiplied by n=3 → 0.003.
+        self.assertAlmostEqual(holm[1], 0.003, places=9)
+        # Position 2 gets the n-1=2 multiplier → 0.2.
+        self.assertAlmostEqual(holm[2], 0.2, places=9)
+        # Position 0 (largest raw) gets the n-2=1 multiplier → 0.3.
+        self.assertAlmostEqual(holm[0], 0.3, places=9)
+
+    def test_bonferroni_caps_at_one_not_an_arbitrary_higher_value(self) -> None:
+        # When raw_p * n exceeds 1.0, the adjusted value must clamp to
+        # exactly 1.0 — not 2.0 or any other ceiling. Direct call
+        # bypasses the Welch numerical-edge-case noise that turns the
+        # raw p into NaN when both samples are degenerate.
+        from src.results_processing.stats import _adjust_pvalues
+
+        # Bonferroni: 0.5 * 3 = 1.5 → must cap to 1.0.
+        bon = _adjust_pvalues([0.5, 0.5, 0.5], "bonferroni")
+        for adj in bon:
+            self.assertEqual(adj, 1.0)
+
+        # Holm: largest at running_max = 0.5 * 3 = 1.5 → cap to 1.0.
+        holm = _adjust_pvalues([0.5, 0.5, 0.5], "holm")
+        for adj in holm:
+            self.assertEqual(adj, 1.0)
+
+
 class TestDefaultComparisonMetrics(unittest.TestCase):
     def test_returns_only_existing_columns(self) -> None:
         df = pd.DataFrame({"welfare_mean_sum": [1], "equilibrium_rate": [0.5]})
