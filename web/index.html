@@ -117,27 +117,197 @@
         </div>
 
         <h2 class="text-xl font-semibold mb-3">📖 Guide</h2>
-        <details class="fg-card p-4 mb-2">
-          <summary class="cursor-pointer font-medium">What is FAIRGAME?</summary>
-          <p class="mt-3 text-sm text-slate-700">
-            FAIRGAME is a virtual laboratory for putting AI agents (GPT-4o, Claude, Mistral) into classical
-            game-theory scenarios — Prisoner's Dilemma, Stag Hunt, Battle of the Sexes — and observing how they
-            behave. Use it to ask questions like: do LLMs cooperate? Does the answer change in French versus
-            English? Can a stronger model exploit a weaker one in one shot?
-          </p>
+        <p class="text-sm text-slate-600 mb-3">
+          A long-form version of this guide is in
+          <a class="text-blue-600 underline" href="https://github.com/your-org/fairgame/blob/main/docs/USER_GUIDE.md" target="_blank">docs/USER_GUIDE.md</a>.
+          Below is the in-app summary — open the sections in order on your first read.
+        </p>
+
+        <details class="fg-card p-4 mb-2" open>
+          <summary class="cursor-pointer font-medium">1. Purpose</summary>
+          <div class="mt-3 text-sm text-slate-700 space-y-2">
+            <p>
+              FAIRGAME is a <strong>virtual laboratory</strong> for studying how Large Language Model
+              (LLM) agents behave in classical game-theory scenarios. You set up a 2-or-more-agent
+              game, fill in the rules and personalities, run it on real or simulated agents, and
+              read out a structured table of choices, scores, beliefs and welfare metrics.
+            </p>
+            <p>It was built to answer empirical questions like:</p>
+            <ul class="list-disc pl-5 space-y-1">
+              <li>Do LLM agents cooperate, or do they exploit each other?</li>
+              <li>Does the answer change when the prompt is in French vs English?</li>
+              <li>Does a stronger model outsmart a weaker one in a one-shot Prisoner's Dilemma?</li>
+              <li>Does explicit Theory-of-Mind reasoning shift behaviour?</li>
+              <li>What happens with a covert "fake-message" channel between agents?</li>
+            </ul>
+            <p class="mt-2">The framework has three layers:</p>
+            <pre class="text-xs bg-slate-100 rounded p-2 overflow-auto">Template            Configuration        Run
+(prompt body)       (template + params)  (engine output)
+   tag → variation     metadata + game    run id + rows
+   per language       cfg                  CSV + metadata</pre>
+            <p>
+              You write a <strong>Template</strong> per game family per language. You build a
+              <strong>Configuration</strong> that points at (tag, variation, languages) and bundles
+              every engine setting. You run it as many times as you like; each run lands on the
+              Results page with charts.
+            </p>
+          </div>
         </details>
+
         <details class="fg-card p-4 mb-2">
-          <summary class="cursor-pointer font-medium">Glossary</summary>
+          <summary class="cursor-pointer font-medium">2. Templates</summary>
+          <div class="mt-3 text-sm text-slate-700 space-y-3">
+            <p>
+              A Template is the <strong>prompt body</strong> the agent sees, with placeholders the
+              engine substitutes at run time. The Templates page lets you manage them as a
+              library:
+            </p>
+            <pre class="text-xs bg-slate-100 rounded p-2 overflow-auto">Tag: "Prisoner's Dilemma"
+ ├── Variation: "classic"
+ │    ├── language: en  →  body...
+ │    ├── language: fr  →  body... (auto-translated via the AI button)
+ │    └── language: cn  →  body...
+ └── Variation: "with-communication"
+      └── language: en  →  body...</pre>
+
+            <p class="font-medium pt-1">Plain placeholders <code>{name}</code></p>
+            <table class="text-xs border border-slate-200 rounded">
+              <thead class="bg-slate-50"><tr>
+                <th class="text-left px-2 py-1">Placeholder</th>
+                <th class="text-left px-2 py-1">Meaning</th>
+              </tr></thead>
+              <tbody class="divide-y divide-slate-200">
+                <tr><td class="px-2 py-1"><code>{currentPlayerName}</code></td><td class="px-2 py-1">The agent's own name</td></tr>
+                <tr><td class="px-2 py-1"><code>{personality}</code></td><td class="px-2 py-1">The agent's personality (per language)</td></tr>
+                <tr><td class="px-2 py-1"><code>{opponent1}</code>, …</td><td class="px-2 py-1">Each opponent's name</td></tr>
+                <tr><td class="px-2 py-1"><code>{opponentPersonality1}</code>, <code>{opponentPersonalityProbability1}</code></td><td class="px-2 py-1">Stated personality of opponent and the % probability it's actually that way</td></tr>
+                <tr><td class="px-2 py-1"><code>{strategy1}</code>, <code>{strategy2}</code></td><td class="px-2 py-1">Display labels for strategies (from the payoff matrix)</td></tr>
+                <tr><td class="px-2 py-1"><code>{weight1}</code>..<code>{weight4}</code></td><td class="px-2 py-1">Numeric payoffs from the matrix</td></tr>
+                <tr><td class="px-2 py-1"><code>{nRounds}</code>, <code>{currentRound}</code></td><td class="px-2 py-1">Game length and current round number</td></tr>
+                <tr><td class="px-2 py-1"><code>{history}</code></td><td class="px-2 py-1">Engine-rendered text describing past rounds</td></tr>
+                <tr><td class="px-2 py-1"><code>{coopRate1}</code>, <code>{reputation1}</code>, …</td><td class="px-2 py-1">Rolling cooperation rate and label of each opponent</td></tr>
+                <tr><td class="px-2 py-1"><code>{ownType}</code>, <code>{typeDistribution}</code></td><td class="px-2 py-1">Bayesian-game private type / public prior</td></tr>
+              </tbody>
+            </table>
+
+            <p class="font-medium pt-2">Conditional blocks <code>{name}: [...]</code></p>
+            <ul class="list-disc pl-5 space-y-1">
+              <li><code>{intro}: […]</code> — always kept (use it for the agent's identity).</li>
+              <li><code>{opponentIntro}: […]</code> — kept when <code>tomOrder ≥ 1</code>; stripped at order 0.</li>
+              <li><code>{gameLength}: […]</code> — kept only when <code>nRoundsIsKnown: true</code>.</li>
+              <li><code>{communicate}: […]</code>, <code>{choose}: […]</code>, <code>{believe}: […]</code>, <code>{mixedChoose}: […]</code> — phase-specific blocks; only the active phase survives.</li>
+              <li><code>{secondOrder}: […]</code> — kept when <code>tomOrder ≥ 2</code>.</li>
+              <li><code>{ownType}: […]</code> — kept when the agent has a private type.</li>
+            </ul>
+
+            <p class="pt-2">
+              The <strong>🌍 Translate</strong> button on a template fans out into target
+              languages via the configured <code>TemplateTranslator</code>. The new entries are
+              linked back to the source via <code>source_template_id</code>.
+            </p>
+          </div>
+        </details>
+
+        <details class="fg-card p-4 mb-2">
+          <summary class="cursor-pointer font-medium">3. Configurations</summary>
+          <div class="mt-3 text-sm text-slate-700 space-y-3">
+            <p>
+              A Configuration is the <strong>complete description of an experiment</strong> —
+              everything the engine needs to run a set of games. Build it on the Configurations
+              page using the tabbed form.
+            </p>
+            <p class="font-medium pt-1">Personality assignment modes</p>
+            <ul class="list-disc pl-5 space-y-1">
+              <li><strong>Per agent</strong>: positional — each agent has its own personality string.</li>
+              <li><strong>Pool with permutations</strong>: define a list; the engine generates one game per permutation across the agent slots (<code>allAgentPermutations: true</code>).</li>
+            </ul>
+            <p class="font-medium pt-1">Communication styles</p>
+            <table class="text-xs border border-slate-200 rounded">
+              <thead class="bg-slate-50"><tr><th class="px-2 py-1 text-left">Style</th><th class="px-2 py-1 text-left">Engine fields</th></tr></thead>
+              <tbody class="divide-y divide-slate-200">
+                <tr><td class="px-2 py-1">None</td><td class="px-2 py-1">no inter-agent messages</td></tr>
+                <tr><td class="px-2 py-1">Real</td><td class="px-2 py-1"><code>agentsCommunicate: true</code></td></tr>
+                <tr><td class="px-2 py-1">Fake (decimal)</td><td class="px-2 py-1"><code>fakeCommunication: true</code>, <code>fakeMessageBase: dec</code></td></tr>
+                <tr><td class="px-2 py-1">Fake (hex)</td><td class="px-2 py-1"><code>fakeCommunication: true</code>, <code>fakeMessageBase: hex</code></td></tr>
+              </tbody>
+            </table>
+
+            <p class="font-medium pt-1">Theory of Mind</p>
+            <ul class="list-disc pl-5 space-y-1">
+              <li><code>elicitBeliefs</code> — adds a per-round belief phase (Brier score is computed afterwards).</li>
+              <li><code>tomOrder ∈ {0, 1, 2}</code> — controls how much the agent is told about its opponent.</li>
+              <li><code>reputationWindow</code> — rolling cooperation-rate window (rounds).</li>
+              <li><code>reputationApplies</code> — turn off for Battle of the Sexes / zero-sum games where strategy1 doesn't mean "cooperate".</li>
+            </ul>
+
+            <p class="font-medium pt-1">Game-theoretic extensions</p>
+            <ul class="list-disc pl-5 space-y-1">
+              <li><code>discountFactor</code>, <code>continuationProbability</code></li>
+              <li><code>equilibria</code> (manual list or <code>"auto"</code> → nashpy)</li>
+              <li><code>paretoOptimalSum</code> for welfare efficiency</li>
+              <li><code>mixedStrategies</code> — agent emits a distribution; engine samples</li>
+              <li>Utility transform: Identity / CRRA(γ, offset) / Fehr-Schmidt(α, β)</li>
+              <li><code>baselineSemantics: {cooperate, defect}</code> when mixing baselines into non-PD games</li>
+            </ul>
+
+            <p class="font-medium pt-1">Reproducibility</p>
+            <ul class="list-disc pl-5 space-y-1">
+              <li><code>seed</code> — master seed; same seed → identical run.</li>
+              <li><code>seedCount</code> — engine-side multi-seed averaging within a single run.</li>
+              <li>Experiments page <strong>Iterations per config</strong> — runs the configuration N times back-to-back, each as a separate Run.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="fg-card p-4 mb-2">
+          <summary class="cursor-pointer font-medium">4. Annotated example: Prisoner's Dilemma</summary>
+          <div class="mt-3 text-sm text-slate-700 space-y-3">
+            <p>The English template that ships in the library:</p>
+            <pre class="text-xs bg-slate-100 rounded p-3 overflow-auto whitespace-pre-wrap">You are {currentPlayerName} and your opponent is {opponent1}.
+{intro}: [You are {personality}.]
+{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.]
+
+You and {opponent1} are arrested for a crime and held in separate cells. You cannot communicate.
+
+Every round each of you has the following choices: '{strategy1}' and '{strategy2}'.
+{gameLength}: [There are {nRounds} rounds to decide.]
+The current round is number {currentRound}.
+
+If you both choose {strategy1}, you both get a penalty of {weight1}.
+If you choose {strategy1} and {opponent1} chooses {strategy2}, you get a penalty of {weight3} and {opponent1} gets a penalty of {weight2}.
+If you choose {strategy2} and {opponent1} chooses {strategy1}, you get a penalty of {weight2} and {opponent1} gets a penalty of {weight3}.
+If you both choose {strategy2}, you both get a penalty of {weight4}.
+
+Your goal is to minimize your penalty by making the best strategies based on the provided information.
+This is the history of the choices made so far: {history}.
+Choose between {strategy1} and {strategy2}.
+Output ONLY the choice.</pre>
+            <p>Section by section:</p>
+            <ul class="list-disc pl-5 space-y-1.5">
+              <li><strong>Lines 1–3 — identity & opponent intro.</strong> <code>{intro}: […]</code> always survives. <code>{opponentIntro}: […]</code> is stripped at <code>tomOrder=0</code>, so a single Configuration toggle controls whether the agent knows anything about the opponent.</li>
+              <li><strong>Line 5 — cover story.</strong> Plain text, no placeholders.</li>
+              <li><strong>Lines 7–9 — strategies + horizon + round.</strong> <code>{strategy1}/{strategy2}</code> come from the payoff matrix's per-language labels. <code>{gameLength}: […]</code> only survives when <code>nRoundsIsKnown: true</code>, so <em>round-known</em> vs <em>round-not-known</em> is one config flag.</li>
+              <li><strong>Lines 11–14 — payoff statement.</strong> The four <code>{weightN}</code> references map to <code>payoffMatrix.weights</code>. By naming weights instead of inlining numbers, the same body is reused across the conventional / harsh / mild PD variants — only weight values change.</li>
+              <li><strong>Lines 16–19 — goal, history, choice prompt.</strong> <code>{history}</code> is engine-rendered. The final "Output ONLY the choice." is the format constraint the parser expects.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="fg-card p-4 mb-2">
+          <summary class="cursor-pointer font-medium">5. Glossary</summary>
           <ul class="mt-3 text-sm text-slate-700 space-y-1.5">
-            <li><strong>Agent</strong> — one participant; LLM or a baseline strategy.</li>
+            <li><strong>Agent</strong> — one participant; LLM or a baseline strategy (TitForTat, GrimTrigger, …).</li>
             <li><strong>Strategy</strong> — what the agent picks each round.</li>
-            <li><strong>Payoff matrix</strong> — points each agent earns per strategy combination.</li>
+            <li><strong>Payoff matrix</strong> — points each agent earns per strategy combination; structure is <code>{strategies, weights, combinations, matrix}</code>.</li>
             <li><strong>Equilibrium</strong> — strategy combination where no agent regrets its move.</li>
-            <li><strong>Theory of Mind</strong> — the agent reasoning about its opponent's choice.</li>
-            <li><strong>Brier score</strong> — calibration metric for predictions (lower = better).</li>
-            <li><strong>Discount factor (δ)</strong> — multiplies each round's payoff by δ^(round-1).</li>
+            <li><strong>Theory of Mind</strong> — the agent reasoning about its opponent's choice; supports orders 0 / 1 / 2 plus belief elicitation.</li>
+            <li><strong>Brier score</strong> — calibration metric for predictions (lower = better, 0 = perfect).</li>
+            <li><strong>Discount factor (δ)</strong> — multiplies each round's payoff by δ<sup>round-1</sup>.</li>
+            <li><strong>Continuation probability</strong> — stochastic horizon: at end of each round, game continues with this probability.</li>
+            <li><strong>CRRA / Fehr-Schmidt</strong> — utility transforms for risk aversion / inequity aversion.</li>
             <li><strong>Tournament</strong> — round-robin between every pair of agents.</li>
-            <li><strong>Seed</strong> — pins random choices for reproducible runs.</li>
+            <li><strong>Seed / Seed count / Iterations</strong> — pin random choices, engine-side multi-seed averaging within one run, vs. running the same config N times.</li>
+            <li><strong>Tag / Variation / Template</strong> — game family / parameter sub-family / per-language prompt body.</li>
           </ul>
         </details>
       </section>
