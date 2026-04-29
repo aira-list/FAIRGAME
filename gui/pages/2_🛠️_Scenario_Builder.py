@@ -1,4 +1,4 @@
-"""Scenario builder: tabs for every config dimension, with live preview."""
+"""Scenario builder: forms for every config dimension, advanced sections folded away."""
 
 from __future__ import annotations
 
@@ -28,45 +28,6 @@ from gui.components.state import (  # noqa: E402
     set_config_draft,
     set_last_run,
 )
-
-init_page("Scenario Builder", icon="🛠️")
-
-st.title("🛠️ Scenario Builder")
-st.caption(
-    "Compose a full FAIRGAME config from forms — no JSON editing required. "
-    "Switch tabs to layer in Theory-of-Mind features, mixed strategies, "
-    "discount factors, and multi-seed reruns."
-)
-
-# ---- Initial config bootstrap -------------------------------------------
-
-with st.sidebar:
-    st.markdown("##### Starting point")
-    presets = usable_presets()
-    options = ["(blank)"] + [p.name for p in presets]
-    pick = st.selectbox(
-        "Load preset",
-        options=options,
-        index=0,
-        help="Pre-fills the forms with a shipped scenario.",
-    )
-    if st.button("Apply preset", use_container_width=True):
-        if pick == "(blank)":
-            set_config_draft(_blank_config())
-        else:
-            preset = presets[options.index(pick) - 1]
-            set_config_draft(preset.load())
-        st.rerun()
-
-    uploaded = st.file_uploader("…or upload a config", type=["json"])
-    if uploaded is not None:
-        try:
-            cfg = json.loads(uploaded.read().decode("utf-8"))
-            set_config_draft(cfg)
-            st.success("Config loaded.")
-            st.rerun()
-        except Exception as exc:  # noqa: BLE001
-            st.error(f"Could not parse JSON: {exc}")
 
 
 def _blank_config() -> dict:
@@ -110,57 +71,116 @@ def _blank_config() -> dict:
     }
 
 
-config = get_config_draft() or _blank_config()
+init_page("Scenario Builder", icon="🛠️")
 
-# ---- Tabs ---------------------------------------------------------------
-
-tabs = st.tabs(
-    ["Basics", "Agents", "Theory of Mind", "Game theory", "Reproducibility", "Run"]
+st.title("🛠️ Scenario Builder")
+st.caption(
+    "Compose a full FAIRGAME config from forms. Most users will only need "
+    "the **Basics** and **Agents** sections; advanced features are tucked "
+    "under the toggle below."
 )
 
-with tabs[0]:
-    config = basics_form(config)
-with tabs[1]:
-    config = agents_form(config)
-with tabs[2]:
-    config = tom_form(config)
-with tabs[3]:
-    config = game_theory_form(config)
-with tabs[4]:
-    config = replay_form(config)
+# ---- Sidebar: starting-point loader ------------------------------------
 
-# Persist the latest edits between reruns.
-set_config_draft(config)
-
-with tabs[5]:
-    st.markdown("##### Effective config")
-    st.json(config, expanded=False)
-
-    download_cols = st.columns([1, 1, 2])
-    download_cols[0].download_button(
-        "Download config.json",
-        data=json.dumps(config, indent=2, ensure_ascii=False),
-        file_name="fairgame_config.json",
-        mime="application/json",
-        use_container_width=True,
+with st.sidebar:
+    st.markdown("##### Starting point")
+    presets = usable_presets()
+    options = ["(blank)"] + [p.name for p in presets]
+    pick = st.selectbox(
+        "Load preset",
+        options=options,
+        index=0,
+        help="Pre-fills the forms with a shipped scenario.",
     )
-    if download_cols[1].button("Reset to blank", use_container_width=True):
-        set_config_draft(_blank_config())
+    if st.button("Apply preset", use_container_width=True):
+        if pick == "(blank)":
+            set_config_draft(_blank_config())
+        else:
+            preset = presets[options.index(pick) - 1]
+            set_config_draft(preset.load())
         st.rerun()
 
-    st.divider()
-    label = st.text_input("Run label", value=config.get("name", "Custom scenario"))
-    if st.button("Run scenario", type="primary"):
-        with st.status("Running…", expanded=True) as status:
-            try:
-                outcome = run_config(config, display_name=label)
-            except Exception as exc:  # noqa: BLE001
-                status.update(label="Run failed", state="error")
-                st.exception(exc)
-                st.stop()
-            status.update(label="Run complete", state="complete")
-            set_last_run(outcome.to_session_payload())
+    uploaded = st.file_uploader("…or upload a config", type=["json"])
+    if uploaded is not None:
+        try:
+            cfg = json.loads(uploaded.read().decode("utf-8"))
+            set_config_draft(cfg)
+            st.success("Config loaded.")
+            st.rerun()
+        except Exception as exc:  # noqa: BLE001
+            st.error(f"Could not parse JSON: {exc}")
 
-        st.success(f"Wrote {outcome.output_dir}.")
-        st.dataframe(outcome.df, use_container_width=True)
-        st.info("Open the **Results** page to explore the run interactively.")
+config = get_config_draft() or _blank_config()
+
+# ---- Always-visible: Basics + Agents -----------------------------------
+
+st.markdown("### 1 — Basics")
+config = basics_form(config)
+
+st.markdown("### 2 — Agents")
+config = agents_form(config)
+
+# ---- Advanced (collapsed by default) ------------------------------------
+
+st.markdown("### 3 — Advanced (optional)")
+show_advanced = st.toggle(
+    "Show advanced settings",
+    value=False,
+    help=(
+        "Toggle on to expose Theory of Mind, mixed strategies, discount "
+        "factors, utility transforms, and multi-seed reruns. You don't need "
+        "any of these to run a classical game."
+    ),
+)
+
+if show_advanced:
+    adv_tabs = st.tabs(["Theory of Mind", "Game theory", "Reproducibility"])
+    with adv_tabs[0]:
+        config = tom_form(config)
+    with adv_tabs[1]:
+        config = game_theory_form(config)
+    with adv_tabs[2]:
+        config = replay_form(config)
+
+# Persist whatever the user edited so refreshing the page doesn't wipe it.
+set_config_draft(config)
+
+# ---- Run + download + reset --------------------------------------------
+
+st.markdown("### 4 — Run")
+
+cols = st.columns([2, 1, 1])
+label = cols[0].text_input(
+    "Run label",
+    value=config.get("name", "Custom scenario"),
+    help="Used in result filenames so you can find the run later.",
+)
+download_clicked = cols[1].download_button(
+    "Download config.json",
+    data=json.dumps(config, indent=2, ensure_ascii=False),
+    file_name="fairgame_config.json",
+    mime="application/json",
+    use_container_width=True,
+    help="Save the config locally so you can re-run it later or share it.",
+)
+if cols[2].button("Reset to blank", use_container_width=True):
+    set_config_draft(_blank_config())
+    st.rerun()
+
+with st.expander("Show raw config (advanced)"):
+    st.json(config, expanded=False)
+
+if st.button("Run scenario", type="primary"):
+    with st.status("Running…", expanded=True) as status:
+        try:
+            outcome = run_config(config, display_name=label)
+        except Exception as exc:  # noqa: BLE001
+            status.update(label="Run failed", state="error")
+            st.exception(exc)
+            st.stop()
+        status.update(label="Run complete", state="complete")
+        set_last_run(outcome.to_session_payload())
+
+    st.success(f"Wrote {outcome.output_dir}.")
+    st.dataframe(outcome.df, use_container_width=True)
+    st.info("Open the **Results** page to explore the run interactively.")

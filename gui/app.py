@@ -21,11 +21,18 @@ if str(_PROJECT_ROOT) not in sys.path:
 
 import streamlit as st  # noqa: E402
 
-from gui.components.presets import usable_presets  # noqa: E402
+from gui.components.payoff_diagram import render_2x2_payoff_html  # noqa: E402
+from gui.components.presets import (  # noqa: E402
+    categories,
+    usable_by_category,
+    usable_presets,
+)
 from gui.components.runner import list_past_runs  # noqa: E402
 from gui.components.state import init_page  # noqa: E402
 
 init_page("Home", icon="🎯")
+
+# ---- Hero ---------------------------------------------------------------
 
 st.markdown(
     """
@@ -38,7 +45,21 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ---- "Quick start" section ---------------------------------------------
+# ---- First-run welcome --------------------------------------------------
+
+if not st.session_state.get("welcome_dismissed"):
+    cols = st.columns([5, 1])
+    with cols[0]:
+        st.info(
+            "👋 **First time here?** Read **📖 Guide** in the sidebar for a "
+            "5-minute walkthrough, or jump straight to **🚀 Quick start** "
+            "and run any scenario — Demo mode is on, so no API keys are needed."
+        )
+    if cols[1].button("Got it", key="dismiss_welcome"):
+        st.session_state["welcome_dismissed"] = True
+        st.rerun()
+
+# ---- "Get started" cards ------------------------------------------------
 
 st.markdown("## Get started", unsafe_allow_html=False)
 cols = st.columns(3)
@@ -47,27 +68,24 @@ cards = [
         "title": "🚀 Quick start",
         "body": (
             "Pick one of the shipped scenarios — Prisoner's Dilemma, "
-            "Volunteer's Dilemma, or a Theory-of-Mind variant — and run it "
-            "in a single click."
+            "Stag Hunt, or a Theory-of-Mind variant — and run it in a single "
+            "click."
         ),
-        "page": "1_🚀_Quick_Start",
     },
     {
         "title": "🛠️ Build a scenario",
         "body": (
             "Custom personality / payoff / model setups via guided forms. "
-            "Toggle ToM, mixed strategies, discount factors, utility transforms "
-            "and more."
+            "Advanced features (ToM, mixed strategies, discount factors) are "
+            "tucked behind a toggle."
         ),
-        "page": "2_🛠️_Scenario_Builder",
     },
     {
         "title": "🏆 Run a tournament",
         "body": (
             "Stage a round-robin between LLM agents and the canonical baseline "
-            "strategies (TitForTat, GrimTrigger, …)."
+            "strategies (Tit-for-Tat, Grim Trigger, …)."
         ),
-        "page": "3_🏆_Tournament",
     },
 ]
 for col, card in zip(cols, cards):
@@ -109,32 +127,39 @@ with cols2[1]:
         unsafe_allow_html=True,
     )
 
-# ---- "Available scenarios" section -------------------------------------
+# ---- "Shipped scenarios" gallery, grouped by category ------------------
 
 st.write("")
 st.markdown("## Shipped scenarios")
-presets = usable_presets()
-if not presets:
+all_categories = categories()
+if not all_categories:
     st.info("No scenarios found under `resources/config/`.")
 else:
-    pres_cols = st.columns(min(2, len(presets)))
-    for idx, preset in enumerate(presets):
-        col = pres_cols[idx % len(pres_cols)]
-        with col:
-            tags_html = "".join(
-                f"<span class='fg-pill fg-pill-blue'>{tag}</span>"
-                for tag in preset.tags
-            )
-            st.markdown(
-                f"""
-                <div class="fg-card">
-                  <h3>{preset.name}</h3>
-                  <p>{preset.summary}</p>
-                  <div style='margin-top: 0.6rem'>{tags_html}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+    for category in all_categories:
+        presets = usable_by_category(category)
+        if not presets:
+            continue
+        st.markdown(f"### {category}")
+        cols = st.columns(min(2, len(presets)))
+        for idx, preset in enumerate(presets):
+            col = cols[idx % len(cols)]
+            with col:
+                tags_html = "".join(
+                    f"<span class='fg-pill fg-pill-blue'>{tag}</span>"
+                    for tag in preset.tags
+                )
+                diagram = render_2x2_payoff_html(preset.load())
+                st.markdown(
+                    f"""
+                    <div class="fg-card">
+                      <h3>{preset.name}</h3>
+                      <p>{preset.summary}</p>
+                      <div style='margin-top: 0.6rem'>{tags_html}</div>
+                      {diagram}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
 # ---- "Recent runs" section ---------------------------------------------
 

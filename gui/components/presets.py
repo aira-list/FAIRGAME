@@ -25,6 +25,7 @@ class ScenarioPreset:
     config_path: Path
     tags: List[str] = field(default_factory=list)
     template_hint: str = "prisoner_dilemma"
+    category: str = "Classic games"
 
     def load(self) -> Dict[str, Any]:
         with self.config_path.open("r", encoding="utf-8") as fh:
@@ -52,6 +53,7 @@ CATALOG: List[ScenarioPreset] = [
         / "prisoner_dilemma"
         / "prisoner_dilemma_round_known_conventional.json",
         tags=["Two-player", "Multilingual"],
+        category="Classic games",
     ),
     ScenarioPreset(
         key="pd_tom",
@@ -66,6 +68,7 @@ CATALOG: List[ScenarioPreset] = [
         / "prisoner_dilemma_tom"
         / "prisoner_dilemma_tom.json",
         tags=["ToM", "Belief elicitation", "Types"],
+        category="Theory of Mind",
     ),
     ScenarioPreset(
         key="pd_mixed",
@@ -77,6 +80,7 @@ CATALOG: List[ScenarioPreset] = [
         ),
         config_path=ROOT / "unit_tests" / "config" / "prisoner_dilemma_mixed.json",
         tags=["Mixed strategies", "Discount factor", "Equilibria"],
+        category="Advanced game theory",
     ),
     ScenarioPreset(
         key="pd_tournament",
@@ -90,6 +94,7 @@ CATALOG: List[ScenarioPreset] = [
         / "config"
         / "prisoner_dilemma_tournament.json",
         tags=["Tournament", "Baselines"],
+        category="Tournaments & baselines",
     ),
     ScenarioPreset(
         key="volunteer",
@@ -104,6 +109,7 @@ CATALOG: List[ScenarioPreset] = [
         / "volunteer_dilemma_multiple_games.json",
         tags=["N-player", "Permutations"],
         template_hint="volunteer_dilemma",
+        category="Classic games",
     ),
     # ---- 2x2 social-dilemma family ported from Fairgame_paper_evaluations ----
     ScenarioPreset(
@@ -120,6 +126,7 @@ CATALOG: List[ScenarioPreset] = [
         / "stag_hunt_round_known.json",
         tags=["Coordination", "Two equilibria"],
         template_hint="stag_hunt",
+        category="Classic games",
     ),
     ScenarioPreset(
         key="snow_drift",
@@ -135,6 +142,7 @@ CATALOG: List[ScenarioPreset] = [
         / "snow_drift_round_known.json",
         tags=["Anti-coordination", "Chicken"],
         template_hint="snow_drift",
+        category="Classic games",
     ),
     ScenarioPreset(
         key="harmony_game",
@@ -150,6 +158,7 @@ CATALOG: List[ScenarioPreset] = [
         / "harmony_game_round_known.json",
         tags=["No conflict", "Dominance"],
         template_hint="harmony_game",
+        category="Classic games",
     ),
     ScenarioPreset(
         key="battle_sexes",
@@ -165,6 +174,7 @@ CATALOG: List[ScenarioPreset] = [
         / "battle_sexes_round_known.json",
         tags=["Asymmetric", "Coordination"],
         template_hint="battle_sexes",
+        category="Classic games",
     ),
     ScenarioPreset(
         key="zero_sum",
@@ -180,6 +190,7 @@ CATALOG: List[ScenarioPreset] = [
         / "zero_sum_round_known.json",
         tags=["Zero-sum", "Mixed equilibrium"],
         template_hint="zero_sum",
+        category="Classic games",
     ),
     # ---- Covert-communication family ----------------------------------
     ScenarioPreset(
@@ -198,6 +209,7 @@ CATALOG: List[ScenarioPreset] = [
         / "prisoner_dilemma_covert_dec.json",
         tags=["Covert channel", "Communication"],
         template_hint="prisoner_dilemma_covert_dec",
+        category="Covert communication",
     ),
     ScenarioPreset(
         key="pd_covert_hex",
@@ -214,6 +226,7 @@ CATALOG: List[ScenarioPreset] = [
         / "prisoner_dilemma_covert_hex.json",
         tags=["Covert channel", "Hex"],
         template_hint="prisoner_dilemma_covert_hex",
+        category="Covert communication",
     ),
     ScenarioPreset(
         key="pd_random_dec",
@@ -231,6 +244,7 @@ CATALOG: List[ScenarioPreset] = [
         / "prisoner_dilemma_random_dec.json",
         tags=["Control", "Random channel"],
         template_hint="prisoner_dilemma_random_dec",
+        category="Covert communication",
     ),
     ScenarioPreset(
         key="pd_fake_dec",
@@ -248,8 +262,22 @@ CATALOG: List[ScenarioPreset] = [
         / "prisoner_dilemma_fake_dec.json",
         tags=["Fake channel", "Engine-generated"],
         template_hint="prisoner_dilemma",
+        category="Covert communication",
     ),
 ]
+
+
+def categories() -> List[str]:
+    """Distinct ``category`` values across the catalog, in catalog order."""
+    seen: List[str] = []
+    for preset in CATALOG:
+        if preset.category not in seen:
+            seen.append(preset.category)
+    return seen
+
+
+def usable_by_category(category: str) -> List[ScenarioPreset]:
+    return [p for p in usable_presets() if p.category == category]
 
 
 def by_key(key: str) -> ScenarioPreset:
