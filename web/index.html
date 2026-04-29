@@ -94,13 +94,13 @@
 
         <h2 class="text-xl font-semibold mb-3">Get started</h2>
         <div class="grid md:grid-cols-3 gap-4 mb-8">
-          <div class="fg-card p-5 cursor-pointer transition" @click="activePage='quick'">
-            <h3 class="font-semibold mb-1">🚀 Quick start</h3>
-            <p class="text-sm text-slate-600">Pick a shipped scenario and run it in one click.</p>
+          <div class="fg-card p-5 cursor-pointer transition" @click="activePage='templates'">
+            <h3 class="font-semibold mb-1">🏷️ Templates</h3>
+            <p class="text-sm text-slate-600">Manage prompt-template families (tags, variations, languages). AI-translate any template into 30+ languages.</p>
           </div>
-          <div class="fg-card p-5 cursor-pointer transition" @click="activePage='builder'">
-            <h3 class="font-semibold mb-1">🛠️ Scenario builder</h3>
-            <p class="text-sm text-slate-600">Custom personality / payoff / model setups via guided forms.</p>
+          <div class="fg-card p-5 cursor-pointer transition" @click="activePage='configurations'">
+            <h3 class="font-semibold mb-1">⚙️ Configurations</h3>
+            <p class="text-sm text-slate-600">Build a runnable bundle: pick a template, set agents / payoffs / ToM / game-theory knobs, save with a name. Run it now or batch later.</p>
           </div>
           <div class="fg-card p-5 cursor-pointer transition" @click="activePage='tournament'">
             <h3 class="font-semibold mb-1">🏆 Tournament</h3>
@@ -1088,68 +1088,6 @@ Output ONLY the JSON.
       </section>
 
 
-      <!-- ===== QUICK START ===== -->
-      <section x-show="activePage === 'quick'">
-        <h1 class="text-2xl font-semibold mb-1">🚀 Quick start</h1>
-        <p class="text-slate-600 mb-6">Pick a shipped scenario, optionally tweak the basics, click Run.</p>
-
-        <div class="fg-card p-6 mb-6">
-          <div class="grid md:grid-cols-2 gap-4">
-            <div class="md:col-span-2">
-              <label class="fg-label">Scenario</label>
-              <select x-model="quick.preset" @change="loadPresetIntoQuick()" class="fg-input">
-                <option value="">— select a preset —</option>
-                <template x-for="(presets, category) in presetsByCategory" :key="category">
-                  <optgroup :label="category">
-                    <template x-for="p in presets" :key="p.id">
-                      <option :value="p.id" x-text="p.label || p.name"></option>
-                    </template>
-                  </optgroup>
-                </template>
-              </select>
-            </div>
-
-            <div>
-              <label class="fg-label">Run name (optional)</label>
-              <input type="text" x-model="quick.name" class="fg-input" placeholder="leave blank to use preset name"/>
-            </div>
-            <div>
-              <label class="fg-label">Number of rounds</label>
-              <input type="number" min="1" x-model.number="quick.nRounds" class="fg-input"/>
-            </div>
-            <div>
-              <label class="fg-label">Master seed</label>
-              <input type="number" x-model.number="quick.seed" class="fg-input"/>
-              <p class="fg-help">Same seed → same outcome. Used for type draws + mixed-strategy sampling.</p>
-            </div>
-            <div>
-              <label class="fg-label">Seed count (for confidence intervals)</label>
-              <input type="number" min="1" x-model.number="quick.seedCount" class="fg-input"/>
-              <p class="fg-help">>1 reruns the scenario with different seeds and aggregates with 95% CIs.</p>
-            </div>
-          </div>
-
-          <button class="mt-5 px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
-                  :disabled="!quick.preset || quick.running"
-                  @click="runQuick()">
-            <span x-show="!quick.running">▶ Run scenario</span>
-            <span x-show="quick.running">Running…</span>
-          </button>
-
-          <div x-show="quick.error" class="mt-4 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-sm" x-text="quick.error"></div>
-        </div>
-
-        <div x-show="quick.lastRun" class="fg-card p-6">
-          <div class="flex items-baseline justify-between mb-3">
-            <h2 class="text-lg font-semibold">Latest run</h2>
-            <a class="text-sm text-blue-600 hover:underline" :href="`/api/runs/${quick.lastRun?.id}/csv`">Download CSV ↓</a>
-          </div>
-          <p class="text-sm text-slate-500 mb-3">Run id: <code class="text-slate-700" x-text="quick.lastRun?.id"></code></p>
-          <div x-html="renderTable(quick.lastRun?.rows)"></div>
-        </div>
-      </section>
-
-
       <!-- ===== TOURNAMENT ===== -->
       <section x-show="activePage === 'tournament'">
         <h1 class="text-2xl font-semibold mb-1">🏆 Tournament</h1>
@@ -1312,7 +1250,7 @@ Output ONLY the JSON.
         <button class="text-sm text-blue-600 hover:underline mb-4" @click="loadRuns()">↻ Refresh</button>
 
         <div x-show="runs.length === 0" class="text-slate-500 italic">
-          No runs yet — start one in <a class="text-blue-600 underline" @click.prevent="activePage='quick'" href="#">Quick start</a>.
+          No runs yet — save a configuration in <a class="text-blue-600 underline" @click.prevent="activePage='configurations'" href="#">Configurations</a> and run it.
         </div>
 
         <div class="grid gap-3 mb-6">
@@ -1394,7 +1332,6 @@ Output ONLY the JSON.
       activePage: 'home',
       pages: [
         { id: 'home',           icon: '🏠', label: 'Home' },
-        { id: 'quick',          icon: '🚀', label: 'Quick start' },
         { id: 'templates',      icon: '🏷️', label: 'Templates' },
         { id: 'configurations', icon: '⚙️', label: 'Configurations' },
         { id: 'tournament',     icon: '🏆', label: 'Tournament' },
@@ -1457,8 +1394,6 @@ Output ONLY the JSON.
         batchProgress: '',
         lastBatchResults: [],
       },
-
-      quick: { preset: '', name: '', nRounds: 1, seed: 0, seedCount: 1, running: false, error: '', lastRun: null },
 
       builder: {
         preset: '',
@@ -1893,37 +1828,6 @@ Output ONLY the JSON.
           await this.$nextTick();
           this.renderCharts();
         } catch (e) { console.error('openRun', e); }
-      },
-
-      // ---- Quick start ----------------------------------------------
-
-      async loadPresetIntoQuick() {
-        if (!this.quick.preset) return;
-        try {
-          const cfg = await this.api(`/api/presets/${this.quick.preset}`);
-          this.quick.name = cfg.name || '';
-          this.quick.nRounds = cfg.nRounds || 1;
-          this.quick.seed = cfg.seed || 0;
-          this.quick.seedCount = cfg.seedCount || 1;
-        } catch (e) { console.error('loadPresetIntoQuick', e); }
-      },
-
-      async runQuick() {
-        this.quick.running = true; this.quick.error = '';
-        try {
-          const cfg = await this.api(`/api/presets/${this.quick.preset}`);
-          if (this.quick.name) cfg.name = this.quick.name;
-          if (this.quick.nRounds) cfg.nRounds = this.quick.nRounds;
-          if (this.quick.seed !== undefined) cfg.seed = this.quick.seed;
-          if (this.quick.seedCount > 1) cfg.seedCount = this.quick.seedCount;
-          const result = await this.api('/api/runs', {
-            method: 'POST',
-            body: JSON.stringify({ config: cfg, demo_mode: this.demoMode }),
-          });
-          this.quick.lastRun = result;
-          await this.loadRuns();
-        } catch (e) { this.quick.error = String(e.message || e); }
-        finally { this.quick.running = false; }
       },
 
       // ---- Builder --------------------------------------------------
