@@ -79,6 +79,48 @@ class TestFakeChannel(unittest.TestCase):
                         self.assertTrue(p.isdigit(), msg=f"non-numeric token: {p!r}")
         self.assertGreater(seen, 0, "fake channel produced no messages")
 
+    def test_fake_channel_with_seed_is_deterministic(self) -> None:
+        config_path = (
+            COVERT_GLOB / "prisoner_dilemma" / "covert" / "prisoner_dilemma_fake_dec.json"
+        )
+        config = json.loads(config_path.read_text())
+        config["seed"] = 12345
+
+        def _messages() -> list[str]:
+            outcomes = _factory().create_and_run_games(config)
+            collected: list[str] = []
+            for game in outcomes.values():
+                for entries in game["history"].values():
+                    for entry in entries:
+                        if entry.get("message"):
+                            collected.append(entry["message"])
+            return collected
+
+        self.assertEqual(_messages(), _messages())
+
+
+# ---------------------------------------------------------------------------
+# Cross-channel invariants
+# ---------------------------------------------------------------------------
+
+class TestCovertChannelInvariants(unittest.TestCase):
+    """Properties that must hold for every covert variant — engine-level
+    only (we don't make claims about LLM compliance with the channel)."""
+
+    def test_every_covert_config_records_strategy_per_round(self) -> None:
+        # The choose phase must complete for every (game × channel × round).
+        for path in sorted(COVERT_GLOB.glob("*/covert/*_covert_*.json"))[:5]:
+            config = json.loads(path.read_text())
+            outcomes = _factory().create_and_run_games(config)
+            for game in outcomes.values():
+                for entries in game["history"].values():
+                    for entry in entries:
+                        # Every round must have a strategy decision.
+                        self.assertIsNotNone(
+                            entry.get("strategy"),
+                            msg=f"missing strategy in {path.name}",
+                        )
+
 
 if __name__ == "__main__":
     unittest.main()

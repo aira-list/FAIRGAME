@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
+import random
 import unittest
 from unittest import mock
 
 from src.fairgame import FairGame
 from src.fairgame_factory import FakeCommunicationConfig
+from src.utility import CRRATransform, FehrSchmidtTransform, IdentityTransform
 
+
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
 
 def _matrix_data() -> dict:
     return {
@@ -60,28 +66,41 @@ class _StubAgent:
         return self.strategies[-1]
 
 
-def _make_game(stop_conditions=None, n_rounds=2) -> FairGame:
-    agents = {"a1": _StubAgent("a1"), "a2": _StubAgent("a2")}
-    return FairGame(
-        name="t",
-        language="en",
-        agents=agents,
-        n_rounds=n_rounds,
-        n_rounds_known=True,
-        payoff_matrix_data=_matrix_data(),
-        prompt_template="ignored",
-        stop_conditions=stop_conditions or [],
-        agents_communicate=False,
-    )
+def _make_game(**kwargs) -> FairGame:
+    agents = kwargs.pop("agents", None) or {
+        "a1": _StubAgent("a1"),
+        "a2": _StubAgent("a2"),
+    }
+    defaults = {
+        "name": "t",
+        "language": "en",
+        "agents": agents,
+        "n_rounds": 2,
+        "n_rounds_known": True,
+        "payoff_matrix_data": _matrix_data(),
+        "prompt_template": "ignored",
+        "stop_conditions": [],
+        "agents_communicate": False,
+    }
+    defaults.update(kwargs)
+    return FairGame(**defaults)
 
 
-class TestFairGame(unittest.TestCase):
-    def test_description_is_property_not_method(self) -> None:
+# ---------------------------------------------------------------------------
+# Description
+# ---------------------------------------------------------------------------
+
+class TestDescription(unittest.TestCase):
+    def test_description_is_property(self) -> None:
         game = _make_game()
-        # Reading the property must yield a dict; treating it as a callable
-        # would have raised TypeError previously.
         self.assertIsInstance(game.description, dict)
         self.assertEqual(game.description["name"], "t")
+
+    def test_description_includes_n_rounds_and_language(self) -> None:
+        game = _make_game(n_rounds=5, language="en")
+        desc = game.description
+        self.assertEqual(desc["n_rounds"], 5)
+        self.assertEqual(desc["language"], "en")
 
     def test_description_includes_fake_communication_when_enabled(self) -> None:
         game = _make_game()
@@ -93,26 +112,165 @@ class TestFairGame(unittest.TestCase):
         self.assertEqual(desc["fake_message_count"], 2)
         self.assertEqual(desc["fake_message_base"], "hex")
 
+    def test_description_omits_fake_communication_when_disabled(self) -> None:
+        # No fake_communication_config attached → keys absent.
+        desc = _make_game().description
+        self.assertNotIn("fake_communication", desc)
+
+    def test_description_includes_seed_when_provided(self) -> None:
+        desc = _make_game(seed=42).description
+        self.assertEqual(desc["seed"], 42)
+
+    def test_description_omits_seed_when_none(self) -> None:
+        desc = _make_game().description
+        self.assertNotIn("seed", desc)
+
+    def test_description_includes_equilibria_when_set(self) -> None:
+        desc = _make_game(equilibria=["c4"]).description
+        self.assertEqual(desc["equilibria"], ["c4"])
+
+
+# ---------------------------------------------------------------------------
+# Termination
+# ---------------------------------------------------------------------------
+
+class TestTermination(unittest.TestCase):
     def test_run_terminates_after_n_rounds(self) -> None:
         game = _make_game(n_rounds=2)
-        with mock.patch("src.fairgame.GameRound") as game_round_cls:
-            instance = game_round_cls.return_value
-            instance.run.return_value = ["strategy2", "strategy2"]  # combo4
+        with mock.patch("src.fairgame.GameRound") as cls:
+            cls.return_value.run.return_value = ["strategy2", "strategy2"]  # c4
             game.run()
-            self.assertEqual(game.current_round, 3)
-            self.assertEqual(len(game.choices_made), 2)
+        self.assertEqual(game.current_round, 3)
+        self.assertEqual(len(game.choices_made), 2)
 
-    def test_run_stops_when_stop_condition_observed(self) -> None:
+    def test_run_terminates_at_stop_condition(self) -> None:
         game = _make_game(n_rounds=10, stop_conditions=["c4"])
-        with mock.patch("src.fairgame.GameRound") as game_round_cls:
-            instance = game_round_cls.return_value
-            instance.run.return_value = ["strategy2", "strategy2"]  # combo c4
+        with mock.patch("src.fairgame.GameRound") as cls:
+            cls.return_value.run.return_value = ["strategy2", "strategy2"]  # c4
             game.run()
-            # Stops after the first round because combo4 is a stop condition.
-            self.assertEqual(len(game.choices_made), 1)
+        # Stops after round 1 since combo c4 is a stop condition.
+        self.assertEqual(len(game.choices_made), 1)
 
-    def test_stop_condition_not_met_when_no_history(self) -> None:
+    def test_stop_condition_false_when_no_rounds_played(self) -> None:
         self.assertFalse(_make_game().stop_condition_is_met())
+
+    def test_stop_condition_false_for_unrecognised_combination(self) -> None:
+        game = _make_game(stop_conditions=["c4"])
+        # Manually push an invalid combination.
+        game.choices_made.append(["nope", "nope"])
+        self.assertFalse(game.stop_condition_is_met())
+
+    def test_continuation_probability_can_end_game_early(self) -> None:
+        # With continuation_probability=0 (the smallest valid value is
+        # 0+epsilon; we use a near-zero probability with a fixed seed that
+        # forces termination after round 1).
+        rng = mock.Mock()
+        rng.random.return_value = 0.99  # strictly above any reasonable p
+        game = _make_game(
+            n_rounds=10,
+            continuation_probability=0.5,
+            rng=rng,
+        )
+        with mock.patch("src.fairgame.GameRound") as cls:
+            cls.return_value.run.return_value = ["strategy2", "strategy1"]
+            game.run()
+        # Only round 1 ran (continuation_probability check fails for round 2).
+        self.assertEqual(len(game.choices_made), 1)
+
+    def test_continuation_check_skipped_for_first_round(self) -> None:
+        # Even with continuation_probability set, the first round always plays.
+        rng = mock.Mock()
+        rng.random.return_value = 0.99
+        game = _make_game(
+            n_rounds=1,
+            continuation_probability=0.01,
+            rng=rng,
+        )
+        with mock.patch("src.fairgame.GameRound") as cls:
+            cls.return_value.run.return_value = ["strategy1", "strategy2"]
+            game.run()
+        self.assertEqual(len(game.choices_made), 1)
+
+
+# ---------------------------------------------------------------------------
+# Score modifiers (utility transform + discount factor)
+# ---------------------------------------------------------------------------
+
+class TestScoreModifiers(unittest.TestCase):
+    def test_discount_factor_applied_to_round_two(self) -> None:
+        # Round 1: discount 0.9^0 = 1.0 → raw scores preserved.
+        # Round 2: discount 0.9^1 = 0.9 → halved by 0.9.
+        game = _make_game(n_rounds=2, discount_factor=0.9)
+        with mock.patch("src.fairgame.GameRound") as cls:
+            cls.return_value.run.return_value = ["strategy1", "strategy1"]  # c1 → w1, w1 = 3, 3
+            cls.return_value._update_round_history = mock.Mock()
+            game.run()
+        for agent in game.agents.values():
+            self.assertAlmostEqual(agent.scores[0], 3.0)
+            self.assertAlmostEqual(agent.scores[1], 3.0 * 0.9)
+
+    def test_discount_factor_one_is_no_op(self) -> None:
+        game = _make_game(n_rounds=2, discount_factor=1.0)
+        with mock.patch("src.fairgame.GameRound") as cls:
+            cls.return_value.run.return_value = ["strategy1", "strategy1"]
+            cls.return_value._update_round_history = mock.Mock()
+            game.run()
+        for agent in game.agents.values():
+            self.assertEqual(agent.scores, [3, 3])
+
+    def test_invalid_discount_factor_rejected_at_construction(self) -> None:
+        with self.assertRaises(ValueError):
+            _make_game(discount_factor=0.0)
+        with self.assertRaises(ValueError):
+            _make_game(discount_factor=-0.1)
+        with self.assertRaises(ValueError):
+            _make_game(discount_factor=1.5)
+
+    def test_invalid_continuation_probability_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            _make_game(continuation_probability=0.0)
+        with self.assertRaises(ValueError):
+            _make_game(continuation_probability=1.5)
+
+    def test_utility_transform_applied_per_round(self) -> None:
+        # FehrSchmidt(α=0, β=0) = identity → no change.
+        game = _make_game(
+            n_rounds=1, utility_transform=FehrSchmidtTransform(alpha=0.0, beta=0.0)
+        )
+        with mock.patch("src.fairgame.GameRound") as cls:
+            cls.return_value.run.return_value = ["strategy1", "strategy2"]  # c2 → 5, 0
+            cls.return_value._update_round_history = mock.Mock()
+            game.run()
+        agents = list(game.agents.values())
+        self.assertAlmostEqual(agents[0].scores[-1], 5.0)
+        self.assertAlmostEqual(agents[1].scores[-1], 0.0)
+
+    def test_default_utility_transform_is_identity(self) -> None:
+        game = _make_game()
+        self.assertIsInstance(game.utility_transform, IdentityTransform)
+
+
+# ---------------------------------------------------------------------------
+# RNG / determinism
+# ---------------------------------------------------------------------------
+
+class TestRng(unittest.TestCase):
+    def test_seed_constructs_a_seeded_rng(self) -> None:
+        game = _make_game(seed=42)
+        self.assertIsInstance(game.rng, random.Random)
+
+    def test_explicit_rng_takes_precedence_over_seed(self) -> None:
+        my_rng = random.Random(123)
+        game = _make_game(rng=my_rng, seed=999)
+        self.assertIs(game.rng, my_rng)
+
+    def test_two_games_with_same_seed_have_same_rng_sequence(self) -> None:
+        a = _make_game(seed=7)
+        b = _make_game(seed=7)
+        # Pull the same number of values from each.
+        seq_a = [a.rng.random() for _ in range(20)]
+        seq_b = [b.rng.random() for _ in range(20)]
+        self.assertEqual(seq_a, seq_b)
 
 
 if __name__ == "__main__":

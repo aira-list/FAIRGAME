@@ -146,9 +146,77 @@ class TestResultsProcessorEmitsBeliefMetrics(unittest.TestCase):
         df = ResultsProcessor().process(results)
         self.assertIn("agent1_belief_mean_brier", df.columns)
         self.assertIn("agent2_belief_mean_brier", df.columns)
-        # Fake belief is biased toward strategy1; metric should be a real number.
         self.assertIsNotNone(df.iloc[0]["agent1_belief_mean_brier"])
         self.assertIsNotNone(df.iloc[0]["agent2_belief_mean_brier"])
+
+
+# ---------------------------------------------------------------------------
+# Invariants and determinism
+# ---------------------------------------------------------------------------
+
+class TestBriefScoreInvariants(unittest.TestCase):
+    """Properties that must hold for every emitted Brier score."""
+
+    def setUp(self) -> None:
+        self.io_manager = IoManager(root_path=str(RESOURCES_PATH))
+        self.factory = FairGameFactory()
+        self.factory.set_io_manager(self.io_manager)
+
+    def test_brier_columns_within_zero_two(self) -> None:
+        results = self.factory.load_config_create_and_run_games(
+            "prisoner_dilemma_tom/prisoner_dilemma_tom.json"
+        )
+        df = ResultsProcessor().process(results)
+        for col in ("agent1_belief_mean_brier", "agent2_belief_mean_brier"):
+            value = df.iloc[0][col]
+            self.assertGreaterEqual(value, 0.0)
+            self.assertLessEqual(value, 2.0)
+
+    def test_p_outcome_columns_within_zero_one(self) -> None:
+        results = self.factory.load_config_create_and_run_games(
+            "prisoner_dilemma_tom/prisoner_dilemma_tom.json"
+        )
+        df = ResultsProcessor().process(results)
+        for col in ("agent1_belief_mean_p_outcome", "agent2_belief_mean_p_outcome"):
+            value = df.iloc[0][col]
+            self.assertGreaterEqual(value, 0.0)
+            self.assertLessEqual(value, 1.0)
+
+
+class TestDeterminism(unittest.TestCase):
+    def test_same_seed_yields_same_type_draws(self) -> None:
+        # Add a seed and run twice — type assignment must match.
+        io_manager = IoManager(root_path=str(RESOURCES_PATH))
+
+        def _types() -> list:
+            factory = FairGameFactory()
+            factory.set_io_manager(io_manager)
+            config = factory.load_config(
+                "prisoner_dilemma_tom/prisoner_dilemma_tom.json"
+            )
+            config["seed"] = 42
+            config = io_manager.process_and_validate_configuration(config)
+            config["_resolved_seed"] = 42
+            factory.create_games(config)
+            return [
+                [agent.agent_type for agent in game.agents.values()]
+                for game in factory.games
+            ]
+
+        self.assertEqual(_types(), _types())
+
+
+class TestBeliefMetricsAbsentWhenNotElicited(unittest.TestCase):
+    def test_no_brier_columns_for_non_belief_run(self) -> None:
+        # Plain PD config has elicit_beliefs unset → no belief columns.
+        io_manager = IoManager(root_path=str(RESOURCES_PATH))
+        factory = FairGameFactory()
+        factory.set_io_manager(io_manager)
+        results = factory.load_config_create_and_run_games(
+            "prisoner_dilemma/prisoner_dilemma_round_known_conventional.json"
+        )
+        df = ResultsProcessor().process(results)
+        self.assertNotIn("agent1_belief_mean_brier", df.columns)
 
 
 if __name__ == "__main__":

@@ -163,6 +163,67 @@ class TestRunnerPersistsArtefacts(unittest.TestCase):
         reloaded = load_past_run(first.output_dir)
         self.assertEqual(reloaded.df.shape, first.df.shape)
 
+    def test_runs_listed_newest_first(self) -> None:
+        # Two runs with deliberate sleep between to ensure distinct timestamps.
+        import time
+
+        run_config(by_key("pd_classic").load(), display_name="alpha")
+        time.sleep(1.1)
+        run_config(by_key("pd_classic").load(), display_name="beta")
+        runs = list_past_runs()
+        # First entry must have a later mtime / lexicographic name than the
+        # second (we sort by name reverse, with timestamp prefix).
+        self.assertGreaterEqual(runs[0].name, runs[1].name)
+
+    def test_run_directory_naming_uses_timestamp_prefix(self) -> None:
+        outcome = run_config(by_key("pd_classic").load(), display_name="ts test")
+        # Expect YYYYMMDD_HHMMSS_<slug> at the start of the directory name.
+        parts = outcome.output_dir.name.split("_")
+        self.assertGreaterEqual(len(parts), 3)
+        self.assertEqual(len(parts[0]), 8)  # YYYYMMDD
+        self.assertEqual(len(parts[1]), 6)  # HHMMSS
+
+    def test_persisted_config_round_trips_through_load(self) -> None:
+        config = by_key("pd_classic").load()
+        config["name"] = "config round trip"
+        outcome = run_config(config, display_name="round trip")
+        reloaded = load_past_run(outcome.output_dir)
+        self.assertEqual(reloaded.config["name"], config["name"])
+
+
+# ---------------------------------------------------------------------------
+# Plot helpers — happy paths
+# ---------------------------------------------------------------------------
+
+class TestPlotsRender(unittest.TestCase):
+    """Plot helpers should produce a Plotly Figure for valid inputs."""
+
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp(prefix="fg_plots_"))
+        self._patch = mock.patch("gui.components.runner.RESULTS_DIR", self.tmp)
+        self._patch.start()
+        self._snapshot = dict(llm_factory_connector.MODEL_PROVIDER_MAP)
+        fakes.install_demo_connector()
+
+    def tearDown(self) -> None:
+        self._patch.stop()
+        llm_factory_connector.MODEL_PROVIDER_MAP.clear()
+        llm_factory_connector.MODEL_PROVIDER_MAP.update(self._snapshot)
+        fakes._DEMO_INSTALLED = False
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_cooperation_rate_returns_figure_for_real_run(self) -> None:
+        outcome = run_config(by_key("pd_classic").load(), display_name="plot")
+        fig = cooperation_rate_per_round(outcome.raw)
+        self.assertIsNotNone(fig)
+        # Plotly Figure has data.
+        self.assertGreater(len(fig.data), 0)
+
+    def test_score_per_round_returns_figure_for_real_run(self) -> None:
+        outcome = run_config(by_key("pd_classic").load(), display_name="plot")
+        fig = score_per_round(outcome.raw)
+        self.assertIsNotNone(fig)
+
 
 if __name__ == "__main__":
     unittest.main()
