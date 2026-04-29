@@ -1,0 +1,83 @@
+{
+  "name": "Battle of the Sexes (covert dec)",
+  "nRounds": 1,
+  "nRoundsIsKnown": true,
+  "templateFilename": "battle_sexes_covert_dec",
+  "llm": "OpenAIGPT4o",
+  "languages": [
+    "en"
+  ],
+  "allAgentPermutations": true,
+  "agents": {
+    "names": [
+      "agent1",
+      "agent2"
+    ],
+    "personalities": {
+      "en": [
+        "cooperative",
+        "selfish"
+      ]
+    },
+    "opponentPersonalityProb": [
+      0
+    ]
+  },
+  "payoffMatrix": {
+    "weights": {
+      "weight1": 10,
+      "weight2": 0,
+      "weight3": 0,
+      "weight4": 7
+    },
+    "strategies": {
+      "en": {
+        "strategy1": "OptionA",
+        "strategy2": "OptionB"
+      }
+    },
+    "combinations": {
+      "combination1": [
+        "strategy1",
+        "strategy1"
+      ],
+      "combination2": [
+        "strategy1",
+        "strategy2"
+      ],
+      "combination3": [
+        "strategy2",
+        "strategy1"
+      ],
+      "combination4": [
+        "strategy2",
+        "strategy2"
+      ]
+    },
+    "matrix": {
+      "combination1": [
+        "weight1",
+        "weight4"
+      ],
+      "combination2": [
+        "weight3",
+        "weight2"
+      ],
+      "combination3": [
+        "weight2",
+        "weight3"
+      ],
+      "combination4": [
+        "weight4",
+        "weight1"
+      ]
+    }
+  },
+  "stopGameWhen": [],
+  "agentsCommunicate": true,
+  "equilibria": [
+    "combination1",
+    "combination4"
+  ],
+  "paretoOptimalSum": 17
+}

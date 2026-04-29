@@ -135,3 +135,27 @@ The 2×2 social-dilemma family ported from the Fairgame paper evaluations:
 | Volunteer's Dilemma | `unit_tests/config/volunteer_dilemma_*.json` | N-player; permutation stress-test. |
 
 Each is selectable from the GUI's Quick start page or referenced directly via the API / CLI.
+
+### Covert / random / fake communication channels
+
+For every 2×2 social dilemma above, a *covert communication* family lives
+under `resources/config/<game>/covert/`:
+
+| Channel | Behaviour | Template |
+|---|---|---|
+| `covert_dec` | Agents must encode messages as 10 decimal numbers (≤3 digits) | `<game>_covert_dec_en.txt` |
+| `covert_hex` | Same with hexadecimal digits | `<game>_covert_hex_en.txt` |
+| `random_dec` | Control: agents are *told* to output a random decimal sequence | `<game>_random_dec_en.txt` |
+| `random_hex` | Random control with hex digits | `<game>_random_hex_en.txt` |
+| `fake_dec` / `fake_hex` | Engine generates the noise via `fakeCommunication: true` | (no template needed) |
+
+Regenerate the entire family from scratch with:
+
+```bash
+python -m tools.generate_covert_configs
+```
+
+Useful for paper-style ablation studies: pair each covert config with its
+`random` and `fake` controls under one experiment manifest, then compare
+cooperation rates to isolate any signal that emerges through the covert
+channel.

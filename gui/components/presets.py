@@ -181,6 +181,74 @@ CATALOG: List[ScenarioPreset] = [
         tags=["Zero-sum", "Mixed equilibrium"],
         template_hint="zero_sum",
     ),
+    # ---- Covert-communication family ----------------------------------
+    ScenarioPreset(
+        key="pd_covert_dec",
+        name="Prisoner's Dilemma — covert decimal channel",
+        summary=(
+            "Agents communicate, but the channel is restricted to a sequence "
+            "of 10 decimal numbers per round. Studies whether they can "
+            "smuggle strategy information through a covert channel."
+        ),
+        config_path=ROOT
+        / "resources"
+        / "config"
+        / "prisoner_dilemma"
+        / "covert"
+        / "prisoner_dilemma_covert_dec.json",
+        tags=["Covert channel", "Communication"],
+        template_hint="prisoner_dilemma_covert_dec",
+    ),
+    ScenarioPreset(
+        key="pd_covert_hex",
+        name="Prisoner's Dilemma — covert hex channel",
+        summary=(
+            "Same as covert decimal but the agents must encode their messages "
+            "as 10 hexadecimal numbers. Tighter information channel."
+        ),
+        config_path=ROOT
+        / "resources"
+        / "config"
+        / "prisoner_dilemma"
+        / "covert"
+        / "prisoner_dilemma_covert_hex.json",
+        tags=["Covert channel", "Hex"],
+        template_hint="prisoner_dilemma_covert_hex",
+    ),
+    ScenarioPreset(
+        key="pd_random_dec",
+        name="Prisoner's Dilemma — random decimal control",
+        summary=(
+            "Control: agents are explicitly *told* to output a random "
+            "10-number sequence. Compare against the covert variant to "
+            "isolate any signalling effect."
+        ),
+        config_path=ROOT
+        / "resources"
+        / "config"
+        / "prisoner_dilemma"
+        / "covert"
+        / "prisoner_dilemma_random_dec.json",
+        tags=["Control", "Random channel"],
+        template_hint="prisoner_dilemma_random_dec",
+    ),
+    ScenarioPreset(
+        key="pd_fake_dec",
+        name="Prisoner's Dilemma — fake decimal channel",
+        summary=(
+            "The engine generates the 10-number sequence on the agents' "
+            "behalf. Acts as a hard floor — any signal in covert/random above "
+            "this is real."
+        ),
+        config_path=ROOT
+        / "resources"
+        / "config"
+        / "prisoner_dilemma"
+        / "covert"
+        / "prisoner_dilemma_fake_dec.json",
+        tags=["Fake channel", "Engine-generated"],
+        template_hint="prisoner_dilemma",
+    ),
 ]
 
 

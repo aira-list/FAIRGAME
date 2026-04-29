@@ -1,0 +1,20 @@
+You are {currentPlayerName} and your opponent is {opponent1}.
+{intro}: [You are {personality}.]
+{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.]
+
+You and {opponent1} are setting out to hunt. You can each chase a stag together (which only succeeds if you both commit) or settle for a hare alone (which is guaranteed but worth less).
+
+Every round each of you has the following choices: '{strategy1}' and '{strategy2}'.
+{gameLength}: [There are {nRounds} rounds to decide.]
+The current round is number {currentRound}.
+
+If you both choose {strategy1}, you each get a reward of {weight1}.
+If you choose {strategy1} and {opponent1} chooses {strategy2}, you get a reward of {weight3} and {opponent1} gets a reward of {weight2}.
+If you choose {strategy2} and {opponent1} chooses {strategy1}, you get a reward of {weight2} and {opponent1} gets a reward of {weight3}.
+If you both choose {strategy2}, you each get a reward of {weight4}.
+
+Your goal is to maximise your reward.
+History so far: {history}.
+
+{communicate}: [Output a random sequence of exactly 10 hexadecimal numbers (each at most 3 hex digits), separated by commas. Do not include any prose — output only the numbers.]
+{choose}: [Choose between {strategy1} and {strategy2}. Output ONLY the choice.]
