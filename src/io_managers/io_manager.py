@@ -1,18 +1,11 @@
-import os
 from pathlib import Path
 
 from src.io_managers.file_manager import FileManager
 from src.io_managers.configuration_validator import ConfigValidator
 from src.utils.utils import get_project_root
 
-# Get the absolute path of the current script
-script_path = os.path.abspath(__file__)
-script_dir = os.path.dirname(script_path)
-
-# Get the absolute path of the current script
-script_path = Path(__file__).resolve()
-
-project_root = get_project_root(script_path, 3)
+# Resolve the project's resources/ directory once at import time.
+project_root = get_project_root(Path(__file__).resolve(), 3)
 DEFAULT_RESOURCES = project_root / "resources"
 
 class IoManager:

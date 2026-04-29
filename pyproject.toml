@@ -1,0 +1,83 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fairgame"
+version = "0.1.0"
+description = "FAIRGAME — A Framework for AI Agents Bias Recognition using Game Theory."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Alessio Buscemi", email = "alessio.buscemi@list.lu" },
+]
+keywords = ["llm", "game-theory", "bias", "agents", "evaluation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+# Runtime dependencies. Pin to known-good majors; rev individually as needed.
+dependencies = [
+    "anthropic>=0.34,<1.0",
+    "Flask>=3.0,<4.0",
+    "langcodes>=3.4,<4.0",
+    "mistralai>=1.0,<2.0",
+    "openai>=1.40,<2.0",
+    "pandas>=2.2,<3.0",
+    "pydantic>=2.7,<3.0",
+    "python-dotenv>=1.0,<2.0",
+    "requests>=2.32,<3.0",
+    "sentence-transformers>=2.7,<5.0",
+    "striprtf>=0.0.26,<1.0",
+    "tenacity>=8.2,<10.0",
+]
+
+[project.optional-dependencies]
+server = ["gunicorn>=22.0,<23.0"]
+s3 = ["s3fs>=2024.6,<2026.0"]
+test = [
+    "pytest>=8.0,<9.0",
+    "pytest-cov>=5.0,<7.0",
+]
+dev = [
+    "ruff>=0.5,<1.0",
+    "black>=24.0,<26.0",
+    "mypy>=1.10,<2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/alessiobuscemi/FAIRGAME"
+Issues = "https://github.com/alessiobuscemi/FAIRGAME/issues"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["src*"]
+exclude = ["unit_tests*", "results*", "fairenv*"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra"
+testpaths = ["unit_tests"]
+filterwarnings = [
+    "ignore::DeprecationWarning:src.llm_factory_connector",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true

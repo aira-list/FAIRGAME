@@ -1,0 +1,1 @@
+"""Streamlit GUI for FAIRGAME."""

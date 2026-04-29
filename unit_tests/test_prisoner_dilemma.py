@@ -41,10 +41,14 @@ class TestPrisonerDilemma(unittest.TestCase):
         """
         Test that the factory creates the expected number of games
         from the standard configuration file.
+
+        The factory dedupes symmetric pairs when every agent uses the same
+        LLM, so 2 personalities x 2 agents collapses from 4 to 3 games:
+        (a,a), (a,b), (b,b).
         """
         config = self.game_factory.load_config(self.CONFIG_FILE)
         self.game_factory.create_games(config)
-        self.assertEqual(len(self.game_factory.games), 4)
+        self.assertEqual(len(self.game_factory.games), 3)
 
     def test_factory_create_and_run_games(self):
         """
@@ -55,9 +59,11 @@ class TestPrisonerDilemma(unittest.TestCase):
         results = self.game_factory.load_config_create_and_run_games(self.CONFIG_SMALL_FILE)
         results_df = self.processor.process(results)
 
-        # Expecting 4 rows and 20 columns as per the configuration setup
-        self.assertEqual(results_df.shape[0], 4)
-        self.assertEqual(results_df.shape[1], 20)
+        # 3 dedup'd permutations across 1 language; the processor schema
+        # widens whenever new optional fields (e.g. ToM beliefs) are added,
+        # so check the row count and a healthy column floor.
+        self.assertEqual(results_df.shape[0], 3)
+        self.assertGreater(results_df.shape[1], 18)
 
     def test_multilingual_scenario_en_fr(self):
         """
@@ -69,13 +75,13 @@ class TestPrisonerDilemma(unittest.TestCase):
         self.game_factory.create_games(config)
         all_games_config = self.game_factory.all_game_configurations()
 
-        # We expect 8 total game configurations for the bilingual scenario
-        self.assertEqual(len(all_games_config), 8)
+        # 3 dedup'd permutations x 2 languages = 6 total game configurations.
+        self.assertEqual(len(all_games_config), 6)
 
-        # Verify the 8th game uses French
+        # Verify the last (French) configuration uses French.
         prompt_template = self.game_factory.build_prompt_template(
             config,
-            all_games_config.iloc[7]['Language']
+            all_games_config.iloc[-1]['Language']
         )
         language_detected = detect(prompt_template)
         self.assertEqual(language_detected, 'fr')
@@ -84,7 +90,7 @@ class TestPrisonerDilemma(unittest.TestCase):
         self.game_factory.run_games()
         results = self.game_factory.results_games()
         results_df = self.processor.process(results)
-        self.assertEqual(len(results_df), 8)
+        self.assertEqual(len(results_df), 6)
 
 
 if __name__ == "__main__":

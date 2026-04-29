@@ -1,99 +1,67 @@
+"""Agent abstraction: a participant that talks to an LLM provider."""
+
+from __future__ import annotations
+
 from typing import Any, Dict, List
-import os
 
-is_for_open_source = os.getenv('OPEN_SOURCE_FLAG', '').lower() == 'true'
+from src.llm_connectors import execute_prompt
+from src.utils.logger import get_logger
 
-if is_for_open_source:
-    from src.llm_connectors.llm_factory_connector import execute_prompt
-else:
-    from src.llm_factory_connector import execute_prompt
+logger = get_logger(__name__)
+
 
 class Agent:
-    """
-    Represents an agent that interacts with a language model service to decide on strategies.
-    
-    The Agent stores its own history of strategies and scores, and it can execute a round
-    by sending a prompt to the LLM service.
+    """A single participant in a FAIRGAME simulation.
+
+    Each agent stores its own move history and delegates strategy selection to
+    the configured LLM service.
     """
 
-    def __init__(self, name: str, llm_service: str, personality: str, opponent_personality_prob: int) -> None:
-        """
-        Initialize the Agent instance.
-
-        Args:
-            name (str): The name of the agent.
-            llm_service (str): Identifier or configuration for the LLM service used to execute prompts.
-            personality (str): The personality descriptor for the agent.
-            opponent_personality_prob (int): The probability (as an integer percentage) that the opponent
-                                             will behave cooperatively.
-        """
+    def __init__(
+        self,
+        name: str,
+        llm_service: str,
+        personality: str,
+        opponent_personality_prob: float,
+        agent_type: str | None = None,
+        baseline_strategy=None,
+    ) -> None:
         self.name: str = name
         self.strategies: List[str] = []
         self.scores: List[int] = []
         self.llm_service: str = llm_service
         self.personality: str = personality
-        self.opponent_personality_prob: int = opponent_personality_prob
+        self.opponent_personality_prob: float = opponent_personality_prob
+        self.agent_type: str | None = agent_type
+        self.baseline_strategy = baseline_strategy
 
     def execute_round(self, prompt: str) -> str:
-        """
-        Execute a round by sending a prompt to the LLM service and returning the agent's choice.
-
-        Args:
-            prompt (str): The prompt to send to the language model.
-
-        Returns:
-            str: The choice or response returned by the language model.
-        """
-        choice = execute_prompt(self.llm_service, prompt)
-        return choice
+        """Send ``prompt`` to the configured LLM and return its raw response."""
+        return execute_prompt(self.llm_service, prompt)
 
     def add_strategy(self, strategy: str) -> None:
-        """
-        Record a new strategy choice.
-
-        Args:
-            strategy (str): The strategy chosen by the agent.
-        """
+        """Append a strategy choice to the agent's history."""
+        logger.debug("Agent %s chose strategy %s", self.name, strategy)
         self.strategies.append(strategy)
 
     def last_strategy(self) -> str:
-        """
-        Retrieve the most recent strategy choice.
-
-        Returns:
-            str: The last strategy from the agent's history.
-        """
         return self.strategies[-1]
 
     def add_score(self, score: int) -> None:
-        """
-        Record a new score for the agent.
-
-        Args:
-            score (int): The score to be added.
-        """
         self.scores.append(score)
 
     def last_score(self) -> int:
-        """
-        Retrieve the most recent score.
-
-        Returns:
-            int: The last score recorded.
-        """
         return self.scores[-1]
 
     def get_info(self) -> Dict[str, Any]:
-        """
-        Retrieve all pertinent information about the agent.
-
-        Returns:
-            dict: A dictionary containing the agent's name, LLM service, personality, and
-                  opponent personality probability.
-        """
-        return {
+        info: Dict[str, Any] = {
             "name": self.name,
             "llm_service": self.llm_service,
             "personality": self.personality,
-            "opponent_personality_probability": self.opponent_personality_prob
+            "opponent_personality_probability": self.opponent_personality_prob,
         }
+        if self.agent_type is not None:
+            info["agent_type"] = self.agent_type
+        if self.baseline_strategy is not None:
+            info["baseline_strategy"] = self.baseline_strategy.name
+        return info

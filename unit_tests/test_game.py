@@ -151,13 +151,17 @@ class TestGame(unittest.TestCase):
         """
         Verify all agent permutation combinations are computed correctly
         by FairGameFactory's 'compute_all_game_configurations' method.
+
+        With a homogeneous LLM the factory deduplicates symmetric personality
+        pairs via ``combinations_with_replacement``, so 2 personalities across
+        2 agents yields 3 unique combinations: (a,a), (a,b), (b,b).
         """
         agent_permutations_df = self.game_factory.compute_all_game_configurations(
-            LANGUAGE, self.config['agents'], LANGUAGE_MODEL
+            LANGUAGE, self.config['agents'], self.config
         )
         logging.info(f"Agent permutations:\n{agent_permutations_df}")
         num_combinations = len(agent_permutations_df)
-        self.assertEqual(num_combinations, 4)
+        self.assertEqual(num_combinations, 3)
 
     def test_configuration_malformed(self):
         """
@@ -175,7 +179,7 @@ class TestGame(unittest.TestCase):
         config = self.io_manager.load_config(str(CONFIG_NO_PERMUTATIONS_FILE))
         self.io_manager.process_and_validate_configuration(config)
         agents_configuration_df = self.game_factory.compute_configuration(
-            LANGUAGE, config['agents'], config['llm']
+            LANGUAGE, config['agents'], config
         )
         self.assertEqual(agents_configuration_df.shape[0], 1)
 

@@ -2,8 +2,8 @@ from typing import Dict, Any, List, Optional, Tuple
 import pandas as pd
 import logging
 
-from src.results_processing.game_data import GameData
 from src.results_processing.agent_info import AgentInfo
+from src.results_processing.game_data import GameData
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +85,14 @@ class ResultsProcessor:
             n_rounds_is_known=n_rounds_is_known,
             agents_communicate=agents_communicate,
             agents=agents_info_list,
-            agents_round_data=agents_round_data
+            agents_round_data=agents_round_data,
+            elicit_beliefs=bool(description.get("elicit_beliefs", False)),
+            tom_order=int(description.get("tom_order", 1)),
+            equilibria=list(description.get("equilibria", []) or []),
+            payoff_matrix_summary=description.get("payoff_matrix_summary"),
+            language_for_matrix=language,
+            pareto_optimal_sum=description.get("pareto_optimal_sum"),
+            seed=description.get("seed"),
         )
 
     def _parse_game_description(
@@ -165,7 +172,9 @@ class ResultsProcessor:
                     name=name,
                     llm_service=llm_service,
                     personality=personality,
-                    opponent_prob=opponent_prob
+                    opponent_prob=opponent_prob,
+                    agent_type=agent_data.get("agent_type"),
+                    baseline_strategy=agent_data.get("baseline_strategy"),
                 )
             )
         return agent_info_list
@@ -179,16 +188,10 @@ class ResultsProcessor:
         """
         Extracts round-level data for a single agent.
 
-        Args:
-            history (Dict[str, Any]): Dictionary keyed by round identifier, each
-                                      containing a list of action dictionaries.
-            agent_name (str): Name of the agent whose actions we want to capture.
-            agents_communicate (bool): Whether to capture messages from the agent's actions.
-
-        Returns:
-            Dict[str, List[Any]]: A dictionary with 'strategies', 'scores', and (optionally) 'messages'.
+        Captures strategies, scores, optional messages, and (when ToM belief
+        elicitation is enabled) the per-round belief distributions.
         """
-        strategies, scores, messages = [], [], []
+        strategies, scores, messages, beliefs = [], [], [], []
 
         for round_actions in history.values():
             for action in round_actions:
@@ -197,9 +200,11 @@ class ResultsProcessor:
                     scores.append(action.get("score"))
                     if agents_communicate:
                         messages.append(action.get("message"))
+                    beliefs.append(action.get("belief"))
 
         return {
             "strategies": strategies,
             "scores": scores,
-            "messages": messages
+            "messages": messages,
+            "beliefs": beliefs,
         }

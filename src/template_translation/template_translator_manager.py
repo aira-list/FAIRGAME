@@ -81,7 +81,9 @@ class TemplateTranslatorManager:
         data = {"llm": self.llm, "template": template, "lang_to": self.lang_to}
         response = requests.post(url, data=json.dumps(data), headers=headers)
         response.raise_for_status()  # Raises an HTTPError for bad responses
-        return response.json().get('translation', '')
+        # The API contract returns ``{"translated_text": ...}``; ``translation``
+        # was a stale legacy key that always resolved to "".
+        return response.json().get("translated_text", "")
 
     def save_translation(self, original_filepath: Path, translation: str) -> Path:
         """

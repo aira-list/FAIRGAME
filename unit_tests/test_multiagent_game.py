@@ -208,12 +208,19 @@ class TestMultiAgentConfigFile(unittest.TestCase):
     def test_create_multiple_games(self):
         """
         Verify that a configuration supporting multiple permutations leads to
-        the correct number of created games (e.g., 64).
+        the correct number of created games.
+
+        With 3 agents and 2 personalities, ``combinations_with_replacement``
+        yields 4 personality combos. The opponent-prob axis (2 values across
+        3 agents) likewise yields 4 combos. 4 x 4 = 16 dedup'd games when
+        every agent shares the same LLM.
         """
         config = self.io_manager.load_config(self.CONFIG_FILE_VOLUNTEER_DILEMMA_PERMUTATIONS)
         games = self.game_factory.create_games(config)
-        self.assertEqual(len(games), 64, 
-                         msg="Expected 64 games from the multiple-game configuration.")
+        self.assertEqual(
+            len(games), 16,
+            msg="Expected 16 games from the multiple-game configuration.",
+        )
 
     def test_run_single_game(self):
         """

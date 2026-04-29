@@ -1,114 +1,196 @@
+"""Top-level game engine.
 
-from src.payoff_matrix import PayoffMatrix
+A :class:`FairGame` orchestrates a sequence of rounds, applies the configured
+payoff matrix, optionally transforms payoffs via a utility function, applies
+a discount factor, checks an indefinite-horizon continuation, and stops when
+either the round limit is reached or one of the listed stop combinations is
+observed.
+"""
+
+from __future__ import annotations
+
+import random
+from typing import Any, Dict, List, Mapping, Optional, Sequence
+
 from src.game_history import GameHistory
 from src.game_round import GameRound
+from src.payoff_matrix import PayoffMatrix
+from src.utility import IdentityTransform, UtilityTransform
+from src.utils.logger import get_logger
+from src.utils.rng import make_rng
+
+logger = get_logger(__name__)
+
 
 class FairGame:
-    """
-    Top-level game engine that orchestrates multiple rounds, applies payoff matrices,
-    and checks for stop conditions.
-    """
+    """Coordinates rounds, payoff scoring, and stop conditions for one game."""
 
-    def __init__(self, name, language, agents, n_rounds, n_rounds_known,
-                 payoff_matrix_data, prompt_template, stop_conditions,
-                 agents_communicate):
-        """
-        Initialize the FairGame with all required parameters.
-
-        Args:
-            name (str): The name of the game.
-            language (str): The language used by the game and payoff matrix.
-            agents (dict): A dictionary mapping agent names to agent objects.
-            n_rounds (int): The total number of rounds to play.
-            n_rounds_known (str or bool): If the number of rounds is known to agents.
-            payoff_matrix_data (dict): The data defining the payoff matrix.
-            prompt_template (str): The template used to generate prompts for agents.
-            stop_conditions (list): A list of combinations that end the game early if chosen.
-            agents_communicate (str or bool): Whether agents communicate before choosing strategies.
-        """
+    def __init__(
+        self,
+        name: str,
+        language: str,
+        agents: Mapping[str, Any],
+        n_rounds: int,
+        n_rounds_known: bool,
+        payoff_matrix_data: Dict,
+        prompt_template: str,
+        stop_conditions: List[str],
+        agents_communicate: bool,
+        *,
+        elicit_beliefs: bool = False,
+        tom_order: int = 1,
+        types_config: Optional[Dict[str, Any]] = None,
+        types_common_knowledge: bool = False,
+        utility_transform: Optional[UtilityTransform] = None,
+        discount_factor: float = 1.0,
+        continuation_probability: Optional[float] = None,
+        equilibria: Optional[Sequence[str]] = None,
+        pareto_optimal_sum: Optional[float] = None,
+        mixed_strategies: bool = False,
+        rng: Optional[random.Random] = None,
+        seed: Optional[int] = None,
+    ) -> None:
         self.name = name
         self.language = language
-        self.agents = agents
+        self.agents = dict(agents)
         self.n_rounds = int(n_rounds)
-        self.n_rounds_known = self._str2bool(n_rounds_known)
+        self.n_rounds_known = bool(n_rounds_known)
         self.prompt_template = prompt_template
         self.stop_conditions = stop_conditions
-        self.agents_communicate = self._str2bool(agents_communicate)
+        self.agents_communicate = bool(agents_communicate)
         self.current_round = 1
         self.history = GameHistory()
-        self.choices_made = []
+        self.choices_made: List[List[str]] = []
         self.payoff_matrix = PayoffMatrix(payoff_matrix_data, language)
+        self.fake_communication_config: Optional[Any] = None
 
-    def _str2bool(self, value):
-        """
-        Convert a string or bool to a boolean value.
+        # Theory-of-Mind configuration.
+        self.elicit_beliefs = bool(elicit_beliefs)
+        self.tom_order = int(tom_order)
+        self.types_config = types_config
+        self.types_common_knowledge = bool(types_common_knowledge)
 
-        Args:
-            value (str or bool): The value to interpret as bool.
+        # Game-theoretic extensions.
+        self.utility_transform: UtilityTransform = utility_transform or IdentityTransform()
+        if not (0.0 < discount_factor <= 1.0):
+            raise ValueError("discount_factor must lie in (0, 1].")
+        self.discount_factor = float(discount_factor)
+        if continuation_probability is not None and not (0.0 < continuation_probability <= 1.0):
+            raise ValueError("continuation_probability must lie in (0, 1] when set.")
+        self.continuation_probability = (
+            float(continuation_probability) if continuation_probability is not None else None
+        )
+        self.equilibria: List[str] = list(equilibria or [])
+        self.pareto_optimal_sum = pareto_optimal_sum
+        self.mixed_strategies = bool(mixed_strategies)
 
-        Returns:
-            bool: The interpreted boolean value.
-        """
-        return value if isinstance(value, bool) else value.strip().lower() == 'true'
+        # RNG: explicit instance > derived-from-seed > nondeterministic.
+        self.seed = seed
+        self.rng = rng if rng is not None else make_rng(seed)
 
     @property
-    def description(self):
-        """
-        dict: A description of the game settings, including agents, language,
-              number of rounds, and payoff matrix data.
-        """
-        return {
+    def description(self) -> Dict[str, Any]:
+        """Serialisable summary of the game configuration."""
+        desc: Dict[str, Any] = {
             "name": self.name,
             "language": self.language,
             "agents": {name: agent.get_info() for name, agent in self.agents.items()},
             "n_rounds": self.n_rounds,
             "number_of_rounds_is_known": self.n_rounds_known,
             "payoff_matrix": self.payoff_matrix.matrix_data,
-            "agents_communicate": self.agents_communicate
+            "agents_communicate": self.agents_communicate,
         }
 
-    def run_round(self):
-        """
-        Run a single round of the game using the GameRound helper class.
-        Record the strategies chosen and update agent scores.
+        if self.fake_communication_config is not None:
+            cfg = self.fake_communication_config
+            desc["fake_communication"] = cfg.enabled
+            desc["fake_message_count"] = getattr(cfg, "message_count", None)
+            desc["fake_message_base"] = getattr(cfg, "base", None)
 
-        This method increments the current_round after execution.
-        """
+        desc["elicit_beliefs"] = self.elicit_beliefs
+        desc["tom_order"] = self.tom_order
+        if self.types_config is not None:
+            desc["types"] = self.types_config
+            desc["types_common_knowledge"] = self.types_common_knowledge
+
+        desc["utility_transform"] = self.utility_transform.name
+        desc["discount_factor"] = self.discount_factor
+        if self.continuation_probability is not None:
+            desc["continuation_probability"] = self.continuation_probability
+        if self.equilibria:
+            desc["equilibria"] = list(self.equilibria)
+        if self.pareto_optimal_sum is not None:
+            desc["pareto_optimal_sum"] = self.pareto_optimal_sum
+        desc["mixed_strategies"] = self.mixed_strategies
+        if self.seed is not None:
+            desc["seed"] = self.seed
+
+        return desc
+
+    def log_game_info(self) -> None:
+        logger.info(
+            "FAIRGAME config: name=%s language=%s rounds=%d known=%s communicate=%s δ=%s",
+            self.name,
+            self.language,
+            self.n_rounds,
+            self.n_rounds_known,
+            self.agents_communicate,
+            self.discount_factor,
+        )
+        for name, agent in self.agents.items():
+            info = agent.get_info()
+            logger.info(
+                "  agent=%s personality=%s llm=%s opp_prob=%s",
+                name,
+                info.get("personality"),
+                info.get("llm_service"),
+                info.get("opponent_personality_probability"),
+            )
+
+    print_game_info = log_game_info
+
+    def run_round(self) -> None:
         round_runner = GameRound(self)
         round_strategies = round_runner.run()
         self.choices_made.append(round_strategies)
         self.payoff_matrix.attribute_scores(list(self.agents.values()), round_strategies)
+        self._apply_score_modifiers()
         round_runner._update_round_history()
 
-    def stop_condition_is_met(self):
-        """
-        Check whether the stop condition is met based on the last round's choices.
-
-        Returns:
-            bool: True if the last round's combination matches any stop condition,
-                  False otherwise.
-        """
-        if self.choices_made:
-            last_round_choices = self.choices_made[-1]
-            # Look up the combination key based on the round choices.
-            combination = next(
-                (k for k, v in self.payoff_matrix.matrix_data['combinations'].items()
-                 if v == last_round_choices),
-                None
+    def _apply_score_modifiers(self) -> None:
+        """Apply utility transform + discount to the most recent round's payoffs."""
+        agents = list(self.agents.values())
+        raw = [float(agent.scores[-1]) for agent in agents]
+        utilities = self.utility_transform.transform(raw)
+        if len(utilities) != len(raw):
+            raise RuntimeError(
+                "Utility transform must return the same number of values as agents."
             )
-            if combination in self.stop_conditions:
-                return True
-        return False
+        discount = self.discount_factor ** (self.current_round - 1)
+        for agent, u in zip(agents, utilities):
+            agent.scores[-1] = u * discount
 
-    def run(self):
-        """
-        Runs the simulation until all rounds are complete or a stop condition is met.
+    def stop_condition_is_met(self) -> bool:
+        if not self.choices_made:
+            return False
+        try:
+            combination = self.payoff_matrix.get_combination_key(self.choices_made[-1])
+        except ValueError:
+            return False
+        return combination in self.stop_conditions
 
-        Returns:
-            GameHistory: The history object containing all round data.
-        """
-        while self.current_round <= self.n_rounds and not self.stop_condition_is_met():
+    def _continuation_check_passes(self) -> bool:
+        """For indefinite-horizon games, decide whether to play another round."""
+        if self.continuation_probability is None or self.current_round == 1:
+            return True
+        return self.rng.random() < self.continuation_probability
+
+    def run(self) -> GameHistory:
+        while (
+            self.current_round <= self.n_rounds
+            and not self.stop_condition_is_met()
+            and self._continuation_check_passes()
+        ):
             self.run_round()
             self.current_round += 1
-
         return self.history

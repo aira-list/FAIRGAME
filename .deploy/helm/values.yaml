@@ -80,6 +80,3 @@ application:
       value: "production"
     - name: LLM_FACTORY_URL
       value: "http://llmfactory:5001"
-    - name: LLM_FACTORY_URL
-      value: "http://llmfactory:5001"
-      

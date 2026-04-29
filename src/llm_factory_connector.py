@@ -1,21 +1,25 @@
-import requests
-import os
-import dotenv
+"""Backwards-compatibility shim for the unified connector module.
 
-# Load environment variables from a .env file
-dotenv.load_dotenv()
-url = os.environ['LLM_FACTORY_URL']
+Historically this module contained an HTTP client to a separate ``llmfactory``
+microservice, gated by ``OPEN_SOURCE_FLAG``. The shim now re-exports the
+in-process implementation from :mod:`src.llm_connectors.llm_factory_connector`
+so older imports keep working while emitting a ``DeprecationWarning``.
+"""
 
-def execute_prompt(llm, prompt):
-    payload = {
-    "model": llm, 
-    "prompt": prompt
-    }
-    response = requests.post(f"{url}/execute_prompt", json=payload)
-    if response.status_code == 200:
-        try:
-            response = response.json().get("response")
-        except ValueError:
-            response = response.text.strip()   
-    
-    return response
+from __future__ import annotations
+
+import warnings
+
+from src.llm_connectors.llm_factory_connector import (  # noqa: F401  re-export
+    ChatModelFactory,
+    MODEL_PROVIDER_MAP,
+    execute_prompt,
+    register_model,
+)
+
+warnings.warn(
+    "src.llm_factory_connector is deprecated; import from "
+    "src.llm_connectors instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)

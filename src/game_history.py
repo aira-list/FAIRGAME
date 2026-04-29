@@ -90,6 +90,9 @@ class GameHistory:
                     "choice_prompt": data.get("choice_prompt"),
                     "strategy": data.get("strategy"),
                     "score": data.get("score"),
+                    "belief": data.get("belief"),
+                    "belief_prompt": data.get("belief_prompt"),
+                    "mixed_distribution": data.get("mixed_distribution"),
                 })
             
             summary[round_key] = round_list

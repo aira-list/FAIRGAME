@@ -1,0 +1,37 @@
+{
+    "name": "Prisoner's Dilemma (mixed)",
+    "nRounds": 2,
+    "nRoundsIsKnown": true,
+    "templateFilename": "prisoner_dilemma_mixed",
+    "llm": "OpenAIGPT4o",
+    "languages": ["en"],
+    "allAgentPermutations": false,
+    "mixedStrategies": true,
+    "discountFactor": 0.9,
+    "equilibria": ["combination4"],
+    "paretoOptimalSum": 12,
+    "seed": 42,
+    "agents": {
+        "names": ["agent1", "agent2"],
+        "personalities": {"en": ["cooperative", "selfish"]},
+        "opponentPersonalityProb": [0, 0]
+    },
+    "payoffMatrix": {
+        "weights": {"weight1": 6, "weight2": 10, "weight3": 0, "weight4": 2},
+        "strategies": {"en": {"strategy1": "Cooperate", "strategy2": "Defect"}},
+        "combinations": {
+            "combination1": ["strategy1", "strategy1"],
+            "combination2": ["strategy1", "strategy2"],
+            "combination3": ["strategy2", "strategy1"],
+            "combination4": ["strategy2", "strategy2"]
+        },
+        "matrix": {
+            "combination1": ["weight1", "weight1"],
+            "combination2": ["weight3", "weight2"],
+            "combination3": ["weight2", "weight3"],
+            "combination4": ["weight4", "weight4"]
+        }
+    },
+    "stopGameWhen": [],
+    "agentsCommunicate": false
+}

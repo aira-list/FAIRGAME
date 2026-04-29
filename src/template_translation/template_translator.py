@@ -1,14 +1,9 @@
 import re
+
 import langcodes
 from sentence_transformers import SentenceTransformer, util
-import os
 
-is_for_open_source = os.getenv('OPEN_SOURCE_FLAG', '').lower() == 'true'
-
-if is_for_open_source:
-    from src.llm_connectors.llm_factory_connector import execute_prompt
-else:
-    from src.llm_factory_connector import execute_prompt
+from src.llm_connectors import execute_prompt
 
 class TemplateTranslator:
     """

@@ -1,0 +1,150 @@
+/* FAIRGAME GUI custom styling. Loaded via st.markdown in app.py. */
+
+/* Page background gradient and tighter top padding. */
+[data-testid="stAppViewContainer"] {
+    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 220px);
+}
+[data-testid="stHeader"] {
+    background: transparent;
+}
+
+/* Main block: narrower, breathing room. */
+.main .block-container {
+    max-width: 1200px;
+    padding-top: 2.5rem;
+    padding-bottom: 4rem;
+}
+
+/* Hero band on the home page. */
+.fg-hero {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #06b6d4 100%);
+    color: white;
+    padding: 2.5rem 2rem;
+    border-radius: 18px;
+    margin-bottom: 2rem;
+    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.20);
+}
+.fg-hero h1 {
+    color: white !important;
+    font-size: 2.4rem;
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.02em;
+}
+.fg-hero p {
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 1.05rem;
+    margin: 0;
+}
+
+/* Dashboard cards. */
+.fg-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    height: 100%;
+}
+.fg-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+.fg-card h3 {
+    margin: 0 0 0.4rem;
+    font-size: 1.1rem;
+    color: #0f172a;
+}
+.fg-card p {
+    color: #475569;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+/* Status pills used for tags ("ToM", "Tournament", ...). */
+.fg-pill {
+    display: inline-block;
+    padding: 0.18rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    margin-right: 0.35rem;
+    margin-bottom: 0.25rem;
+}
+.fg-pill-blue { background: #dbeafe; color: #1d4ed8; }
+.fg-pill-green { background: #dcfce7; color: #166534; }
+.fg-pill-amber { background: #fef3c7; color: #92400e; }
+.fg-pill-violet { background: #ede9fe; color: #6d28d9; }
+.fg-pill-rose { background: #ffe4e6; color: #be123c; }
+.fg-pill-slate { background: #e2e8f0; color: #475569; }
+
+/* Make Streamlit's default tabs feel more like a real navbar. */
+[data-baseweb="tab-list"] {
+    gap: 0.4rem;
+}
+[data-baseweb="tab"] {
+    border-radius: 8px;
+    padding: 0.4rem 0.95rem;
+    background: #f1f5f9;
+}
+[data-baseweb="tab"]:hover {
+    background: #e2e8f0;
+}
+
+/* Sidebar: cleaner tone. */
+[data-testid="stSidebar"] {
+    background: #0f172a;
+    color: #e2e8f0;
+}
+[data-testid="stSidebar"] *:not(button):not(input) {
+    color: #e2e8f0 !important;
+}
+[data-testid="stSidebar"] .fg-sidebar-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.4rem;
+}
+[data-testid="stSidebar"] .fg-sidebar-sub {
+    font-size: 0.84rem;
+    opacity: 0.8;
+    margin-bottom: 1.5rem;
+}
+
+/* Demo-mode banner. */
+.fg-banner {
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    font-size: 0.92rem;
+    margin-bottom: 1rem;
+}
+.fg-banner-live {
+    background: #dcfce7;
+    border-color: #bbf7d0;
+    color: #166534;
+}
+
+/* Section heading underline. */
+.fg-section h2 {
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0.4rem;
+    margin-bottom: 1rem;
+}
+
+/* Run button ergonomics. */
+.stButton > button[kind="primary"] {
+    border-radius: 10px;
+    padding: 0.55rem 1.4rem;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.18);
+}
+
+/* Result table — hide the scrolling shadow. */
+[data-testid="stDataFrame"] {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+}
