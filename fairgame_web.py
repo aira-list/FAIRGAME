@@ -950,6 +950,10 @@ class ConfigurationBody(BaseModel):
 class RunConfigurationsBody(BaseModel):
     configuration_ids: List[str]
     demo_mode: bool = True
+    iterations: int = 1               # how many times to run each config
+    master_seed: Optional[int] = None  # used as base; iteration k → seed = base + k
+    n_rounds_override: Optional[int] = None  # global override across this batch
+    seed_count: Optional[int] = None  # per-run engine-side multi-seed averaging
 
 
 @app.get("/api/configurations")
@@ -1059,23 +1063,40 @@ def run_configurations_batch(body: RunConfigurationsBody) -> Dict[str, Any]:
     items = _load_store("configurations")
     results: List[Dict[str, Any]] = []
     set_demo_mode(body.demo_mode)
+    iterations = max(1, body.iterations or 1)
     for cid in body.configuration_ids:
         item = next((i for i in items if i["id"] == cid), None)
         if item is None:
             results.append({"configuration_id": cid, "error": "not found"})
             continue
-        try:
-            cfg = _resolve_configuration_to_engine_config(item)
-            rows = engine.create_and_run_games(cfg)
-        except HTTPException as exc:
-            results.append({"configuration_id": cid, "error": exc.detail})
-            continue
-        except (ValueError, TypeError) as exc:
-            results.append({"configuration_id": cid, "error": str(exc)})
-            continue
-        run_id = _new_id()
-        _save_run(run_id, cfg, rows, demo_mode=body.demo_mode)
-        results.append({"configuration_id": cid, "run_id": run_id, "n_rows": len(rows)})
+        for it in range(iterations):
+            try:
+                cfg = _resolve_configuration_to_engine_config(item)
+                if body.master_seed is not None:
+                    cfg["seed"] = int(body.master_seed) + it
+                if body.n_rounds_override is not None and body.n_rounds_override > 0:
+                    cfg["nRounds"] = int(body.n_rounds_override)
+                if body.seed_count is not None and body.seed_count > 1:
+                    cfg["seedCount"] = int(body.seed_count)
+                rows = engine.create_and_run_games(cfg)
+            except HTTPException as exc:
+                results.append({
+                    "configuration_id": cid, "iteration": it + 1,
+                    "error": exc.detail,
+                })
+                continue
+            except (ValueError, TypeError) as exc:
+                results.append({
+                    "configuration_id": cid, "iteration": it + 1,
+                    "error": str(exc),
+                })
+                continue
+            run_id = _new_id()
+            _save_run(run_id, cfg, rows, demo_mode=body.demo_mode)
+            results.append({
+                "configuration_id": cid, "iteration": it + 1,
+                "run_id": run_id, "n_rows": len(rows),
+            })
     return {"results": results}
 
 

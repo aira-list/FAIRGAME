@@ -1104,66 +1104,113 @@ Output ONLY the JSON.
       <!-- ===== EXPERIMENT ===== -->
       <section x-show="activePage === 'experiment'">
         <h1 class="text-2xl font-semibold mb-1">🧪 Experiment</h1>
-        <p class="text-slate-600 mb-6">Run multiple configs back-to-back, each at multiple seeds. Each config produces its own run id, browseable in <a class="text-blue-600 underline" @click.prevent="activePage='results'" href="#">Results</a>.</p>
+        <p class="text-slate-600 mb-3">
+          Batch-run a selection of <strong>your saved Configurations</strong> back-to-back. Each
+          (configuration × iteration) becomes a separate Run with its own id, browseable in
+          <a class="text-blue-600 underline" @click.prevent="activePage='results'" href="#">Results</a>.
+        </p>
+        <p class="text-slate-600 text-sm mb-6">
+          Don't see anything to pick? Save a configuration first in
+          <a class="text-blue-600 underline" @click.prevent="activePage='configurations'" href="#">⚙️ Configurations</a>.
+        </p>
 
         <div class="fg-card p-6 mb-6">
-          <h3 class="font-semibold mb-3">Pick configs</h3>
-          <div class="max-h-72 overflow-auto border border-slate-200 rounded-md p-2 mb-4">
-            <template x-for="(presets, category) in presetsByCategory" :key="category">
-              <div class="mb-2">
-                <div class="text-xs uppercase tracking-wider text-slate-500 mb-1" x-text="category"></div>
-                <template x-for="p in presets" :key="p.id">
-                  <label class="flex items-center gap-2 text-sm py-0.5">
-                    <input type="checkbox" :value="p.id" x-model="experiment.selectedPresets"/>
-                    <span x-text="p.label || p.name"></span>
-                  </label>
-                </template>
-              </div>
+          <h3 class="font-semibold mb-2">1. Pick configurations to run</h3>
+          <p class="fg-help mb-3">Each ticked configuration is run from start to finish before the next one starts. Tick as many as you want.</p>
+          <div class="max-h-72 overflow-auto border border-slate-200 rounded-md p-2 mb-4 space-y-1.5">
+            <template x-for="cfg in configurations" :key="cfg.id">
+              <label class="flex items-start gap-2 text-sm py-0.5 cursor-pointer hover:bg-slate-50 rounded px-1">
+                <input type="checkbox" :value="cfg.id" x-model="experiment.selectedConfigs" class="mt-0.5"/>
+                <div class="flex-1">
+                  <div class="font-medium" x-text="cfg.name"></div>
+                  <div class="text-xs text-slate-500">
+                    <code x-text="cfg.id"></code>
+                    · <span x-text="tagName(cfg.tag_id) + ' / ' + cfg.variation"></span>
+                    · <span x-text="cfg.languages.map(l => languageFlag(l)).join(' ')"></span>
+                  </div>
+                </div>
+              </label>
             </template>
+            <div x-show="configurations.length === 0" class="text-sm text-slate-500 italic px-2 py-1">
+              No saved configurations yet.
+            </div>
           </div>
 
+          <h3 class="font-semibold mb-2">2. Repetition controls</h3>
           <div class="grid md:grid-cols-4 gap-4">
             <div>
-              <label class="fg-label">Iterations per config</label>
+              <label class="fg-label">Iterations per configuration</label>
               <input type="number" min="1" x-model.number="experiment.nIterations" class="fg-input"/>
-              <p class="fg-help">Repeat the same configuration this many times back-to-back. Each iteration is a separate run with its own id.</p>
+              <p class="fg-help">
+                <strong>How many times to run each configuration end-to-end.</strong>
+                Each iteration is a fresh Run (new id). Useful when you want N independent
+                replicates of the same setup. With seed below, iteration k uses seed (master + k)
+                so the iterations differ.
+              </p>
             </div>
             <div>
-              <label class="fg-label">Seed count per config</label>
+              <label class="fg-label">Seed count per run</label>
               <input type="number" min="1" x-model.number="experiment.seedCount" class="fg-input"/>
-              <p class="fg-help">Engine-side multi-seed averaging within a single run.</p>
+              <p class="fg-help">
+                <strong>Engine-side multi-seed averaging within a single Run.</strong>
+                Set to N>1 and the engine reruns the same configuration internally with N child
+                seeds and emits aggregated mean ± 95% CI columns (good for confidence intervals
+                in a paper). Different from iterations: this stays inside one Run.
+              </p>
             </div>
             <div>
               <label class="fg-label">Master seed</label>
               <input type="number" x-model.number="experiment.seed" class="fg-input"/>
+              <p class="fg-help">
+                <strong>Anchors the random number generator.</strong>
+                Same master seed → identical outcome (LLM responses are deterministic in demo
+                mode and seeded in live mode for sampling steps). Iteration k uses
+                <code>master + k</code>; leave blank to let the engine pick non-deterministically.
+              </p>
             </div>
             <div>
-              <label class="fg-label">Override nRounds (optional)</label>
+              <label class="fg-label">Override nRounds</label>
               <input type="number" min="0" x-model.number="experiment.nRoundsOverride" class="fg-input"/>
-              <p class="fg-help">0 = leave each config's own nRounds.</p>
+              <p class="fg-help">
+                <strong>Temporarily overrides each configuration's <code>nRounds</code> for this batch only.</strong>
+                Use this when, say, you want to compare 5 configurations <em>all at 10 rounds</em>
+                without permanently editing each one. <code>0</code> = use each config's own nRounds.
+              </p>
             </div>
           </div>
 
           <button class="mt-5 px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
-                  :disabled="experiment.selectedPresets.length === 0 || experiment.running"
+                  :disabled="experiment.selectedConfigs.length === 0 || experiment.running"
                   @click="runExperiment()">
             <span x-show="!experiment.running">▶ Run experiment</span>
-            <span x-show="experiment.running">Running… <span x-text="experiment.progress"></span></span>
+            <span x-show="experiment.running">Running…</span>
           </button>
+
+          <p class="fg-help mt-3" x-show="experiment.selectedConfigs.length > 0">
+            Will produce
+            <strong x-text="experiment.selectedConfigs.length * Math.max(1, experiment.nIterations || 1)"></strong>
+            Runs total
+            (<span x-text="experiment.selectedConfigs.length"></span> configurations
+            × <span x-text="Math.max(1, experiment.nIterations || 1)"></span> iterations).
+          </p>
 
           <div x-show="experiment.error" class="mt-4 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-sm" x-text="experiment.error"></div>
         </div>
 
         <div x-show="experiment.results.length > 0" class="fg-card p-6">
-          <h2 class="text-lg font-semibold mb-3">Per-config runs</h2>
+          <h2 class="text-lg font-semibold mb-3">Generated runs</h2>
           <ul class="space-y-1 text-sm">
-            <template x-for="r in experiment.results" :key="r.id">
+            <template x-for="r in experiment.results" :key="r.run_id || (r.configuration_id + '_' + r.iteration)">
               <li>
-                <a class="text-blue-600 underline" @click.prevent="activePage='results'; openRun(r.id)" href="#"
-                   x-text="r.preset"></a>
-                <span class="text-slate-500"> · </span>
-                <code class="text-slate-700" x-text="r.id"></code>
-                <span class="text-slate-500" x-text="' · ' + r.n_rows + ' games'"></span>
+                <span x-show="r.run_id">
+                  <a class="text-blue-600 underline" @click.prevent="openRun(r.run_id)" href="#"
+                     x-text="r.run_id"></a>
+                  <span class="text-slate-500"> · iteration <span x-text="r.iteration"></span></span>
+                  <span class="text-slate-500" x-text="' · ' + r.n_rows + ' games'"></span>
+                </span>
+                <span x-show="r.error" class="text-rose-700">
+                  <code x-text="r.configuration_id"></code> iteration <span x-text="r.iteration"></span> · error: <span x-text="r.error"></span>
+                </span>
               </li>
             </template>
           </ul>
@@ -1382,12 +1429,12 @@ Output ONLY the JSON.
 
 
       experiment: {
-        selectedPresets: [],
+        selectedConfigs: [],
         nIterations: 1,
         seedCount: 1,
         seed: 0,
         nRoundsOverride: 0,
-        running: false, error: '', progress: '', results: [],
+        running: false, error: '', results: [],
       },
 
       results: { tab: 'table' },
@@ -2096,37 +2143,24 @@ Output ONLY the JSON.
         this.experiment.running = true;
         this.experiment.error = '';
         this.experiment.results = [];
-        const iterations = Math.max(1, this.experiment.nIterations || 1);
-        const total = this.experiment.selectedPresets.length * iterations;
         try {
-          let done = 0;
-          for (const presetId of this.experiment.selectedPresets) {
-            for (let it = 0; it < iterations; it++) {
-              this.experiment.progress = `${++done}/${total}`;
-              const cfg = await this.api(`/api/presets/${presetId}`);
-              if (this.experiment.seedCount > 1) cfg.seedCount = this.experiment.seedCount;
-              // Vary the seed per iteration so the engine doesn't return
-              // identical-on-prompt outputs from the demo connector.
-              if (this.experiment.seed !== undefined) cfg.seed = this.experiment.seed + it;
-              if (this.experiment.nRoundsOverride > 0) cfg.nRounds = this.experiment.nRoundsOverride;
-              const result = await this.api('/api/runs', {
-                method: 'POST',
-                body: JSON.stringify({ config: cfg, demo_mode: this.demoMode }),
-              });
-              this.experiment.results.push({
-                id: result.id,
-                preset: presetId,
-                iteration: it + 1,
-                n_rows: result.rows.length,
-              });
-            }
-          }
+          const result = await this.api('/api/configurations/run-batch', {
+            method: 'POST',
+            body: JSON.stringify({
+              configuration_ids: this.experiment.selectedConfigs,
+              demo_mode: this.demoMode,
+              iterations: Math.max(1, this.experiment.nIterations || 1),
+              master_seed: this.experiment.seed,
+              n_rounds_override: this.experiment.nRoundsOverride > 0
+                ? this.experiment.nRoundsOverride : null,
+              seed_count: this.experiment.seedCount > 1
+                ? this.experiment.seedCount : null,
+            }),
+          });
+          this.experiment.results = result.results;
           await this.loadRuns();
         } catch (e) { this.experiment.error = String(e.message || e); }
-        finally {
-          this.experiment.running = false;
-          this.experiment.progress = '';
-        }
+        finally { this.experiment.running = false; }
       },
 
       // ---- Results charts -------------------------------------------
