@@ -56,7 +56,7 @@ probability:
 {"Cooperate": 0.7, "Defect": 0.3}
 ```
 
-`src.belief_parser.parse_belief` is tolerant of:
+`src.agents.belief_parser.parse_belief` is tolerant of:
 
 * prose surrounding the JSON object,
 * canonical keys (`"strategy1"`) or display labels (`"Cooperate"`),

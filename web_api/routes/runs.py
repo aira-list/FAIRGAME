@@ -7,7 +7,6 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
-from src.llm_connectors import demo_mode
 from web_api import storage
 from web_api.compare import build_comparison
 from web_api.dashboards import build_dashboard
@@ -25,15 +24,14 @@ def create_run(body: RunBody) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail="Provide a 'config'.")
 
     try:
-        with demo_mode(body.demo):
-            rows = get_engine().create_and_run_games(config)
+        rows = get_engine().create_and_run_games(config, demo=body.demo)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except TypeError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     run_id = storage.new_id()
-    save_run(run_id, config, rows)
+    save_run(run_id, config, rows, demo=body.demo)
     return {"id": run_id, "rows": rows}
 
 

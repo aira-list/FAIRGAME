@@ -41,6 +41,17 @@ class TestDemoConnectorSelection(unittest.TestCase):
         reply = conn.send_prompt("Choose between Cooperate and Betray.")
         self.assertIn(reply, {"Cooperate", "Betray"})
 
+    def test_demo_connector_handles_multiword_quoted_and_three_option_labels(self) -> None:
+        # Custom configs aren't limited to single-word OptionA/OptionB labels;
+        # the fake must return a label that is actually in the game, not the
+        # hardcoded 'Cooperate' fallback (which would make the run fail slowly).
+        conn = DemoConnector("anything")
+        self.assertEqual(conn.send_prompt("Choose between Stay Silent and Confess."), "Stay Silent")
+        self.assertEqual(conn.send_prompt("Choose between 'OptionA' and 'OptionB'."), "OptionA")
+        self.assertEqual(conn.send_prompt("Choose between Rock, Paper and Scissors."), "Rock")
+        # Regression: shipped single-word labels still work.
+        self.assertEqual(conn.send_prompt("Choose between OptionA and OptionB."), "OptionA")
+
 
 class TestRunEndpointsDefaultToDemo(unittest.TestCase):
     @classmethod
@@ -56,20 +67,37 @@ class TestRunEndpointsDefaultToDemo(unittest.TestCase):
     def tearDownClass(cls) -> None:
         cls._dirs_cm.__exit__(None, None, None)
 
-    # Shipped LLM seed configs use "GPT-4o" / "Claude Sonnet 4.6" — neither is
-    # a test-fake-overridden model, so they hit the live connector unless demo
-    # mode is active. A passing run therefore proves demo is on by default.
-    def test_llm_seed_config_runs_offline_by_default(self) -> None:
-        res = self.client.post("/api/configurations/seed_cfg_pd_llm/run")
+    # Shipped LLM seed configs use "GPT-4o" / "Claude Sonnet 4.6" — neither is a
+    # test-fake-overridden model, so they hit the live connector UNLESS demo is
+    # explicitly requested. A passing run with demo=true proves demo works end
+    # to end offline; the default (demo omitted) is real models — see
+    # test_run_defaults_to_live below.
+    def test_llm_seed_config_runs_offline_when_demo_requested(self) -> None:
+        res = self.client.post("/api/configurations/seed_cfg_pd_llm/run", json={"demo": True})
         self.assertEqual(res.status_code, 200, res.text)
         self.assertTrue(res.json()["rows"])
 
     def test_theory_of_mind_seed_config_runs_offline(self) -> None:
         # pd_tom exercises the belief-elicitation path; confirm it runs end to
-        # end in the shipped app under demo mode (no external resources needed).
-        res = self.client.post("/api/configurations/seed_cfg_pd_tom/run")
+        # end offline in demo mode (no external resources needed).
+        res = self.client.post("/api/configurations/seed_cfg_pd_tom/run", json={"demo": True})
         self.assertEqual(res.status_code, 200, res.text)
         self.assertTrue(res.json()["rows"])
+
+    def test_demo_defaults_to_false_on_the_api(self) -> None:
+        # A client that doesn't mention demo must NOT silently get the fake.
+        from web_api.models import RunBody, RunConfigurationsBody
+
+        self.assertFalse(RunBody(config={}).demo)
+        self.assertFalse(RunConfigurationsBody(configuration_ids=[]).demo)
+
+    def test_demo_run_is_marked_in_persisted_metadata(self) -> None:
+        # Provenance: a demo run must be recoverable as fake from history.
+        run_id = self.client.post(
+            "/api/configurations/seed_cfg_pd_llm/run", json={"demo": True}
+        ).json()["id"]
+        detail = self.client.get(f"/api/runs/{run_id}").json()
+        self.assertTrue(detail["demo"], detail)
 
 
 if __name__ == "__main__":

@@ -102,7 +102,7 @@ top-trading-cycles implementations; treat agent preferences as the
 code. Choosing target effect sizes, MDE, sample sizes, etc., is
 research-judgment territory.
 
-**Design sketch** — `src.experiment.power_analysis(manifest, target_effect,
+**Design sketch** — `src.factory.experiment.power_analysis(manifest, target_effect,
 target_power)` returns a recommended `seedCount`. Use Welch t-tests over
 the seed-aggregated DataFrame; punt on more sophisticated designs.
 

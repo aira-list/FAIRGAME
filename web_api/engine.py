@@ -7,6 +7,7 @@ from collections.abc import Callable
 from typing import Any
 
 from src.factory.fairgame_factory import FairGameFactory
+from src.llm_connectors import demo_mode
 from src.prompting.template_translator import TemplateTranslator
 from src.results_processing.results_processor import ResultsProcessor
 
@@ -14,45 +15,46 @@ from src.results_processing.results_processor import ResultsProcessor
 class FairGameEngine:
     """Wraps :class:`FairGameFactory` and the results processor."""
 
-    def __init__(
-        self,
-        translator: TemplateTranslator | None = None,
-    ) -> None:
+    def __init__(self) -> None:
         self.results_processor = ResultsProcessor()
-        self._translator = translator
-        self._translator_model = os.getenv("FAIRGAME_TRANSLATOR_MODEL", "OpenAIGPT4o")
+        # Default to a featured model so the SPA's translate dialog can
+        # preselect it (legacy aliases like "OpenAIGPT4o" aren't in the picker).
+        self._translator_model = os.getenv("FAIRGAME_TRANSLATOR_MODEL", "GPT-4o")
 
     @property
     def default_translator_model(self) -> str:
         """Model used for translation when the caller doesn't pick one."""
         return self._translator_model
 
-    @property
-    def template_translator(self) -> TemplateTranslator:
-        if self._translator is None:
-            self._translator = TemplateTranslator(self._translator_model)
-        return self._translator
-
     def translator_for(self, model: str | None) -> TemplateTranslator:
         """Return a translator using ``model`` (any LiteLLM-resolvable name),
-        or the configured default translator when ``model`` is falsy.
-
-        An explicitly injected translator (tests) always wins so the engine
-        stays overridable.
+        or the configured default model when ``model`` is falsy. A fresh
+        translator per call keeps per-request model selection honest — the
+        object is cheap (it just holds the model name).
         """
-        if self._translator is not None:
-            return self._translator
         return TemplateTranslator(model or self._translator_model)
 
     def create_and_run_games(
         self,
         config: dict[str, Any],
         progress_cb: Callable[[dict[str, Any]], None] | None = None,
+        *,
+        demo: bool = False,
     ) -> list[dict[str, Any]]:
+        """Run every game for ``config`` and return flattened result rows.
+
+        ``demo`` is the single enforcement point for demo mode: when true,
+        every LLM call is routed to the offline :class:`DemoConnector` (no
+        API keys, no charges). Entering the context here — rather than in each
+        route — means no run path can accidentally forget it and bill real
+        providers. Defaults to false: the API runs real models unless a caller
+        explicitly opts into demo.
+        """
         if not isinstance(config, dict):
             raise ValueError("Request body must be a JSON object.")
         self._validate_llms_config(config)
-        outcomes = FairGameFactory().create_and_run_games(config, progress_cb=progress_cb)
+        with demo_mode(demo):
+            outcomes = FairGameFactory().create_and_run_games(config, progress_cb=progress_cb)
         df = self.results_processor.process(outcomes)
         return df.to_dict(orient="records")
 

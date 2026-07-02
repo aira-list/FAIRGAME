@@ -86,7 +86,7 @@ results/web/
 
 * The web app calls the engine in-process. For long multi-seed
   tournaments, prefer the experiment-manifest runner
-  (`python -m src.experiment <manifest.json>`).
+  (`python -m src.factory.experiment <manifest.json>`).
 * Runs are synchronous — long requests hold the connection open. A
   Server-Sent Events progress endpoint and per-run status polling
   are on the roadmap.

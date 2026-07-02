@@ -82,7 +82,7 @@ vector of agents' raw payoffs each round.
 * `{ "type": "identity" }` — no change (default).
 
 Add new transforms by subclassing
-``src.utility.UtilityTransform`` and adding the class to
+``src.game_theory.utility.UtilityTransform`` and adding the class to
 ``_TRANSFORM_REGISTRY``.
 
 ## 5 — Equilibrium-distance metrics
@@ -225,7 +225,7 @@ with five seeds each), a manifest bundles them into one run:
 Run it with:
 
 ```bash
-python -m src.experiment manifest.json
+python -m src.factory.experiment manifest.json
 ```
 
 The runner writes one ``<config>_per_seed.csv`` (raw rows) and one

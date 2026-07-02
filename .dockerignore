@@ -1,0 +1,45 @@
+# Keep the build context (and thus image layers) lean and free of secrets.
+# Docker does NOT honour .gitignore, so this must be maintained separately.
+
+# ---- Virtual environments (multi-GB; never belong in an image) ---------
+**/*env*/
+fairenv/
+.venv/
+venv/
+
+# ---- VCS / CI ----------------------------------------------------------
+.git/
+.github/
+.gitignore
+
+# ---- Python caches / build artifacts -----------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# ---- Secrets / local key material — must never enter an image ----------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pub
+credentials.json
+
+# ---- Tests, docs, editor/OS cruft (not needed at runtime) --------------
+unit_tests/
+docs/
+.vscode/
+.idea/
+.DS_Store
+
+# ---- Local agent / assistant tooling -----------------------------------
+.claude/
+.agents/

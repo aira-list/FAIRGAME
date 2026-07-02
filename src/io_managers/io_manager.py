@@ -48,6 +48,14 @@ class IoManager:
         RTF reader strips formatting before returning the plain text.
         """
         stem = self.game_path / f"{filename}_{lang}"
+        # Containment guard: ``filename``/``lang`` can be attacker-controlled
+        # (e.g. an inline config's ``templateFilename`` reaches here via
+        # /api/runs). Reject anything that resolves outside game_templates/ so
+        # a traversal like "../../etc/passwd" can't read arbitrary files.
+        base = self.game_path.resolve()
+        resolved_stem = stem.resolve()
+        if base != resolved_stem and base not in resolved_stem.parents:
+            raise ValueError(f"Invalid template name {filename!r}")
         for suffix in (".txt", ".rtf"):
             candidate = stem.with_suffix(suffix)
             if candidate.is_file():

@@ -177,6 +177,7 @@ def run_variant_iteration(
     it: int,
     iterations: int,
     progress_cb=None,
+    demo: bool = False,
 ) -> dict[str, Any]:
     """Run one (variant, iteration) unit, persist it, and return its result row.
 
@@ -189,9 +190,9 @@ def run_variant_iteration(
     cfg = copy.deepcopy(variant.config)
     if iterations > 1 and cfg.get("seed") is not None:
         cfg["seed"] = int(cfg["seed"]) + it
-    rows = get_engine().create_and_run_games(cfg, progress_cb=progress_cb)
+    rows = get_engine().create_and_run_games(cfg, progress_cb=progress_cb, demo=demo)
     run_id = new_id()
-    save_run(run_id, cfg, rows, configuration_id=cid)
+    save_run(run_id, cfg, rows, configuration_id=cid, demo=demo)
     row: dict[str, Any] = {
         "configuration_id": cid,
         "iteration": it + 1,

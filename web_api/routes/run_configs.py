@@ -14,7 +14,6 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
-from src.llm_connectors import demo_mode
 from src.utils.logger import get_logger
 from web_api.configurations_lib import is_group
 from web_api.engine import get_engine
@@ -23,7 +22,7 @@ from web_api.library_service import (
     resolve_runnable_variants,
     run_variant_iteration,
 )
-from web_api.models import RunConfigurationsBody
+from web_api.models import RunConfigOptions, RunConfigurationsBody
 from web_api.run_history import save_run
 from web_api.storage import load_store, new_id
 
@@ -36,20 +35,20 @@ router = APIRouter()
 def run_one_configuration(
     config_id: str,
     variant: str | None = None,
-    demo: bool = True,
+    options: RunConfigOptions | None = None,
 ) -> dict[str, Any]:
+    demo = bool(options and options.demo)
     items = load_store("configurations")
     item = next((i for i in items if i["id"] == config_id), None)
     if item is None:
         raise HTTPException(status_code=404, detail=f"Configuration {config_id!r} not found.")
     resolved = resolve_one_variant(item, variant)
     try:
-        with demo_mode(demo):
-            rows = get_engine().create_and_run_games(resolved.config)
+        rows = get_engine().create_and_run_games(resolved.config, demo=demo)
     except (ValueError, TypeError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     run_id = new_id()
-    save_run(run_id, resolved.config, rows, configuration_id=config_id)
+    save_run(run_id, resolved.config, rows, configuration_id=config_id, demo=demo)
     out: dict[str, Any] = {
         "id": run_id,
         "rows": rows,
@@ -88,8 +87,7 @@ def run_configurations_batch(body: RunConfigurationsBody) -> dict[str, Any]:
         for variant in variants:
             for it in range(iterations):
                 try:
-                    with demo_mode(body.demo):
-                        row = run_variant_iteration(cid, item, variant, it, iterations)
+                    row = run_variant_iteration(cid, item, variant, it, iterations, demo=body.demo)
                 except Exception as exc:  # noqa: BLE001
                     # Record this iteration's failure and keep going — one bad
                     # iteration (e.g. a transient LLM/network error) must not
@@ -202,10 +200,9 @@ def run_configurations_batch_stream(body: RunConfigurationsBody) -> StreamingRes
                         )
 
                     try:
-                        with demo_mode(body.demo):
-                            row = run_variant_iteration(
-                                cid, item, variant, it, iterations, progress_cb=cb
-                            )
+                        row = run_variant_iteration(
+                            cid, item, variant, it, iterations, progress_cb=cb, demo=body.demo
+                        )
                     except _Cancelled:
                         return
                     except Exception as exc:  # noqa: BLE001

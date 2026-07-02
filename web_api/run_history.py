@@ -49,6 +49,7 @@ def save_run(
     rows: list[dict[str, Any]],
     *,
     configuration_id: str | None = None,
+    demo: bool = False,
 ) -> Path:
     """Write a run's metadata + CSV payload to ``RUNS_DIR/<run_id>/``.
 
@@ -66,6 +67,9 @@ def save_run(
         "configuration_id": configuration_id,
         "config": config,
         "n_rows": len(rows),
+        # Provenance: true when produced by the offline demo fake, so demo runs
+        # are never mistaken for real LLM results in history / compare / export.
+        "demo": demo,
     }
     (run_dir / "metadata.json").write_text(json.dumps(metadata, indent=2))
     return run_dir

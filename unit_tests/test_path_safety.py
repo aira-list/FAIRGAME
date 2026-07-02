@@ -78,5 +78,30 @@ class TestWebTraversalEndpoints(unittest.TestCase):
         self.assertIn(ctx.exception.status_code, (400, 404))
 
 
+class TestTemplateFilenameTraversal(unittest.TestCase):
+    """`templateFilename` (attacker-controllable via an inline /api/runs config)
+    must not escape the game_templates/ directory in IoManager.load_template."""
+
+    def test_load_template_rejects_traversal(self) -> None:
+        from src.io_managers.io_manager import IoManager
+
+        io = IoManager()
+        # Traversal via the filename half...
+        with self.assertRaises(ValueError):
+            io.load_template("../../../../etc/passwd", "en")
+        # ...and via the language half (appended after the '_').
+        with self.assertRaises(ValueError):
+            io.load_template("pd", "../../../../etc/passwd")
+
+    def test_load_template_allows_plain_name(self) -> None:
+        # A normal flat name is contained; it just isn't found (no such file),
+        # which is a FileNotFoundError, NOT the traversal ValueError.
+        from src.io_managers.io_manager import IoManager
+
+        io = IoManager()
+        with self.assertRaises(FileNotFoundError):
+            io.load_template("prisoner_dilemma", "en")
+
+
 if __name__ == "__main__":
     unittest.main()

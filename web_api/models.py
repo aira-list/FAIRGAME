@@ -14,10 +14,11 @@ class RunBody(BaseModel):
     """An inline configuration to run."""
 
     config: dict[str, Any] | None = None
-    # Demo mode answers every LLM call with an offline deterministic fake, so
-    # runs need no API keys. On by default so the app is explorable out of the
-    # box; send ``"demo": false`` to use real provider models (and keys).
-    demo: bool = True
+    # Demo mode answers every LLM call with an offline deterministic fake (no
+    # API keys, no charges). Defaults to false: a direct API/CLI client runs
+    # real models unless it explicitly opts in. The web UI sends its Demo/Live
+    # toggle on every run, so it is unaffected by this default.
+    demo: bool = False
 
 
 class HealthResponse(BaseModel):
@@ -47,8 +48,10 @@ class TemplateBody(BaseModel):
 
 class TemplateTranslateBody(BaseModel):
     target_languages: list[str]
-    # LiteLLM-resolvable model that performs the translation. When omitted the
-    # server's default translator model (FAIRGAME_TRANSLATOR_MODEL) is used.
+    # Model that performs the translation: a featured model name from
+    # ``GET /api/llms`` (e.g. "GPT-4o"), or any other LiteLLM model string
+    # prefixed with ``litellm:`` (e.g. "litellm:ollama/llama3"). When omitted,
+    # the server's default (FAIRGAME_TRANSLATOR_MODEL) is used.
     model: str | None = None
 
 
@@ -103,5 +106,13 @@ class RunConfigurationsBody(BaseModel):
 
     configuration_ids: list[str]
     iterations: int = Field(default=1, ge=1, le=MAX_RUN_ITERATIONS)
-    # See RunBody.demo — on by default so batches run without API keys.
-    demo: bool = True
+    # See RunBody.demo — defaults to real models; the web UI sends its toggle.
+    demo: bool = False
+
+
+class RunConfigOptions(BaseModel):
+    """Optional body for ``POST /api/configurations/{id}/run`` — carries the
+    ``demo`` flag in the JSON body, matching the other run endpoints (rather
+    than as a query parameter)."""
+
+    demo: bool = False
