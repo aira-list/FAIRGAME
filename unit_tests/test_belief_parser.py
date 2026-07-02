@@ -18,6 +18,7 @@ THREE_STRATEGIES = {
 # Happy paths
 # ---------------------------------------------------------------------------
 
+
 class TestHappyPath(unittest.TestCase):
     def test_parses_clean_json_with_display_labels(self) -> None:
         result = parse_belief('{"Cooperate": 0.7, "Defect": 0.3}', STRATEGIES)
@@ -54,6 +55,7 @@ class TestHappyPath(unittest.TestCase):
 # Robust-extraction (prose around the JSON)
 # ---------------------------------------------------------------------------
 
+
 class TestProseExtraction(unittest.TestCase):
     def test_extracts_from_prefix_prose(self) -> None:
         text = 'Sure! Here is my belief: {"Cooperate": 0.5, "Defect": 0.5}'
@@ -81,6 +83,7 @@ class TestProseExtraction(unittest.TestCase):
 # Renormalisation
 # ---------------------------------------------------------------------------
 
+
 class TestRenormalisation(unittest.TestCase):
     def test_sum_within_tolerance_is_renormalised_to_one(self) -> None:
         result = parse_belief('{"Cooperate": 0.5, "Defect": 0.54}', STRATEGIES)
@@ -102,6 +105,7 @@ class TestRenormalisation(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Error paths
 # ---------------------------------------------------------------------------
+
 
 class TestErrorPaths(unittest.TestCase):
     def test_far_from_one_sum_rejected_with_specific_message(self) -> None:
@@ -162,20 +166,17 @@ class TestErrorPaths(unittest.TestCase):
 # Unknown extras
 # ---------------------------------------------------------------------------
 
+
 class TestUnknownStrategies(unittest.TestCase):
     def test_unknown_extras_dropped_when_known_present(self) -> None:
-        result = parse_belief(
-            '{"Cooperate": 0.6, "Defect": 0.4, "BogusExtra": 0.99}', STRATEGIES
-        )
+        result = parse_belief('{"Cooperate": 0.6, "Defect": 0.4, "BogusExtra": 0.99}', STRATEGIES)
         # Only the 2 declared strategies should appear in the output.
         self.assertEqual(set(result), {"strategy1", "strategy2"})
 
     def test_unknown_extras_dont_affect_renormalisation(self) -> None:
         # The extra "Bogus" entry has prob 100 but should be ignored;
         # remaining probs sum to 1.0 so output should be unmodified.
-        result = parse_belief(
-            '{"Cooperate": 0.7, "Defect": 0.3, "Bogus": 100}', STRATEGIES
-        )
+        result = parse_belief('{"Cooperate": 0.7, "Defect": 0.3, "Bogus": 100}', STRATEGIES)
         self.assertAlmostEqual(result["strategy1"], 0.7)
         self.assertAlmostEqual(result["strategy2"], 0.3)
 
@@ -183,6 +184,7 @@ class TestUnknownStrategies(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Output invariants
 # ---------------------------------------------------------------------------
+
 
 class TestOutputInvariants(unittest.TestCase):
     """Properties that must hold for any successfully-parsed belief."""
@@ -210,18 +212,15 @@ class TestToleranceBoundary(unittest.TestCase):
     def test_sum_just_inside_5x_tolerance_is_accepted(self) -> None:
         # default sum_tolerance = 0.05 → reject window |sum - 1| > 0.25.
         # Sum = 1.24 is inside (0.24 < 0.25); should renormalise.
-        result = parse_belief(
-            '{"Cooperate": 0.74, "Defect": 0.50}', STRATEGIES, sum_tolerance=0.05
-        )
+        result = parse_belief('{"Cooperate": 0.74, "Defect": 0.50}', STRATEGIES, sum_tolerance=0.05)
         self.assertAlmostEqual(sum(result.values()), 1.0, places=5)
 
     def test_sum_just_outside_5x_tolerance_is_rejected(self) -> None:
         # Sum = 1.30 is outside the 0.25 window → reject.
         from src.belief_parser import BeliefParseError
+
         with self.assertRaises(BeliefParseError):
-            parse_belief(
-                '{"Cooperate": 0.80, "Defect": 0.50}', STRATEGIES, sum_tolerance=0.05
-            )
+            parse_belief('{"Cooperate": 0.80, "Defect": 0.50}', STRATEGIES, sum_tolerance=0.05)
 
 
 if __name__ == "__main__":

@@ -1,9 +1,19 @@
-# environments
+# ---- Python ------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# ---- Node (frontend build tooling) -------------------------------------
+# The built web/css/tailwind.css IS committed so the app serves it with no
+# build step; only the local install dir is ignored.
+node_modules/
+
+# ---- Virtual environments ----------------------------------------------
 **/*env*/
 **/*env*/**
 **/*env
 
-# Secrets — never commit these.
+# ---- Secrets — never commit these --------------------------------------
 .env
 .env.*
 !.env.example
@@ -11,27 +21,33 @@
 *.key
 credentials.json
 
-# VSCode settings
-.vscode
-.vscode.*
-.vscode/*
+# ---- Tooling caches ----------------------------------------------------
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 
-# macOS
+# ---- Editor / OS -------------------------------------------------------
+.vscode/
+.idea/
 .DS_Store
 
-# byte-compiled / optimized / DLL files
-__pycache__/
+# ---- Local agent / assistant tooling (not part of the project) ---------
+.claude/
+.agents/
+skills-lock.json
 
-# playground files
-__playground/
-
-# GUI / experiment runtime outputs
+# ---- Runtime outputs & scratch -----------------------------------------
 results/
+__playground/
+Screenshot*.png
 
-# Jupyter notebook checkpoints
-.ipynb_checkpoints/
-
-# Ad-hoc data dumps
+# ---- Ad-hoc data dumps -------------------------------------------------
 duplicates.csv
 merged.csv
 data/
+
+# ---- Locally downloaded/extracted external repos (e.g. GitHub ZIPs) ----
+*-main/
+*.zip

@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, Optional
+from typing import Any
 
 from src.utils.logger import get_logger
+from src.utils.utils import round_index
 
 logger = get_logger(__name__)
 
-PHASE_BLOCKS = ("communicate", "choose", "believe", "mixedChoose")
+PHASE_BLOCKS = ("communicate", "trust", "choose", "believe", "believe2", "mixedChoose")
 
 
 class PromptCreator:
@@ -27,6 +28,10 @@ class PromptCreator:
       ``tom_order >= 2``.
     * ``ownType`` — block referring to the agent's private type; stripped
       if no type is configured.
+    * ``discount`` — describes the per-round discount to the agent; kept only
+      when ``discount_in_prompt`` and δ < 1 (behavioural discount mode).
+    * ``riskFrame`` — describes a risk preference (CRRA) to the agent; kept
+      only when ``risk_in_prompt`` (behavioural risk mode).
     """
 
     def __init__(
@@ -38,10 +43,17 @@ class PromptCreator:
         payoff_matrix,
         *,
         tom_order: int = 1,
-        reputation_window: Optional[int] = None,
+        reputation_window: int | None = None,
         reputation_applies: bool = True,
+        discount_in_prompt: bool = False,
+        discount_factor: float = 1.0,
+        risk_in_prompt: bool = False,
     ) -> None:
         self.language = lang
+        # Immutable source. Block processing mutates a per-render working copy
+        # (``self.prompt_template``), reset from this at the start of every
+        # ``fill_template`` so renders carry no side effects across calls.
+        self._template_source = prompt_template
         self.prompt_template = prompt_template
         self.n_rounds = n_rounds
         self.n_rounds_known = n_rounds_known
@@ -56,6 +68,14 @@ class PromptCreator:
         # asymmetric coordination games (Battle of the Sexes), zero-sum
         # games, and any scenario where strategy1 doesn't mean "cooperate".
         self.reputation_applies = reputation_applies
+        # Behavioural (prompt-side) framing of game-theoretic preferences.
+        # When on, an optional ``{discount}`` / ``{riskFrame}`` block is kept
+        # so the preference is described to the agent and shapes its choices.
+        # When off, the block is stripped (and the preference, if any, acts
+        # only on the score — see ``FairGame._apply_score_modifiers``).
+        self.discount_in_prompt = discount_in_prompt
+        self.discount_factor = discount_factor
+        self.risk_in_prompt = risk_in_prompt
 
     # ---- Block helpers --------------------------------------------------
 
@@ -77,7 +97,7 @@ class PromptCreator:
 
     # ---- Block processors -----------------------------------------------
 
-    def process_intro(self, agent, pv_dict: Dict[str, Any]) -> None:
+    def process_intro(self, agent, pv_dict: dict[str, Any]) -> None:
         intro = self._find_part("intro")
         if intro is None:
             return
@@ -87,7 +107,7 @@ class PromptCreator:
             self._replace_part(intro)
             pv_dict["personality"] = agent.personality
 
-    def process_opponent_intro(self, agent, opponents, pv_dict: Dict[str, Any]) -> None:
+    def process_opponent_intro(self, agent, opponents, pv_dict: dict[str, Any]) -> None:
         opponent_intro = self._find_part("opponentIntro")
         if opponent_intro is None:
             return
@@ -98,8 +118,7 @@ class PromptCreator:
             return
 
         valid_opponents_exist = any(
-            (opp.opponent_personality_prob != 0 and opp.personality != "None")
-            for opp in opponents
+            (opp.opponent_personality_prob != 0 and opp.personality != "None") for opp in opponents
         )
 
         if not valid_opponents_exist:
@@ -111,7 +130,7 @@ class PromptCreator:
                 pv_dict[f"opponentPersonality{i}"] = opp.personality
                 pv_dict[f"opponentPersonalityProbability{i}"] = opp.opponent_personality_prob
 
-    def process_game_length(self, pv_dict: Dict[str, Any]) -> None:
+    def process_game_length(self, pv_dict: dict[str, Any]) -> None:
         game_length = self._find_part("gameLength")
         if game_length is None:
             return
@@ -130,11 +149,37 @@ class PromptCreator:
         else:
             self._remove_part(block)
 
-    def process_own_type(self, pv_dict: Dict[str, Any]) -> None:
+    def process_own_type(self, pv_dict: dict[str, Any]) -> None:
         block = self._find_part("ownType")
         if block is None:
             return
         if "ownType" in pv_dict:
+            self._replace_part(block)
+        else:
+            self._remove_part(block)
+
+    def process_discount(self, pv_dict: dict[str, Any]) -> None:
+        """Keep the ``{discount}`` block only when the discount is being
+        described to the agent (``discount_mode`` in {prompt, both}) and it
+        actually discounts (δ < 1). Fills ``{discountFactor}`` for templates
+        that want to state the magnitude."""
+        block = self._find_part("discount")
+        if block is None:
+            return
+        if self.discount_in_prompt and self.discount_factor < 1.0:
+            pv_dict["discountFactor"] = self.discount_factor
+            self._replace_part(block)
+        else:
+            self._remove_part(block)
+
+    def process_risk_frame(self) -> None:
+        """Keep the ``{riskFrame}`` block only when a risk preference is being
+        described to the agent (``risk_mode`` in {prompt, both} with a CRRA
+        transform)."""
+        block = self._find_part("riskFrame")
+        if block is None:
+            return
+        if self.risk_in_prompt:
             self._replace_part(block)
         else:
             self._remove_part(block)
@@ -146,27 +191,29 @@ class PromptCreator:
         agent_name: str,
         opponents,
         current_round: int,
-        history: Dict,
-    ) -> Dict[str, Any]:
+        history: dict,
+    ) -> dict[str, Any]:
         strategies_keys = list(self.payoff_matrix.strategies.keys())
         weight_keys = list(self.payoff_matrix.weights.keys())
 
-        values: Dict[str, Any] = {
+        values: dict[str, Any] = {
             "currentPlayerName": agent_name,
             "currentRound": current_round,
             "history": history,
         }
         for i, key in enumerate(strategies_keys):
-            values[f"strategy{i+1}"] = self.payoff_matrix.strategies[key]
+            values[f"strategy{i + 1}"] = self.payoff_matrix.strategies[key]
 
         # Per-opponent reputation: rolling cooperation rate over their
         # past plays. By convention strategy1 = "cooperate". When
         # ``reputation_applies`` is False (asymmetric / zero-sum games),
         # we deliberately emit ``n/a`` / ``unknown`` so the labels
         # don't mislead the LLM.
-        cooperate_label = self.payoff_matrix.strategies.get(strategies_keys[0]) if strategies_keys else None
+        cooperate_label = (
+            self.payoff_matrix.strategies.get(strategies_keys[0]) if strategies_keys else None
+        )
         for i, opp in enumerate(opponents, start=1):
-            rate: Optional[float] = None
+            rate: float | None = None
             if self.reputation_applies:
                 rate = self._opponent_cooperation_rate(opp, history, cooperate_label)
             if rate is not None:
@@ -176,14 +223,14 @@ class PromptCreator:
                 values[f"coopRate{i}"] = "n/a"
                 values[f"reputation{i}"] = "unknown"
         for i, key in enumerate(weight_keys):
-            values[f"weight{i+1}"] = self.payoff_matrix.weights[key]
+            values[f"weight{i + 1}"] = self.payoff_matrix.weights[key]
         for i, opp in enumerate(opponents, start=1):
             values[f"opponent{i}"] = opp.name
         return values
 
     # ---- Reputation helpers ---------------------------------------------
 
-    def _opponent_cooperation_rate(self, opponent, history: Dict, cooperate_label):
+    def _opponent_cooperation_rate(self, opponent, history: dict, cooperate_label):
         """Fraction of past rounds in which ``opponent`` played the cooperate label.
 
         ``history`` is keyed by ``round_N`` and each value is a dict of
@@ -193,13 +240,11 @@ class PromptCreator:
         if not history or cooperate_label is None:
             return None
         try:
-            sorted_keys = sorted(
-                history.keys(), key=lambda k: int(str(k).split("_")[1])
-            )
+            sorted_keys = sorted(history.keys(), key=round_index)
         except (IndexError, ValueError):
             return None
         if self.reputation_window:
-            sorted_keys = sorted_keys[-int(self.reputation_window):]
+            sorted_keys = sorted_keys[-int(self.reputation_window) :]
 
         total = 0
         cooperated = 0
@@ -245,12 +290,14 @@ class PromptCreator:
             else:
                 self._remove_part(block)
 
-    def process_optional_parts(self, agent, opponents, pv_dict: Dict[str, Any]) -> None:
+    def process_optional_parts(self, agent, opponents, pv_dict: dict[str, Any]) -> None:
         self.process_intro(agent, pv_dict)
         self.process_opponent_intro(agent, opponents, pv_dict)
         self.process_game_length(pv_dict)
         self.process_second_order()
         self.process_own_type(pv_dict)
+        self.process_discount(pv_dict)
+        self.process_risk_frame()
 
     # ---- Main entry -----------------------------------------------------
 
@@ -259,11 +306,15 @@ class PromptCreator:
         agent,
         opponents,
         current_round: int,
-        history: Dict,
+        history: dict,
         phase: str,
         *,
-        extra_placeholders: Optional[Dict[str, Any]] = None,
+        extra_placeholders: dict[str, Any] | None = None,
     ) -> str:
+        # Start each render from the pristine source so block stripping never
+        # leaks into the next render of the same instance.
+        self.prompt_template = self._template_source
+
         placeholder_value_dict = self.map_placeholders(
             agent.name, opponents, current_round, history
         )

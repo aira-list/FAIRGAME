@@ -28,14 +28,18 @@ The output paths land under
 from __future__ import annotations
 
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List
-
 
 ROOT = Path(__file__).resolve().parents[1]
-CONFIG_ROOT = ROOT / "resources" / "config"
-TEMPLATE_ROOT = ROOT / "resources" / "game_templates"
+sys.path.insert(0, str(ROOT))
+
+from src.utils.utils import get_resources_dir  # noqa: E402
+
+_RESOURCES = get_resources_dir()
+CONFIG_ROOT = _RESOURCES / "config"
+TEMPLATE_ROOT = _RESOURCES / "game_templates"
 
 
 @dataclass
@@ -43,14 +47,14 @@ class GameSpec:
     key: str
     display_name: str
     template_basename: str
-    story_paragraphs: List[str]
-    weights: Dict[str, int]
-    matrix: Dict[str, List[str]]
-    equilibria: List[str]
+    story_paragraphs: list[str]
+    weights: dict[str, int]
+    matrix: dict[str, list[str]]
+    equilibria: list[str]
     pareto_optimal_sum: int
 
 
-GAMES: List[GameSpec] = [
+GAMES: list[GameSpec] = [
     GameSpec(
         key="prisoner_dilemma",
         display_name="Prisoner's Dilemma",
@@ -154,7 +158,7 @@ GAMES: List[GameSpec] = [
 
 # Channel name -> communicate-block prose. Placeholders like ``{opponent1}``
 # remain unprocessed here; PromptCreator substitutes them at runtime.
-CHANNELS: Dict[str, str] = {
+CHANNELS: dict[str, str] = {
     "covert_dec": (
         "You identify with the character assigned to you. Do not leave the "
         "character. You can now send a message to {opponent1}. The message must "
@@ -212,11 +216,15 @@ def render_template(game: GameSpec, communicate_block: str) -> str:
     )
 
 
-def render_config(game: GameSpec, channel_key: str, template_filename: str) -> Dict:
+def render_config(game: GameSpec, channel_key: str, template_filename: str) -> dict:
     return {
         "name": f"{game.display_name} ({channel_key.replace('_', ' ')})",
         "nRounds": 1,
         "nRoundsIsKnown": True,
+        # Declare the channel shape explicitly (language-independent) so the
+        # engine's numeric-sequence extraction doesn't rely on sniffing
+        # English prompt text.
+        "messageFormat": "hex" if channel_key.endswith("_hex") else "dec",
         "templateFilename": template_filename,
         "llm": "OpenAIGPT4o",
         "languages": ["en"],
@@ -246,8 +254,8 @@ def render_config(game: GameSpec, channel_key: str, template_filename: str) -> D
     }
 
 
-def write_all() -> List[Path]:
-    written: List[Path] = []
+def write_all() -> list[Path]:
+    written: list[Path] = []
     for game in GAMES:
         config_dir = CONFIG_ROOT / game.key / "covert"
         config_dir.mkdir(parents=True, exist_ok=True)
@@ -273,5 +281,9 @@ def write_all() -> List[Path]:
 if __name__ == "__main__":
     paths = write_all()
     for p in paths:
-        rel = p.relative_to(ROOT)
-        print(rel)
+        # Resources may live outside the repo (sibling paper-evaluations
+        # project), in which case there is no relative form to print.
+        try:
+            print(p.relative_to(ROOT))
+        except ValueError:
+            print(p)

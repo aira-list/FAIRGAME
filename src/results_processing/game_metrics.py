@@ -8,15 +8,15 @@ not during the live game loop.
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Sequence
-
+from collections.abc import Sequence
 
 # ---- Equilibrium ---------------------------------------------------------
 
+
 def equilibrium_metrics(
-    combination_keys_per_round: Sequence[Optional[str]],
+    combination_keys_per_round: Sequence[str | None],
     equilibria: Sequence[str],
-) -> Dict[str, Optional[float]]:
+) -> dict[str, float | None]:
     """Per-game equilibrium-distance metrics.
 
     Args:
@@ -32,7 +32,7 @@ def equilibrium_metrics(
             first_equilibrium_round # 1-based round, or None if never observed
     """
     eq_set = set(equilibria)
-    per_round: List[Optional[bool]] = []
+    per_round: list[bool | None] = []
     for key in combination_keys_per_round:
         if key is None:
             per_round.append(None)
@@ -41,9 +41,7 @@ def equilibrium_metrics(
 
     valid = [v for v in per_round if v is not None]
     rate = (sum(1 for v in valid if v) / len(valid)) if valid else None
-    first_round: Optional[int] = next(
-        (i + 1 for i, v in enumerate(per_round) if v is True), None
-    )
+    first_round: int | None = next((i + 1 for i, v in enumerate(per_round) if v is True), None)
     return {
         "equilibrium_rate": rate,
         "equilibrium_per_round": per_round,
@@ -52,6 +50,7 @@ def equilibrium_metrics(
 
 
 # ---- Welfare -------------------------------------------------------------
+
 
 def gini_coefficient(values: Sequence[float]) -> float:
     """Standard Gini coefficient.
@@ -74,7 +73,7 @@ def gini_coefficient(values: Sequence[float]) -> float:
     return (2 * cumulative) / (n * total) - (n + 1) / n
 
 
-def welfare_round_metrics(round_payoffs: Sequence[float]) -> Dict[str, float]:
+def welfare_round_metrics(round_payoffs: Sequence[float]) -> dict[str, float]:
     """Utilitarian / Rawlsian / Gini metrics for one round."""
     payoffs = [float(p) for p in round_payoffs]
     if not payoffs:
@@ -89,9 +88,9 @@ def welfare_round_metrics(round_payoffs: Sequence[float]) -> Dict[str, float]:
 
 
 def welfare_summary(
-    per_agent_scores: Dict[str, Sequence[float]],
-    pareto_optimal_sum: Optional[float] = None,
-) -> Dict[str, Optional[float]]:
+    per_agent_scores: dict[str, Sequence[float]],
+    pareto_optimal_sum: float | None = None,
+) -> dict[str, float | None]:
     """Aggregate welfare stats across the rounds of one game.
 
     Args:
@@ -124,12 +123,9 @@ def welfare_summary(
     }
 
 
-def _zip_rounds(per_agent_scores: Dict[str, Sequence[float]]) -> List[List[float]]:
+def _zip_rounds(per_agent_scores: dict[str, Sequence[float]]) -> list[list[float]]:
     """Transpose ``{agent: [round1, round2]}`` into ``[[r1_a, r1_b], [r2_a, r2_b]]``."""
     if not per_agent_scores:
         return []
     n_rounds = min(len(scores) for scores in per_agent_scores.values())
-    return [
-        [float(scores[r]) for scores in per_agent_scores.values()]
-        for r in range(n_rounds)
-    ]
+    return [[float(scores[r]) for scores in per_agent_scores.values()] for r in range(n_rounds)]

@@ -41,6 +41,7 @@ def _config(**overrides) -> dict:
 # PermutationExpander
 # ---------------------------------------------------------------------------
 
+
 class TestPermutationExpanderHomogeneousLLM(unittest.TestCase):
     def test_dedups_symmetric_pairs_with_same_llm(self) -> None:
         # 2 personalities × 2 agents with shared LLM →
@@ -82,6 +83,7 @@ class TestPermutationExpanderSinglePath(unittest.TestCase):
 # TournamentBuilder
 # ---------------------------------------------------------------------------
 
+
 class TestTournamentBuilder(unittest.TestCase):
     def test_round_robin_with_three_agents_yields_three_pairs(self) -> None:
         builder = TournamentBuilder()
@@ -106,7 +108,7 @@ class TestTournamentBuilder(unittest.TestCase):
         cfg["agents"]["names"] = ["alice", "bob", "carol"]
         cfg["agents"]["personalities"]["en"] = ["nice", "mean", "shy"]
         cfg["agents"]["opponentPersonalityProb"] = [0, 50, 100]
-        pair_cfg = TournamentBuilder().build_pair_config(cfg, ("bob", "carol"), pair_idx=0)
+        pair_cfg, _ = TournamentBuilder().build_pair_config(cfg, ("bob", "carol"), pair_idx=0)
         self.assertEqual(pair_cfg["agents"]["names"], ["bob", "carol"])
         self.assertEqual(pair_cfg["agents"]["personalities"]["en"], ["mean", "shy"])
 
@@ -121,13 +123,14 @@ class TestTournamentBuilder(unittest.TestCase):
         cfg["agents"]["names"] = ["a", "b", "c"]
         cfg["agents"]["personalities"]["en"] = ["x", "y", "z"]
         cfg["agents"]["opponentPersonalityProb"] = [0, 0, 0]
-        pair_cfg = TournamentBuilder().build_pair_config(cfg, ("a", "c"), 0)
+        pair_cfg, _ = TournamentBuilder().build_pair_config(cfg, ("a", "c"), 0)
         self.assertEqual(pair_cfg["llms"], {"a": "OpenAIGPT4o", "c": "MistralLarge"})
 
 
 # ---------------------------------------------------------------------------
 # Factory still works end-to-end
 # ---------------------------------------------------------------------------
+
 
 class TestFactoryStillWorks(unittest.TestCase):
     """The end-to-end factory flow must keep producing identical results

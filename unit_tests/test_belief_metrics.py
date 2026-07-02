@@ -11,10 +11,10 @@ from src.results_processing.belief_metrics import (
     per_round_metrics,
 )
 
-
 # ---------------------------------------------------------------------------
 # brier_score
 # ---------------------------------------------------------------------------
+
 
 class TestBrierScore(unittest.TestCase):
     def test_perfect_forecast_is_zero(self) -> None:
@@ -59,6 +59,7 @@ class TestBrierScore(unittest.TestCase):
 # belief_agreement
 # ---------------------------------------------------------------------------
 
+
 class TestBeliefAgreement(unittest.TestCase):
     def test_picks_modal_strategy(self) -> None:
         belief = {"a": 0.7, "b": 0.3}
@@ -88,6 +89,7 @@ class TestBeliefAgreement(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # per_round_metrics
 # ---------------------------------------------------------------------------
+
 
 class TestPerRoundMetrics(unittest.TestCase):
     def test_complete_data_yields_dicts(self) -> None:
@@ -151,6 +153,7 @@ class TestPerRoundMetrics(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # aggregate_metrics
 # ---------------------------------------------------------------------------
+
 
 class TestAggregateMetrics(unittest.TestCase):
     def test_averages_only_valid_rounds(self) -> None:

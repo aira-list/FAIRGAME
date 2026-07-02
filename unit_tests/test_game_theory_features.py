@@ -19,7 +19,6 @@ from src.io_managers.io_manager import IoManager
 from src.results_processing.results_processor import ResultsProcessor
 from src.results_processing.seed_aggregator import aggregate_seeds
 
-
 BASE_DIR = Path(__file__).resolve().parent
 
 
@@ -40,9 +39,7 @@ class TestMixedStrategies(unittest.TestCase):
                 self.assertIsNotNone(entry["mixed_distribution"])
                 self.assertAlmostEqual(sum(entry["mixed_distribution"].values()), 1.0, places=4)
                 # The realised strategy must be one of the labels.
-                self.assertIn(
-                    entry["strategy"], {"Cooperate", "Defect"}
-                )
+                self.assertIn(entry["strategy"], {"Cooperate", "Defect"})
 
     def test_seed_makes_run_deterministic(self) -> None:
         first = _factory().load_config_create_and_run_games("prisoner_dilemma_mixed.json")
@@ -74,7 +71,7 @@ class TestEquilibriumAndWelfare(unittest.TestCase):
         round2_scores = [e["score"] for e in history["round_2"]]
         # Either round can have the same raw payoff; just check the discount
         # applied to round 2 (some score < round 1's equivalent raw value).
-        for s1, s2 in zip(round1_scores, round2_scores):
+        for _s1, s2 in zip(round1_scores, round2_scores, strict=True):
             # In every cell of this matrix, raw payoffs are integers; discounted
             # payoffs in round 2 must be a multiple of 0.9.
             self.assertAlmostEqual(s2 / 0.9, round(s2 / 0.9), places=5)
@@ -83,23 +80,16 @@ class TestEquilibriumAndWelfare(unittest.TestCase):
 class TestTournament(unittest.TestCase):
     def test_round_robin_creates_pair_games(self) -> None:
         factory = _factory()
-        results = factory.load_config_create_and_run_games(
-            "prisoner_dilemma_tournament.json"
-        )
+        results = factory.load_config_create_and_run_games("prisoner_dilemma_tournament.json")
         # 3 baseline strategies -> C(3, 2) = 3 pair games.
         self.assertEqual(len(results), 3)
 
     def test_canonical_strategies_play_correctly(self) -> None:
         factory = _factory()
-        results = factory.load_config_create_and_run_games(
-            "prisoner_dilemma_tournament.json"
-        )
+        results = factory.load_config_create_and_run_games("prisoner_dilemma_tournament.json")
         # Find the alwaysC vs alwaysD pair: tournaments key by 'game_N',
         # so resolve via descriptions.
-        pairs = {
-            tuple(g["description"]["agents"].keys()): g
-            for g in results.values()
-        }
+        pairs = {tuple(g["description"]["agents"].keys()): g for g in results.values()}
         always_c_vs_always_d = pairs[("alwaysC", "alwaysD")]
         rounds = list(always_c_vs_always_d["history"].values())
         # Each baseline plays its name. AlwaysCooperate -> Cooperate,
@@ -121,10 +111,7 @@ class TestUtilityTransformAppliedEndToEnd(unittest.TestCase):
         results = factory.create_and_run_games(config)
         # Compute mean across rounds for each agent.
         history = results["game_0"]["history"]
-        scores = {
-            entry["agent"]: []
-            for entry in next(iter(history.values()))
-        }
+        scores = {entry["agent"]: [] for entry in next(iter(history.values()))}
         for entries in history.values():
             for e in entries:
                 scores[e["agent"]].append(e["score"])
@@ -177,6 +164,7 @@ class TestMultiSeed(unittest.TestCase):
 # Cross-cutting invariants
 # ---------------------------------------------------------------------------
 
+
 class TestCrossCuttingInvariants(unittest.TestCase):
     def test_seed_count_one_does_not_create_extra_runs(self) -> None:
         factory = _factory()
@@ -204,6 +192,7 @@ class TestCrossCuttingInvariants(unittest.TestCase):
         factory_b.create_and_run_games(config_b)
 
         import random
+
         a, b = random.Random(1).random(), random.Random(999).random()
         self.assertNotEqual(a, b)
 

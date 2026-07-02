@@ -17,10 +17,10 @@ from pathlib import Path
 
 from src.fairgame_factory import FairGameFactory
 from src.io_managers.io_manager import IoManager
-
+from src.utils.utils import get_resources_dir
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-COVERT_GLOB = PROJECT_ROOT / "resources" / "config"
+COVERT_GLOB = get_resources_dir() / "config"
 
 
 def _factory() -> FairGameFactory:
@@ -60,9 +60,7 @@ class TestFakeChannel(unittest.TestCase):
     """Engine-generated fake channel: messages are recorded without LLM input."""
 
     def test_fake_channel_messages_are_numeric_sequences(self) -> None:
-        config_path = (
-            COVERT_GLOB / "prisoner_dilemma" / "covert" / "prisoner_dilemma_fake_dec.json"
-        )
+        config_path = COVERT_GLOB / "prisoner_dilemma" / "covert" / "prisoner_dilemma_fake_dec.json"
         config = json.loads(config_path.read_text())
         outcomes = _factory().create_and_run_games(config)
         seen = 0
@@ -80,9 +78,7 @@ class TestFakeChannel(unittest.TestCase):
         self.assertGreater(seen, 0, "fake channel produced no messages")
 
     def test_fake_channel_with_seed_is_deterministic(self) -> None:
-        config_path = (
-            COVERT_GLOB / "prisoner_dilemma" / "covert" / "prisoner_dilemma_fake_dec.json"
-        )
+        config_path = COVERT_GLOB / "prisoner_dilemma" / "covert" / "prisoner_dilemma_fake_dec.json"
         config = json.loads(config_path.read_text())
         config["seed"] = 12345
 
@@ -102,6 +98,7 @@ class TestFakeChannel(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Cross-channel invariants
 # ---------------------------------------------------------------------------
+
 
 class TestCovertChannelInvariants(unittest.TestCase):
     """Properties that must hold for every covert variant — engine-level

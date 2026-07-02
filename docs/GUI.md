@@ -10,12 +10,12 @@ machine clients that want to drive the engine programmatically.
 
 ```bash
 pip install -e '.[server,test]'
-uvicorn fairgame_web:app --reload
+uvicorn web_api.main:app --reload
 ```
 
-The app binds to port `8000` by default. Open
-<http://localhost:8000>. Auto-reload picks up edits to either the
-backend (`fairgame_web.py`) or the frontend (`web/index.html`).
+The app binds to port `4263` by default ("GAME" on a phone keypad). Open
+<http://localhost:4263>. Auto-reload picks up edits to either the
+backend (`web_api/`) or the frontend (`web/index.html`).
 
 ## Demo mode
 
@@ -38,16 +38,16 @@ Landing page: cards linking to each workflow plus an embedded guide
 
 ### 🚀 Quick start
 
-Pick a shipped scenario from the dropdown — every JSON file under
-`resources/config/<category>/<name>.json` shows up grouped by
-category. Click **Run scenario** and the result table renders inline
-once the engine returns. The CSV is also downloadable.
+Pick a shipped configuration from the library — the starter library
+(`starter_library/`) seeds a set of ready-to-run scenarios on first
+launch. Click **Run** and the result table renders inline once the
+engine returns. The CSV is also downloadable.
 
 ### 🛠️ Scenario builder
 
-Pick a preset, edit the JSON inline, click **Run**. (Form-based
-builder is on the roadmap; for now the JSON view is the most flexible
-way to tweak any field.)
+Start from a shipped configuration (or a blank one), edit the JSON
+inline, click **Run**. (Form-based builder is on the roadmap; for now
+the JSON view is the most flexible way to tweak any field.)
 
 ### 📊 Results
 
@@ -60,17 +60,13 @@ per-game DataFrame.
 | Endpoint | Method | Purpose |
 | --- | --- | --- |
 | `/api/health` | GET | Liveness probe |
-| `/api/presets` | GET | List shipped scenarios, grouped by category |
-| `/api/presets/{id}` | GET | Load a preset's full JSON config |
-| `/api/runs` | POST | Run a config (inline or by preset id) and persist results |
+| `/api/configurations` | GET | List shipped + user configurations |
+| `/api/configurations/{id}/run` | POST | Run a stored configuration and persist results |
+| `/api/runs` | POST | Run an inline config and persist results |
 | `/api/runs` | GET | List past runs |
 | `/api/runs/{id}` | GET | Detail for one run (metadata + rows) |
 | `/api/runs/{id}/csv` | GET | Download the run's CSV |
-| `/api/translate` | POST | Translate a prompt template into a target language |
-
-The three Flask paths from the previous version are kept as `308`
-redirects: `/health`, `/create_and_run_games`, `/translate_template`
-forward to their `/api/*` equivalents.
+| `/api/templates/{id}/translate` | POST | AI-translate a stored template into target languages |
 
 ## What's stored where
 
@@ -80,10 +76,6 @@ results/web/
     metadata.json          # request config + timestamp + demo flag
     results.csv            # ResultsProcessor DataFrame
 ```
-
-If `S3_ENDPOINT`, `BUCKET_NAME`, `S3_KEY`, `S3_SECRET` are set in the
-environment, the same CSV is also pushed to the configured S3 bucket
-under `<DEFAULT_FOLDER>/<models_tag>/<date>_<game>/<file>.csv`.
 
 ## Limits and roadmap
 
@@ -95,4 +87,14 @@ under `<DEFAULT_FOLDER>/<models_tag>/<date>_<game>/<file>.csv`.
   are on the roadmap.
 * No authentication / multi-tenancy. The app is built for local
   research use; if you need to expose it remotely, deploy behind an
-  SSO proxy.
+  SSO proxy (see [DEPLOYMENT.md § Security](DEPLOYMENT.md#security)).
+* The SPA loads its libraries from CDNs. Alpine and Chart.js are pinned
+  with Subresource Integrity hashes, but Tailwind uses the runtime JIT
+  build (`cdn.tailwindcss.com`, unpinned) and fonts come from Google
+  Fonts. For production or offline use, replace the runtime Tailwind CDN
+  with a pre-built local stylesheet and self-host the fonts.
+* The configuration builder's serialize (`buildConfig`) and deserialize
+  (`applyConfigToBuilder`) logic in `web/js/app.configurations.js` is split
+  into focused, per-field-group `_serialize*` / `_hydrate*` helpers. The
+  module is still large overall, and a small SVG-graph helper is duplicated
+  with `app.results.js` — both remain minor known tech debt.

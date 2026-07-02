@@ -20,10 +20,10 @@ from src.results_processing.stats import (
     extract_numeric,
 )
 
-
 # ---------------------------------------------------------------------------
 # extract_numeric
 # ---------------------------------------------------------------------------
+
 
 class TestExtractNumeric(unittest.TestCase):
     def test_drops_strings_and_nans(self) -> None:
@@ -51,6 +51,7 @@ class TestExtractNumeric(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # compare_metric: happy paths
 # ---------------------------------------------------------------------------
+
 
 class TestCompareMetricHappyPath(unittest.TestCase):
     def test_distinct_distributions_have_low_pvalue(self) -> None:
@@ -99,6 +100,7 @@ class TestCompareMetricHappyPath(unittest.TestCase):
 # compare_metric: edge cases
 # ---------------------------------------------------------------------------
 
+
 class TestCompareMetricEdgeCases(unittest.TestCase):
     def test_empty_a_yields_nan_mean_a(self) -> None:
         result = compare_metric(pd.DataFrame({"x": []}), pd.DataFrame({"x": [1, 2]}), "x")
@@ -140,14 +142,23 @@ class TestCompareMetricEdgeCases(unittest.TestCase):
 # ComparisonResult dataclass
 # ---------------------------------------------------------------------------
 
+
 class TestComparisonResultDataclass(unittest.TestCase):
     def test_to_dict_round_trip_keys(self) -> None:
         result = compare_metric(pd.DataFrame({"x": [1, 2]}), pd.DataFrame({"x": [3, 4]}), "x")
         d = result.to_dict()
         # All declared fields appear.
         for field in (
-            "metric", "n_a", "n_b", "mean_a", "mean_b", "mean_diff",
-            "welch_t", "welch_p", "mannwhitney_u", "mannwhitney_p",
+            "metric",
+            "n_a",
+            "n_b",
+            "mean_a",
+            "mean_b",
+            "mean_diff",
+            "welch_t",
+            "welch_p",
+            "mannwhitney_u",
+            "mannwhitney_p",
         ):
             self.assertIn(field, d)
 
@@ -161,6 +172,7 @@ class TestComparisonResultDataclass(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # compare_metrics (sweep)
 # ---------------------------------------------------------------------------
+
 
 class TestCompareMetricsSweep(unittest.TestCase):
     def test_one_row_per_metric(self) -> None:
@@ -189,6 +201,7 @@ class TestCompareMetricsSweep(unittest.TestCase):
 # default_comparison_metrics
 # ---------------------------------------------------------------------------
 
+
 class TestMultipleComparisonCorrection(unittest.TestCase):
     """``compare_metrics`` must support Bonferroni and Holm corrections so
     multi-metric exploratory comparisons don't produce inflated false
@@ -196,12 +209,8 @@ class TestMultipleComparisonCorrection(unittest.TestCase):
 
     def _three_metric_inputs(self) -> tuple:
         # Three metrics, each with the same A/B distinction.
-        df_a = pd.DataFrame(
-            {"x": [10, 11, 12, 13], "y": [10, 11, 12, 13], "z": [10, 11, 12, 13]}
-        )
-        df_b = pd.DataFrame(
-            {"x": [1, 2, 3, 4], "y": [1, 2, 3, 4], "z": [1, 2, 3, 4]}
-        )
+        df_a = pd.DataFrame({"x": [10, 11, 12, 13], "y": [10, 11, 12, 13], "z": [10, 11, 12, 13]})
+        df_b = pd.DataFrame({"x": [1, 2, 3, 4], "y": [1, 2, 3, 4], "z": [1, 2, 3, 4]})
         return df_a, df_b
 
     def test_bonferroni_multiplies_pvalues_by_count(self) -> None:
@@ -209,7 +218,7 @@ class TestMultipleComparisonCorrection(unittest.TestCase):
         out_raw = compare_metrics(df_a, df_b, ["x", "y", "z"], correction="none")
         out_bon = compare_metrics(df_a, df_b, ["x", "y", "z"], correction="bonferroni")
         # Each Bonferroni-adjusted p must be 3x the raw p (capped at 1.0).
-        for raw, bon in zip(out_raw["welch_p"], out_bon["welch_p_adjusted"]):
+        for raw, bon in zip(out_raw["welch_p"], out_bon["welch_p_adjusted"], strict=True):
             self.assertAlmostEqual(min(raw * 3, 1.0), bon, places=6)
 
     def test_holm_is_at_least_as_strict_as_raw_but_no_worse_than_bonferroni(self) -> None:
@@ -218,7 +227,10 @@ class TestMultipleComparisonCorrection(unittest.TestCase):
         out_holm = compare_metrics(df_a, df_b, ["x", "y", "z"], correction="holm")
         out_bon = compare_metrics(df_a, df_b, ["x", "y", "z"], correction="bonferroni")
         for raw, holm, bon in zip(
-            out_raw["welch_p"], out_holm["welch_p_adjusted"], out_bon["welch_p_adjusted"]
+            out_raw["welch_p"],
+            out_holm["welch_p_adjusted"],
+            out_bon["welch_p_adjusted"],
+            strict=True,
         ):
             self.assertGreaterEqual(holm, raw - 1e-9)
             self.assertLessEqual(holm, bon + 1e-9)
@@ -227,7 +239,7 @@ class TestMultipleComparisonCorrection(unittest.TestCase):
         df_a, df_b = self._three_metric_inputs()
         out_raw = compare_metrics(df_a, df_b, ["x", "y", "z"], correction="none")
         # The adjusted column equals the raw p.
-        for raw, adj in zip(out_raw["welch_p"], out_raw["welch_p_adjusted"]):
+        for raw, adj in zip(out_raw["welch_p"], out_raw["welch_p_adjusted"], strict=True):
             self.assertAlmostEqual(raw, adj)
 
     def test_unknown_correction_method_rejected(self) -> None:

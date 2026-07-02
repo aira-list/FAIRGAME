@@ -30,8 +30,8 @@ def __getattr__(name):  # noqa: D401 - module dunder
 
 if TYPE_CHECKING:  # pragma: no cover
     from src.llm_connectors.llm_factory_connector import (  # noqa: F401
-        ChatModelFactory,
         MODEL_PROVIDER_MAP,
+        ChatModelFactory,
         execute_prompt,
         register_model,
     )

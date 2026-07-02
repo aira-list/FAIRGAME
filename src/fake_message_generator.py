@@ -3,7 +3,32 @@
 from __future__ import annotations
 
 import random
-from typing import Optional
+from typing import Any
+
+
+class FakeCommunicationConfig:
+    """Configuration holder for the optional fake-communication phase."""
+
+    def __init__(
+        self,
+        enabled: bool = False,
+        message_count: int = 1,
+        base: str = "dec",
+    ) -> None:
+        self.enabled = enabled
+        self.message_count = message_count
+        self.base = base
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> FakeCommunicationConfig:
+        enabled = bool(config.get("fakeCommunication", False))
+        if not enabled:
+            return cls(enabled=False)
+        return cls(
+            enabled=True,
+            message_count=int(config.get("fakeMessageCount", 1)),
+            base=config.get("fakeMessageBase", "dec"),
+        )
 
 
 class FakeMessageGenerator:
@@ -22,7 +47,7 @@ class FakeMessageGenerator:
         self,
         count: int = 1,
         base: str = "dec",
-        rng: Optional[random.Random] = None,
+        rng: random.Random | None = None,
     ) -> None:
         if base not in ("dec", "hex"):
             raise ValueError("base must be 'dec' or 'hex'")

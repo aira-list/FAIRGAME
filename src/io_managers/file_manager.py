@@ -1,10 +1,12 @@
 import json
 from pathlib import Path
+
 from striprtf.striprtf import rtf_to_text
+
 
 class FileManager:
     """
-    Handles reading and loading of files (JSON or text/RTF), 
+    Handles reading and loading of files (JSON or text/RTF),
     plus saving output (e.g., CSV).
     """
 
@@ -21,9 +23,9 @@ class FileManager:
             with filepath.open("r", encoding="utf-8") as file:
                 return json.load(file)
         except FileNotFoundError:
-            raise FileNotFoundError(f"File not found: {filepath}")
+            raise FileNotFoundError(f"File not found: {filepath}") from None
         except json.JSONDecodeError as e:
-            raise ValueError(f"Error decoding JSON in '{filepath}': {e}")
+            raise ValueError(f"Error decoding JSON in '{filepath}': {e}") from e
 
     @staticmethod
     def load_text_file(filepath: Path) -> str:
@@ -36,7 +38,7 @@ class FileManager:
         try:
             return filepath.read_text(encoding="utf-8")
         except FileNotFoundError:
-            raise FileNotFoundError(f"File not found: {filepath}")
+            raise FileNotFoundError(f"File not found: {filepath}") from None
 
     @staticmethod
     def load_rtf_file(filepath: Path) -> str:
@@ -50,7 +52,7 @@ class FileManager:
             with filepath.open("r", encoding="utf-8") as file:
                 return rtf_to_text(file.read())
         except FileNotFoundError:
-            raise FileNotFoundError(f"File not found: {filepath}")
+            raise FileNotFoundError(f"File not found: {filepath}") from None
 
     @staticmethod
     def read_template_file(filepath: Path) -> str:

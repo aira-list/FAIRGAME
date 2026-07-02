@@ -7,10 +7,10 @@ import unittest
 from src.payoff_matrix import PayoffMatrix
 from src.prompt_creator import PromptCreator
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _matrix_data() -> dict:
     return {
@@ -54,14 +54,14 @@ def _make_creator(
 def _hist(rounds_strategies: list[str], opponent_name: str = "opp") -> dict:
     """Build a history dict from a list of strategies, one per round."""
     return {
-        f"round_{i + 1}": {opponent_name: {"strategy": s}}
-        for i, s in enumerate(rounds_strategies)
+        f"round_{i + 1}": {opponent_name: {"strategy": s}} for i, s in enumerate(rounds_strategies)
     }
 
 
 # ---------------------------------------------------------------------------
 # Aggregate cooperation rate
 # ---------------------------------------------------------------------------
+
 
 class TestFullHistoryRate(unittest.TestCase):
     def test_two_of_four_cooperated_yields_50_percent(self) -> None:
@@ -99,9 +99,7 @@ class TestFullHistoryRate(unittest.TestCase):
 
     def test_no_history_emits_unknown_label(self) -> None:
         creator = _make_creator()
-        prompt = creator.fill_template(
-            _StubAgent("agent1"), [_StubAgent("opp")], 1, {}, "choose"
-        )
+        prompt = creator.fill_template(_StubAgent("agent1"), [_StubAgent("opp")], 1, {}, "choose")
         self.assertIn("coop rate n/a", prompt)
         self.assertIn("reputation unknown", prompt)
 
@@ -109,6 +107,7 @@ class TestFullHistoryRate(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Reputation window
 # ---------------------------------------------------------------------------
+
 
 class TestReputationWindow(unittest.TestCase):
     def setUp(self) -> None:
@@ -143,6 +142,7 @@ class TestReputationWindow(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Reputation label boundaries
 # ---------------------------------------------------------------------------
+
 
 class TestReputationLabel(unittest.TestCase):
     """Boundary points of the rate→label mapping. 0.25 / 0.50 / 0.75 are
@@ -179,6 +179,7 @@ class TestReputationLabel(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Multi-opponent + history holes
 # ---------------------------------------------------------------------------
+
 
 class TestMultiOpponent(unittest.TestCase):
     def test_each_opponent_has_independent_rate(self) -> None:
@@ -252,6 +253,7 @@ class TestHistoryHoles(unittest.TestCase):
 # Placeholder hygiene
 # ---------------------------------------------------------------------------
 
+
 class TestReputationApplies(unittest.TestCase):
     """The ``reputation_applies`` flag must suppress reputation labels for
     games where 'cooperate' / 'defect' aren't meaningful (Battle of Sexes,
@@ -285,8 +287,11 @@ class TestReputationApplies(unittest.TestCase):
         pm = PayoffMatrix(_matrix_data(), "en")
         # Construct without the new flag — must default to True.
         creator = PC(
-            "en", "{coopRate1} {reputation1} {choose}: [Pick {strategy1}.]",
-            n_rounds=1, n_rounds_known=False, payoff_matrix=pm,
+            "en",
+            "{coopRate1} {reputation1} {choose}: [Pick {strategy1}.]",
+            n_rounds=1,
+            n_rounds_known=False,
+            payoff_matrix=pm,
         )
         self.assertTrue(creator.reputation_applies)
 
@@ -318,9 +323,7 @@ class TestPlaceholderHygiene(unittest.TestCase):
             _hist(["Cooperate"]),
             "choose",
         )
-        self.assertEqual(
-            prompt.strip(), "agent1 Pick Cooperate."
-        )
+        self.assertEqual(prompt.strip(), "agent1 Pick Cooperate.")
 
 
 if __name__ == "__main__":

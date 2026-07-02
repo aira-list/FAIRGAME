@@ -7,13 +7,14 @@ import unittest
 from unittest import mock
 
 from src.fairgame import FairGame
-from src.fairgame_factory import FakeCommunicationConfig
+from src.fake_message_generator import FakeCommunicationConfig
+from src.game_config import GameConfig
 from src.utility import FehrSchmidtTransform, IdentityTransform
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _matrix_data() -> dict:
     return {
@@ -74,7 +75,6 @@ def _make_game(**kwargs) -> FairGame:
     defaults = {
         "name": "t",
         "language": "en",
-        "agents": agents,
         "n_rounds": 2,
         "n_rounds_known": True,
         "payoff_matrix_data": _matrix_data(),
@@ -83,12 +83,13 @@ def _make_game(**kwargs) -> FairGame:
         "agents_communicate": False,
     }
     defaults.update(kwargs)
-    return FairGame(**defaults)
+    return FairGame.from_config(GameConfig(**defaults), agents)
 
 
 # ---------------------------------------------------------------------------
 # Description
 # ---------------------------------------------------------------------------
+
 
 class TestDescription(unittest.TestCase):
     def test_description_is_property(self) -> None:
@@ -103,19 +104,24 @@ class TestDescription(unittest.TestCase):
         self.assertEqual(desc["language"], "en")
 
     def test_description_includes_fake_communication_when_enabled(self) -> None:
-        game = _make_game()
-        game.fake_communication_config = FakeCommunicationConfig(
-            enabled=True, message_count=2, base="hex"
+        # The collaborator is part of GameConfig — supplied at construction,
+        # never bolted on afterwards.
+        game = _make_game(
+            fake_communication_config=FakeCommunicationConfig(
+                enabled=True, message_count=2, base="hex"
+            )
         )
         desc = game.description
         self.assertTrue(desc["fake_communication"])
         self.assertEqual(desc["fake_message_count"], 2)
         self.assertEqual(desc["fake_message_base"], "hex")
 
-    def test_description_omits_fake_communication_when_disabled(self) -> None:
-        # No fake_communication_config attached → keys absent.
+    def test_description_reports_fake_communication_disabled(self) -> None:
+        # The flag is always present (the collaborator always exists);
+        # disabled games report False with no count/base.
         desc = _make_game().description
-        self.assertNotIn("fake_communication", desc)
+        self.assertFalse(desc["fake_communication"])
+        self.assertIsNone(desc["fake_message_count"])
 
     def test_description_includes_seed_when_provided(self) -> None:
         desc = _make_game(seed=42).description
@@ -133,6 +139,7 @@ class TestDescription(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Termination
 # ---------------------------------------------------------------------------
+
 
 class TestTermination(unittest.TestCase):
     def test_run_terminates_after_n_rounds(self) -> None:
@@ -196,6 +203,7 @@ class TestTermination(unittest.TestCase):
 # Score modifiers (utility transform + discount factor)
 # ---------------------------------------------------------------------------
 
+
 class TestScoreModifiers(unittest.TestCase):
     def test_discount_factor_applied_to_round_two(self) -> None:
         # Round 1: discount 0.9^0 = 1.0 → raw scores preserved.
@@ -203,7 +211,7 @@ class TestScoreModifiers(unittest.TestCase):
         game = _make_game(n_rounds=2, discount_factor=0.9)
         with mock.patch("src.fairgame.GameRound") as cls:
             cls.return_value.run.return_value = ["strategy1", "strategy1"]  # c1 → w1, w1 = 3, 3
-            cls.return_value._update_round_history = mock.Mock()
+            cls.return_value.record_round_history = mock.Mock()
             game.run()
         for agent in game.agents.values():
             self.assertAlmostEqual(agent.scores[0], 3.0)
@@ -213,7 +221,7 @@ class TestScoreModifiers(unittest.TestCase):
         game = _make_game(n_rounds=2, discount_factor=1.0)
         with mock.patch("src.fairgame.GameRound") as cls:
             cls.return_value.run.return_value = ["strategy1", "strategy1"]
-            cls.return_value._update_round_history = mock.Mock()
+            cls.return_value.record_round_history = mock.Mock()
             game.run()
         for agent in game.agents.values():
             self.assertEqual(agent.scores, [3, 3])
@@ -234,12 +242,10 @@ class TestScoreModifiers(unittest.TestCase):
 
     def test_utility_transform_applied_per_round(self) -> None:
         # FehrSchmidt(α=0, β=0) = identity → no change.
-        game = _make_game(
-            n_rounds=1, utility_transform=FehrSchmidtTransform(alpha=0.0, beta=0.0)
-        )
+        game = _make_game(n_rounds=1, utility_transform=FehrSchmidtTransform(alpha=0.0, beta=0.0))
         with mock.patch("src.fairgame.GameRound") as cls:
             cls.return_value.run.return_value = ["strategy1", "strategy2"]  # c2 → 5, 0
-            cls.return_value._update_round_history = mock.Mock()
+            cls.return_value.record_round_history = mock.Mock()
             game.run()
         agents = list(game.agents.values())
         self.assertAlmostEqual(agents[0].scores[-1], 5.0)
@@ -253,6 +259,7 @@ class TestScoreModifiers(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # RNG / determinism
 # ---------------------------------------------------------------------------
+
 
 class TestRng(unittest.TestCase):
     def test_seed_constructs_a_seeded_rng(self) -> None:
@@ -276,6 +283,7 @@ class TestRng(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Reputation-applies wiring
 # ---------------------------------------------------------------------------
+
 
 class TestCompoundDiscountWarning(unittest.TestCase):
     """Combining discount factor with continuation probability double-counts

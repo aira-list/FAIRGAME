@@ -1,0 +1,35 @@
+{
+    "name": "Prisoner's Dilemma (trust, baselines)",
+    "nRounds": 3,
+    "nRoundsIsKnown": true,
+    "templateFilename": "prisoner_dilemma_trust",
+    "llms": ["baseline:AlwaysCooperate", "baseline:AlwaysDefect"],
+    "languages": ["en"],
+    "allAgentPermutations": false,
+    "seed": 7,
+    "trust": {"enabled": true, "lookCost": 2, "historyScope": "full"},
+    "baselineSemantics": {"cooperate": "strategy1", "defect": "strategy2"},
+    "agents": {
+        "names": ["agent1", "agent2"],
+        "personalities": {"en": ["neutral", "neutral"]},
+        "opponentPersonalityProb": [0, 0]
+    },
+    "payoffMatrix": {
+        "weights": {"weight1": 3, "weight2": 0, "weight3": 5, "weight4": 1},
+        "strategies": {"en": {"strategy1": "Cooperate", "strategy2": "Defect"}},
+        "combinations": {
+            "combination1": ["strategy1", "strategy1"],
+            "combination2": ["strategy1", "strategy2"],
+            "combination3": ["strategy2", "strategy1"],
+            "combination4": ["strategy2", "strategy2"]
+        },
+        "matrix": {
+            "combination1": ["weight1", "weight1"],
+            "combination2": ["weight2", "weight3"],
+            "combination3": ["weight3", "weight2"],
+            "combination4": ["weight4", "weight4"]
+        }
+    },
+    "stopGameWhen": [],
+    "agentsCommunicate": false
+}

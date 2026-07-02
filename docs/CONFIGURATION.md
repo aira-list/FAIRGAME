@@ -20,7 +20,7 @@ canonical reference for every field accepted by the validator
 | `llm` | str | one of | Single model name applied to every agent. |
 | `llms` | `list[str]` or `dict[str, str]` | one of | Per-agent model assignment. List length must match `len(agents.names)`; dict keys must equal `agents.names`. |
 | `promptTemplate` | `dict[str, str]` | one of | Inline `{lang: text}` template; mutually exclusive with `templateFilename`. |
-| `templateFilename` | str | one of | Stem of a file under `resources/game_templates/{name}_{lang}.txt`. |
+| `templateFilename` | str | one of | Stem of a template file. The web app resolves it against `starter_library/templates/`; the CLI resolves `{name}_{lang}.txt` under `$FAIRGAME_RESOURCES_DIR/game_templates/` (see [Environment variables](#environment-variables)). |
 | `fakeCommunication` | bool | no | Replace real inter-agent messages with random tokens. Default `false`. |
 | `fakeMessageCount` | int | no | Number of fake messages per agent per round (default `1`). |
 | `fakeMessageBase` | `"dec"` \| `"hex"` | no | Encoding of the fake messages (default `"dec"`). |
@@ -99,32 +99,43 @@ A legacy compact form is also accepted (each combination listed as
 
 | Name | Default | Purpose |
 |---|---|---|
-| `API_KEY_OPENAI` | — | Required for OpenAI connector. |
-| `API_KEY_ANTHROPIC` | — | Required for Anthropic connector. |
-| `API_KEY_MISTRAL` | — | Required for Mistral connector. |
+| `OPENAI_API_KEY` | — | Required for OpenAI connector. |
+| `ANTHROPIC_API_KEY` | — | Required for Anthropic connector. |
+| `MISTRAL_API_KEY` | — | Required for Mistral connector. |
+| `DEEPSEEK_API_KEY` | — | Required for the DeepSeek connector. |
 | `FAIRGAME_LOG_LEVEL` | `INFO` | Root logger level. |
 | `FAIRGAME_LLM_MAX_ATTEMPTS` | `3` | Retry attempts for transient LLM errors. |
 | `FAIRGAME_LLM_BACKOFF_MIN` | `1.0` | Min seconds between retries. |
 | `FAIRGAME_LLM_BACKOFF_MAX` | `10.0` | Max seconds between retries. |
+| `FAIRGAME_LLM_TIMEOUT` | `60.0` | Per-request LLM timeout, in seconds. |
+| `FAIRGAME_LLM_MAX_TOKENS` | unset | Cap the tokens generated per LLM call (helps avoid provider TPM 429s). |
+| `FAIRGAME_LLM_TEMPERATURE` | unset | Override the sampling temperature for LLM calls. |
+| `FAIRGAME_LLM_MIN_INTERVAL` | `0.0` | Minimum seconds between successive LLM calls. |
+| `FAIRGAME_LLM_RATE_LIMIT` | `0.0` | Aggregate requests/sec budget shared across workers (`0` disables). |
 | `FAIRGAME_STRATEGY_MAX_ATTEMPTS` | `10` | Times to re-prompt an agent when its response fails to parse. |
 | `FAIRGAME_BELIEF_MAX_ATTEMPTS` | `3` | Retries when an agent's belief JSON cannot be parsed. |
 | `FAIRGAME_TRANSLATOR_MODEL` | `OpenAIGPT4o` | Model used by the translation endpoint. |
+| `FAIRGAME_RESOURCES_DIR` | sibling `Fairgame_paper_evaluations/resources` | Location of the CLI/paper example configs and templates. The web app does not need it. |
+| `FAIRGAME_COMMUNITY_URL` | unset | Public FAIRGAME community/showcase URL. When set, the SPA shows "community" links; when empty they are hidden. |
 | `FAIRGAME_LIVE_LLM` | unset | Set to `1` in tests to opt-in to live-LLM tests. |
-| `S3_ENDPOINT` / `BUCKET_NAME` / `S3_KEY` / `S3_SECRET` / `S3_PREFIX` | — | S3-compatible upload (skipped if any are missing). |
-| `DEFAULT_FOLDER` | `fairgame-results` | Top-level prefix used when constructing result keys. |
-| `FAIRGAME_URL` | `http://127.0.0.1:5003/create_and_run_games` | Endpoint used by `main.py` in `api` mode. |
-| `PORT` | `5003` | Bind port for the dev server. |
+| `FAIRGAME_URL` | `http://127.0.0.1:4263/api/runs` | Endpoint used by `main.py` in `api` mode. |
+| `PORT` | `4263` | Bind port for the dev server. |
 
 ## Example
 
-The shipped example
-[`resources/config/prisoner_dilemma/prisoner_dilemma_round_known_conventional.json`](../resources/config/prisoner_dilemma/prisoner_dilemma_round_known_conventional.json)
-is a single-round Prisoner's Dilemma with cooperative/selfish personalities
-across five languages, scored against a standard four-cell payoff matrix.
+The shipped starter configurations (browse them on the GUI's Configurations
+page or via `GET /api/configurations`) include a single-round Prisoner's
+Dilemma with cooperative/selfish personalities across several languages,
+scored against a standard four-cell payoff matrix. The full set of paper
+scenarios lives in the sibling `Fairgame_paper_evaluations/resources/config/`
+folder, resolved via `FAIRGAME_RESOURCES_DIR` (see [Environment variables](#environment-variables)).
 
 ## Shipped scenarios
 
-The 2×2 social-dilemma family ported from the Fairgame paper evaluations:
+The 2×2 social-dilemma family ported from the Fairgame paper evaluations. The
+paths below are relative to `$FAIRGAME_RESOURCES_DIR/config/` (the sibling
+`Fairgame_paper_evaluations/resources/config/`), except the `unit_tests/` entry
+which ships in this repository:
 
 | Scenario | Path | Notes |
 |---|---|---|
@@ -141,7 +152,7 @@ Each is selectable from the GUI's Quick start page or referenced directly via th
 ### Covert / random / fake communication channels
 
 For every 2×2 social dilemma above, a *covert communication* family lives
-under `resources/config/<game>/covert/`:
+under `$FAIRGAME_RESOURCES_DIR/config/<game>/covert/`:
 
 | Channel | Behaviour | Template |
 |---|---|---|

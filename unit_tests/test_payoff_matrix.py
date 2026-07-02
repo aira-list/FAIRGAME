@@ -6,10 +6,10 @@ import unittest
 
 from src.payoff_matrix import PayoffMatrix
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _pd_matrix() -> dict:
     return {
@@ -45,6 +45,7 @@ class _StubAgent:
 # Properties
 # ---------------------------------------------------------------------------
 
+
 class TestProperties(unittest.TestCase):
     def setUp(self) -> None:
         self.pm = PayoffMatrix(_pd_matrix(), "en")
@@ -67,6 +68,7 @@ class TestProperties(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # get_weights_for_combination
 # ---------------------------------------------------------------------------
+
 
 class TestGetWeightsForCombination(unittest.TestCase):
     def setUp(self) -> None:
@@ -103,6 +105,7 @@ class TestGetWeightsForCombination(unittest.TestCase):
 # get_combination_key
 # ---------------------------------------------------------------------------
 
+
 class TestGetCombinationKey(unittest.TestCase):
     def setUp(self) -> None:
         self.pm = PayoffMatrix(_pd_matrix(), "en")
@@ -120,6 +123,7 @@ class TestGetCombinationKey(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # attribute_scores
 # ---------------------------------------------------------------------------
+
 
 class TestAttributeScores(unittest.TestCase):
     def setUp(self) -> None:
@@ -165,6 +169,7 @@ class TestAttributeScores(unittest.TestCase):
 # Lazy combo cache
 # ---------------------------------------------------------------------------
 
+
 class TestComboCache(unittest.TestCase):
     def test_cache_is_built_lazily(self) -> None:
         pm = PayoffMatrix(_pd_matrix(), "en")
@@ -206,6 +211,7 @@ class TestAttributeScoresOrder(unittest.TestCase):
         # iterated in reverse, popped from the end, or zipped backwards
         # would give the swapped pair (0, 5).
         from src.payoff_matrix import PayoffMatrix
+
         pm = PayoffMatrix(_pd_matrix(), "en")
         a, b = _StubAgent(), _StubAgent()
         pm.attribute_scores([a, b], ["strategy1", "strategy2"])

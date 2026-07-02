@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
+
+from src.results_processing.row_schema import AgentCol
 
 
 class AgentInfo:
@@ -19,8 +21,8 @@ class AgentInfo:
         llm_service: str,
         personality: str,
         opponent_prob: float,
-        agent_type: Optional[str] = None,
-        baseline_strategy: Optional[str] = None,
+        agent_type: str | None = None,
+        baseline_strategy: str | None = None,
     ) -> None:
         self.name = name
         self.llm_service = llm_service
@@ -29,15 +31,15 @@ class AgentInfo:
         self.agent_type = agent_type
         self.baseline_strategy = baseline_strategy
 
-    def to_dict(self, prefix: str) -> Dict[str, Any]:
-        out: Dict[str, Any] = {
-            f"{prefix}name": self.name,
-            f"{prefix}llm": self.llm_service,
-            f"{prefix}personality": self.personality,
-            f"{prefix}knows_opponent_with_prob": self.opponent_personality_probability,
+    def to_dict(self, prefix: str) -> dict[str, Any]:
+        out: dict[str, Any] = {
+            prefix + AgentCol.NAME: self.name,
+            prefix + AgentCol.LLM: self.llm_service,
+            prefix + AgentCol.PERSONALITY: self.personality,
+            prefix + AgentCol.KNOWS_OPPONENT_WITH_PROB: self.opponent_personality_probability,
         }
         if self.agent_type is not None:
-            out[f"{prefix}agent_type"] = self.agent_type
+            out[prefix + AgentCol.AGENT_TYPE] = self.agent_type
         if self.baseline_strategy is not None:
-            out[f"{prefix}baseline_strategy"] = self.baseline_strategy
+            out[prefix + AgentCol.BASELINE_STRATEGY] = self.baseline_strategy
         return out

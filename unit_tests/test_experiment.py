@@ -88,7 +88,7 @@ class TestManifest(unittest.TestCase):
     def test_manifest_invalid_json_raises(self) -> None:
         bad = self.tmp / "bad.json"
         bad.write_text("definitely not json")
-        with self.assertRaises(Exception):  # json.JSONDecodeError
+        with self.assertRaises(ValueError):  # json.JSONDecodeError is a ValueError subclass
             Manifest.load(bad)
 
     def test_manifest_missing_file_raises(self) -> None:

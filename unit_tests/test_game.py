@@ -1,38 +1,39 @@
-import unittest
 import logging
+import unittest
 from pathlib import Path
 
-from src.fairgame_factory import FairGameFactory
-from src.io_managers.io_manager import IoManager
 from src.fairgame import FairGame, PayoffMatrix
+from src.fairgame_factory import FairGameFactory
+from src.game_config import GameConfig
+from src.io_managers.io_manager import IoManager
 
 # Configure logging at the module level
 logging.basicConfig(level=logging.INFO)
 
 # Define directory and configuration paths
 BASE_PATH = Path(__file__).resolve().parent
-CONFIG_DIR = BASE_PATH / 'config'
+CONFIG_DIR = BASE_PATH / "config"
 
 # Configuration file paths
-CONFIG_MAIN_FILE = CONFIG_DIR / 'prisoner_dilemma.json'
-CONFIG_NO_PERMUTATIONS_FILE = CONFIG_DIR / 'prisoner_dilemma_all_permutations_false.json'
-CONFIG_MALFORMED_FILE = CONFIG_DIR / 'prisoner_dilemma_no_template.json'
+CONFIG_MAIN_FILE = CONFIG_DIR / "prisoner_dilemma.json"
+CONFIG_NO_PERMUTATIONS_FILE = CONFIG_DIR / "prisoner_dilemma_all_permutations_false.json"
+CONFIG_MALFORMED_FILE = CONFIG_DIR / "prisoner_dilemma_no_template.json"
 
 # Constants for game configuration
-LANGUAGE_MODEL = 'OpenAIGPT4o'
+LANGUAGE_MODEL = "OpenAIGPT4o"
 GAME_SETTINGS = {
-    'nRounds': 3,
-    'nRoundsIsKnown': True,
-    'Agent1': 'agent1',
-    'Personality1': 'aggressive',
-    'OpponentPersonalityProb1': 80,
-    'Agent2': 'agent2',
-    'Personality2': 'cooperative',
-    'OpponentPersonalityProb2': 90,
-    'LLM': LANGUAGE_MODEL,
-    'stopGameWhen': ["combination1"]
+    "nRounds": 3,
+    "nRoundsIsKnown": True,
+    "Agent1": "agent1",
+    "Personality1": "aggressive",
+    "OpponentPersonalityProb1": 80,
+    "Agent2": "agent2",
+    "Personality2": "cooperative",
+    "OpponentPersonalityProb2": 90,
+    "LLM": LANGUAGE_MODEL,
+    "stopGameWhen": ["combination1"],
 }
-LANGUAGE = 'en'
+LANGUAGE = "en"
 
 
 class TestGame(unittest.TestCase):
@@ -71,7 +72,7 @@ class TestGame(unittest.TestCase):
         Returns:
             PayoffMatrix: The initialized payoff matrix object.
         """
-        payoff_config = self.config['payoffMatrix']
+        payoff_config = self.config["payoffMatrix"]
         return PayoffMatrix(payoff_config, language)
 
     def _create_prompt_template(self, language: str) -> dict:
@@ -107,17 +108,17 @@ class TestGame(unittest.TestCase):
         Returns:
             FairGame: A configured FairGame instance.
         """
-        return FairGame(
-            name='test_prisoner_dilemma',
+        config = GameConfig(
+            name="test_prisoner_dilemma",
             language=LANGUAGE,
-            agents=agents,
-            n_rounds=GAME_SETTINGS['nRounds'],
-            n_rounds_known=GAME_SETTINGS['nRoundsIsKnown'],
-            payoff_matrix_data=self.config['payoffMatrix'],
+            n_rounds=GAME_SETTINGS["nRounds"],
+            n_rounds_known=GAME_SETTINGS["nRoundsIsKnown"],
+            payoff_matrix_data=self.config["payoffMatrix"],
             prompt_template=self.prompt_template,
-            stop_conditions=GAME_SETTINGS['stopGameWhen'],
-            agents_communicate=self.agents_communicate
+            stop_conditions=GAME_SETTINGS["stopGameWhen"],
+            agents_communicate=self.agents_communicate,
         )
+        return FairGame.from_config(config, agents)
 
     def _display_payoff_matrix(self, payoff_matrix: PayoffMatrix) -> None:
         """
@@ -139,7 +140,7 @@ class TestGame(unittest.TestCase):
         for i, strategy in enumerate(strategy_names):
             row_entries = []
             for j in range(num_strategies):
-                matrix_key = f'combination{i * num_strategies + j + 1}'
+                matrix_key = f"combination{i * num_strategies + j + 1}"
                 weight_keys = payoff_matrix.matrix[matrix_key]
                 score_values = [payoff_matrix.weights[w] for w in weight_keys]
                 row_entries.append(f"{score_values[0]}/{score_values[1]}".center(cell_width))
@@ -156,9 +157,9 @@ class TestGame(unittest.TestCase):
         pairs via ``combinations_with_replacement``, so 2 personalities across
         2 agents yields 3 unique combinations: (a,a), (a,b), (b,b).
         """
-        agent_permutations_df = self.game_factory.compute_all_game_configurations(
-            LANGUAGE, self.config['agents'], self.config
-        )
+        from src.factory import PermutationExpander
+
+        agent_permutations_df = PermutationExpander().expand(self.config, LANGUAGE)
         logging.info(f"Agent permutations:\n{agent_permutations_df}")
         num_combinations = len(agent_permutations_df)
         self.assertEqual(num_combinations, 3)
@@ -176,10 +177,12 @@ class TestGame(unittest.TestCase):
         Verify that a well-formed configuration is processed correctly,
         resulting in exactly one agent configuration (no permutations).
         """
+        from src.factory import PermutationExpander
+
         config = self.io_manager.load_config(str(CONFIG_NO_PERMUTATIONS_FILE))
         self.io_manager.process_and_validate_configuration(config)
-        agents_configuration_df = self.game_factory.compute_configuration(
-            LANGUAGE, config['agents'], config
+        agents_configuration_df = PermutationExpander().expand(
+            {**config, "allAgentPermutations": False}, LANGUAGE
         )
         self.assertEqual(agents_configuration_df.shape[0], 1)
 
@@ -187,9 +190,9 @@ class TestGame(unittest.TestCase):
         """
         Test that the prompt template contains the expected top-level keys.
         """
-        self.assertIn('intro', self.prompt_template)
-        self.assertIn('opponentIntro', self.prompt_template)
-        self.assertIn('gameLength', self.prompt_template)
+        self.assertIn("intro", self.prompt_template)
+        self.assertIn("opponentIntro", self.prompt_template)
+        self.assertIn("gameLength", self.prompt_template)
 
     def test_payoff_matrix(self):
         """
@@ -208,20 +211,17 @@ class TestGame(unittest.TestCase):
 
         # Validate payoff outcomes for each possible combination
         self.assertEqual(
-            game_instance.payoff_matrix.get_weights_for_combination(['Betray', 'Betray']),
-            (3, 3)
+            game_instance.payoff_matrix.get_weights_for_combination(["Betray", "Betray"]), (3, 3)
         )
         self.assertEqual(
-            game_instance.payoff_matrix.get_weights_for_combination(['Betray', 'Cooperate']),
-            (5, 0)
+            game_instance.payoff_matrix.get_weights_for_combination(["Betray", "Cooperate"]), (5, 0)
         )
         self.assertEqual(
-            game_instance.payoff_matrix.get_weights_for_combination(['Cooperate', 'Betray']),
-            (0, 5)
+            game_instance.payoff_matrix.get_weights_for_combination(["Cooperate", "Betray"]), (0, 5)
         )
         self.assertEqual(
-            game_instance.payoff_matrix.get_weights_for_combination(['Cooperate', 'Cooperate']),
-            (1, 1)
+            game_instance.payoff_matrix.get_weights_for_combination(["Cooperate", "Cooperate"]),
+            (1, 1),
         )
 
     def test_create_agents(self):
@@ -242,32 +242,34 @@ class TestGame(unittest.TestCase):
         game_instance.run_round()
 
         # Extract agent decisions from the first round history
-        agent1_history = game_instance.history.all_rounds['round_1']['agent1']
-        agent2_history = game_instance.history.all_rounds['round_1']['agent2']
-        agent1_strategy = agent1_history['strategy']
-        agent2_strategy = agent2_history['strategy']
-        agent1_score = agent1_history['score']
-        agent2_score = agent2_history['score']
+        agent1_history = game_instance.history.all_rounds["round_1"]["agent1"]
+        agent2_history = game_instance.history.all_rounds["round_1"]["agent2"]
+        agent1_strategy = agent1_history["strategy"]
+        agent2_strategy = agent2_history["strategy"]
+        agent1_score = agent1_history["score"]
+        agent2_score = agent2_history["score"]
 
         # Verify the recorded strategy matches the agent object’s last strategy
         self.assertEqual(
-            agents['agent1'].strategies[-1],
+            agents["agent1"].strategies[-1],
             agent1_strategy,
-            "Agent1's final strategy should match the round history."
+            "Agent1's final strategy should match the round history.",
         )
         self.assertEqual(
-            agents['agent2'].strategies[-1],
+            agents["agent2"].strategies[-1],
             agent2_strategy,
-            "Agent2's final strategy should match the round history."
+            "Agent2's final strategy should match the round history.",
         )
 
         # Verify the scores align with the payoff matrix
         self.assertEqual(
-            game_instance.payoff_matrix.get_weights_for_combination([agent1_strategy, agent2_strategy]),
+            game_instance.payoff_matrix.get_weights_for_combination(
+                [agent1_strategy, agent2_strategy]
+            ),
             (agent1_score, agent2_score),
-            "Round scores should match the payoff matrix combination outcome."
+            "Round scores should match the payoff matrix combination outcome.",
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

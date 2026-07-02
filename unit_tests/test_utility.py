@@ -13,10 +13,10 @@ from src.utility import (
     build_utility_transform,
 )
 
-
 # ---------------------------------------------------------------------------
 # IdentityTransform
 # ---------------------------------------------------------------------------
+
 
 class TestIdentity(unittest.TestCase):
     def test_passes_payoffs_through_unchanged(self) -> None:
@@ -44,6 +44,7 @@ class TestIdentity(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # CRRATransform
 # ---------------------------------------------------------------------------
+
 
 class TestCRRA(unittest.TestCase):
     def test_log_case_when_gamma_one(self) -> None:
@@ -104,6 +105,7 @@ class TestCRRA(unittest.TestCase):
 # FehrSchmidtTransform
 # ---------------------------------------------------------------------------
 
+
 class TestFehrSchmidt(unittest.TestCase):
     def test_equal_payoffs_unchanged(self) -> None:
         u = FehrSchmidtTransform(alpha=0.5, beta=0.5).transform([1.0, 1.0, 1.0])
@@ -161,6 +163,7 @@ class TestFehrSchmidt(unittest.TestCase):
 # build_utility_transform factory
 # ---------------------------------------------------------------------------
 
+
 class TestBuildFromConfig(unittest.TestCase):
     def test_none_config_returns_identity(self) -> None:
         self.assertIsInstance(build_utility_transform(None), IdentityTransform)
@@ -193,7 +196,11 @@ class TestBuildFromConfig(unittest.TestCase):
         self.assertIsInstance(t, FehrSchmidtTransform)
 
     def test_returns_subclass_of_utility_transform(self) -> None:
-        for cfg in (None, {"type": "CRRA", "gamma": 0.5}, {"type": "FehrSchmidt", "alpha": 0.0, "beta": 0.0}):
+        for cfg in (
+            None,
+            {"type": "CRRA", "gamma": 0.5},
+            {"type": "FehrSchmidt", "alpha": 0.0, "beta": 0.0},
+        ):
             self.assertIsInstance(build_utility_transform(cfg), UtilityTransform)
 
     def test_factory_passes_through_offset(self) -> None:

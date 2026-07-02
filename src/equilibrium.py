@@ -12,12 +12,12 @@ helper raises ``ImportError`` with a clear message.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 
 def _two_player_payoff_arrays(
-    matrix_block: Dict[str, Any], language: str = "en"
-) -> Tuple[Any, Any] | None:
+    matrix_block: dict[str, Any], language: str = "en"
+) -> tuple[Any, Any] | None:
     """Build the (A, B) payoff arrays for nashpy from a FAIRGAME matrix block.
 
     Returns ``None`` when the matrix isn't the canonical 2x2 four-combination
@@ -54,19 +54,27 @@ def _two_player_payoff_arrays(
         if tuple(combinations[combo_name]) != combo_keys:
             return None
 
-    def cell(combo_name: str) -> Tuple[float, float]:
+    def cell(combo_name: str) -> tuple[float, float]:
         wkeys = weight_matrix[combo_name]
         return float(weights.get(wkeys[0], 0.0)), float(weights.get(wkeys[1], 0.0))
 
     # nashpy convention: A is row player's payoffs, B is column player's.
-    a = np.array([[cell("combination1")[0], cell("combination2")[0]],
-                  [cell("combination3")[0], cell("combination4")[0]]])
-    b = np.array([[cell("combination1")[1], cell("combination2")[1]],
-                  [cell("combination3")[1], cell("combination4")[1]]])
+    a = np.array(
+        [
+            [cell("combination1")[0], cell("combination2")[0]],
+            [cell("combination3")[0], cell("combination4")[0]],
+        ]
+    )
+    b = np.array(
+        [
+            [cell("combination1")[1], cell("combination2")[1]],
+            [cell("combination3")[1], cell("combination4")[1]],
+        ]
+    )
     return a, b
 
 
-def compute_nash_equilibria(matrix_block: Dict[str, Any], language: str = "en") -> List[str]:
+def compute_nash_equilibria(matrix_block: dict[str, Any], language: str = "en") -> list[str]:
     """Return the list of combination keys that are pure-strategy Nash equilibria.
 
     Mixed-strategy equilibria are intentionally excluded — they don't
@@ -86,7 +94,7 @@ def compute_nash_equilibria(matrix_block: Dict[str, Any], language: str = "en") 
 
     a, b = arrays
     game = nash.Game(a, b)
-    equilibria: List[str] = []
+    equilibria: list[str] = []
     combo_for_pure = {
         (0, 0): "combination1",
         (0, 1): "combination2",
@@ -107,5 +115,3 @@ def compute_nash_equilibria(matrix_block: Dict[str, Any], language: str = "en") 
             seen.add(combo)
             equilibria.append(combo)
     return equilibria
-
-

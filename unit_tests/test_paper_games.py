@@ -15,10 +15,10 @@ from pathlib import Path
 from src.fairgame_factory import FairGameFactory
 from src.io_managers.io_manager import IoManager
 from src.results_processing.results_processor import ResultsProcessor
-
+from src.utils.utils import get_resources_dir
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-CONFIG_DIR = PROJECT_ROOT / "resources" / "config"
+CONFIG_DIR = get_resources_dir() / "config"
 
 
 def _load(rel_path: str) -> dict:
@@ -49,7 +49,8 @@ class TestPaperGamesLoadAndRun(unittest.TestCase):
                 factory = _factory()
                 outcomes = factory.create_and_run_games(config)
                 self.assertGreater(
-                    len(outcomes), 0,
+                    len(outcomes),
+                    0,
                     msg=f"{label} produced no games",
                 )
                 df = ResultsProcessor().process(outcomes)
@@ -58,9 +59,7 @@ class TestPaperGamesLoadAndRun(unittest.TestCase):
 
     def test_equilibrium_metric_emitted_when_declared(self) -> None:
         # Stag Hunt declares two pure equilibria; expect the column.
-        outcomes = _factory().create_and_run_games(
-            _load("stag_hunt/stag_hunt_round_known.json")
-        )
+        outcomes = _factory().create_and_run_games(_load("stag_hunt/stag_hunt_round_known.json"))
         df = ResultsProcessor().process(outcomes)
         self.assertIn("equilibrium_rate", df.columns)
 
@@ -69,9 +68,7 @@ class TestZeroSumPayoffStructure(unittest.TestCase):
     """Zero Sum uses a 2-weight matrix; ensure the per-round payoffs sum to 0."""
 
     def test_per_round_payoffs_cancel(self) -> None:
-        outcomes = _factory().create_and_run_games(
-            _load("zero_sum/zero_sum_round_known.json")
-        )
+        outcomes = _factory().create_and_run_games(_load("zero_sum/zero_sum_round_known.json"))
         for game in outcomes.values():
             for entries in game["history"].values():
                 total = sum(float(e["score"]) for e in entries if e.get("score") is not None)
@@ -81,6 +78,7 @@ class TestZeroSumPayoffStructure(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Cross-game invariants
 # ---------------------------------------------------------------------------
+
 
 class TestPerGameInvariants(unittest.TestCase):
     """Properties that must hold for every shipped 2x2 game."""

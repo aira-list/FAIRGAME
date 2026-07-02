@@ -11,10 +11,10 @@ from src.results_processing.game_metrics import (
     welfare_summary,
 )
 
-
 # ---------------------------------------------------------------------------
 # equilibrium_metrics
 # ---------------------------------------------------------------------------
+
 
 class TestEquilibriumMetrics(unittest.TestCase):
     def test_rate_one_in_three(self) -> None:
@@ -73,6 +73,7 @@ class TestEquilibriumMetrics(unittest.TestCase):
 # gini_coefficient
 # ---------------------------------------------------------------------------
 
+
 class TestGiniCoefficient(unittest.TestCase):
     def test_zero_for_perfect_equality(self) -> None:
         self.assertAlmostEqual(gini_coefficient([5, 5, 5]), 0.0, places=6)
@@ -117,6 +118,7 @@ class TestGiniCoefficient(unittest.TestCase):
 # welfare_round_metrics
 # ---------------------------------------------------------------------------
 
+
 class TestWelfareRoundMetrics(unittest.TestCase):
     def test_basic_round(self) -> None:
         out = welfare_round_metrics([1, 2, 3])
@@ -152,6 +154,7 @@ class TestWelfareRoundMetrics(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # welfare_summary
 # ---------------------------------------------------------------------------
+
 
 class TestWelfareSummary(unittest.TestCase):
     def test_basic_summary(self) -> None:

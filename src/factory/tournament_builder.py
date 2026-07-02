@@ -8,7 +8,10 @@ top-level config but slices the agents block, opponent-prior list, and
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Sequence, Tuple
+from collections.abc import Sequence
+from typing import Any
+
+from src.utils.rng import combine_seed
 
 
 class TournamentBuilder:
@@ -19,14 +22,14 @@ class TournamentBuilder:
         names: Sequence[str],
         mode: str = "round_robin",
         symmetric: bool = True,
-    ) -> List[Tuple[str, str]]:
+    ) -> list[tuple[str, str]]:
         """Return the ordered list of agent-name pairs to play."""
         if mode != "round_robin":
             raise ValueError(f"Unsupported tournament mode {mode!r}.")
         if len(names) < 2:
             raise ValueError("Tournament needs at least 2 agents.")
 
-        result: List[Tuple[str, str]] = []
+        result: list[tuple[str, str]] = []
         for i, ai in enumerate(names):
             for j, aj in enumerate(names):
                 if ai == aj:
@@ -38,18 +41,25 @@ class TournamentBuilder:
 
     def build_pair_config(
         self,
-        config: Dict[str, Any],
-        pair: Tuple[str, str],
+        config: dict[str, Any],
+        pair: tuple[str, str],
         pair_idx: int,
-    ) -> Dict[str, Any]:
+        resolved_seed: Any = None,
+    ) -> tuple[dict[str, Any], Any]:
         """Materialise a config that has only the two agents in ``pair``.
 
-        Distinct ``pair_idx`` values bump the resolved seed (when set) so
-        deterministic multi-seed runs don't collide between pairs.
+        Returns ``(pair_config, pair_seed)``. Distinct ``pair_idx`` values
+        derive a fresh resolved seed (when ``resolved_seed`` is set) so
+        deterministic multi-seed runs don't collide between pairs. Plain
+        addition (``seed + pair_idx``) collided across axes — e.g. (base 10,
+        pair 1) == (base 11, pair 0); ``combine_seed`` folds the two axes into
+        a unique seed instead. The seed travels as an explicit value, never
+        as a smuggled key inside the config dict.
         """
         pair_config = dict(config)
-        if pair_config.get("_resolved_seed") is not None:
-            pair_config["_resolved_seed"] = int(pair_config["_resolved_seed"]) + pair_idx
+        pair_seed = (
+            combine_seed(int(resolved_seed), pair_idx) if resolved_seed is not None else None
+        )
 
         agents_block = dict(config["agents"])
         names = list(config["agents"]["names"])
@@ -72,4 +82,4 @@ class TournamentBuilder:
         elif isinstance(config.get("llms"), list):
             pair_config["llms"] = [config["llms"][i] for i in idx]
 
-        return pair_config
+        return pair_config, pair_seed

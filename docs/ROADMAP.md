@@ -75,7 +75,7 @@ extensive-form games; depends on item 2.
 
 **Design sketch** — Once extensive-form support lands, ship Rubinstein,
 Nash bargaining, and Kalai-Smorodinsky as scenario presets in
-`resources/config/`.
+`starter_library/configurations/`.
 
 ## 7 — Auctions
 

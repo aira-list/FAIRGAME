@@ -14,18 +14,19 @@ from unittest import mock
 
 from src.equilibrium import _two_player_payoff_arrays, compute_nash_equilibria
 from src.io_managers.io_manager import IoManager
-
+from src.utils.utils import get_resources_dir
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 def _load(rel: str) -> dict:
-    return json.loads((PROJECT_ROOT / "resources" / "config" / rel).read_text())
+    return json.loads((get_resources_dir() / "config" / rel).read_text())
 
 
 # ---------------------------------------------------------------------------
 # Known-good cases on the shipped scenarios
 # ---------------------------------------------------------------------------
+
 
 class TestKnownPureEquilibria(unittest.TestCase):
     def test_prisoner_dilemma_unique_pure_eq(self) -> None:
@@ -54,6 +55,7 @@ class TestKnownPureEquilibria(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Degenerate / unsupported shapes
 # ---------------------------------------------------------------------------
+
 
 class TestDegenerateInputs(unittest.TestCase):
     """The function must never crash on shapes it can't handle."""
@@ -109,6 +111,7 @@ class TestDegenerateInputs(unittest.TestCase):
 # Mixed-strategy-only cases (matching pennies)
 # ---------------------------------------------------------------------------
 
+
 class TestMixedStrategyOnly(unittest.TestCase):
     """Matching pennies has no pure Nash equilibrium — the result must be []."""
 
@@ -137,6 +140,7 @@ class TestMixedStrategyOnly(unittest.TestCase):
 # Internal helper: array builder
 # ---------------------------------------------------------------------------
 
+
 class TestPayoffArrayBuilder(unittest.TestCase):
     def test_builds_2x2_arrays_for_pd(self) -> None:
         cfg = _load("prisoner_dilemma/prisoner_dilemma_round_known_conventional.json")
@@ -163,6 +167,7 @@ class TestPayoffArrayBuilder(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Validator integration: equilibria: "auto"
 # ---------------------------------------------------------------------------
+
 
 class TestAutoEquilibriaResolution(unittest.TestCase):
     def test_auto_replaced_with_resolved_list_for_pd(self) -> None:
@@ -194,6 +199,7 @@ class TestAutoEquilibriaResolution(unittest.TestCase):
 # Missing optional dependency
 # ---------------------------------------------------------------------------
 
+
 class TestMissingNashpy(unittest.TestCase):
     """If nashpy isn't installed, callers should get a clear ImportError."""
 
@@ -208,6 +214,7 @@ class TestMissingNashpy(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # mutmut-driven coverage
 # ---------------------------------------------------------------------------
+
 
 class TestPartialBlockMismatch(unittest.TestCase):
     def test_combinations_present_but_weight_matrix_missing_a_key(self) -> None:

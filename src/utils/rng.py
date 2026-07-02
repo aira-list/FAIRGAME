@@ -9,11 +9,11 @@ explicit ``seed`` to make a run reproducible; pass ``None`` for nondeterminism.
 
 from __future__ import annotations
 
+import hashlib
 import random
-from typing import Optional
 
 
-def make_rng(seed: Optional[int] = None) -> random.Random:
+def make_rng(seed: int | None = None) -> random.Random:
     """Return a private ``random.Random`` instance seeded with ``seed``.
 
     Using a private instance (instead of the module-level singleton) means
@@ -22,6 +22,14 @@ def make_rng(seed: Optional[int] = None) -> random.Random:
     return random.Random(seed)
 
 
-def derive_seed(parent: random.Random) -> int:
-    """Draw a fresh integer seed from ``parent`` for spawning child RNGs."""
-    return parent.randint(0, 2**31 - 1)
+def combine_seed(*parts: int) -> int:
+    """Deterministically fold integers into a single 32-bit seed.
+
+    Used to derive a per-cell seed from independent axes (e.g. a multi-seed
+    base and a tournament pair index). Unlike plain addition
+    (``base + pair_idx``), distinct axis combinations cannot collide:
+    ``(10, 1)`` and ``(11, 0)`` map to different seeds. Unlike the builtin
+    ``hash()`` it is stable across processes (no PYTHONHASHSEED salt).
+    """
+    payload = ":".join(str(int(p)) for p in parts).encode()
+    return int.from_bytes(hashlib.sha256(payload).digest()[:4], "big")

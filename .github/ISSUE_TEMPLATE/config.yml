@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: FAIRGAME documentation
+    url: https://github.com/aira-list/FAIRGAME/tree/main/docs
+    about: Architecture, configuration, game-theory, and deployment guides.

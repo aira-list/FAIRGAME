@@ -40,8 +40,8 @@ Institute of Science and Technology — part of the
 ## Repository layout
 
 ```
-fairgame_web.py       # FastAPI app: REST + static SPA mount
-web/index.html        # Single-file vanilla SPA (Tailwind + Alpine via CDN)
+web_api/              # FastAPI app: REST API + static SPA mount (web_api.main:app)
+web/                  # Vanilla SPA (Tailwind + Alpine via CDN)
 main.py               # CLI runner (local or via API)
 Dockerfile            # Production container, runs as non-root with healthcheck
 pyproject.toml        # Packaging + tool config (ruff, mypy, pytest)
@@ -49,20 +49,21 @@ src/                  # Engine source code
   fairgame.py            # Top-level orchestrator
   fairgame_factory.py    # Permutation expansion + game construction
   game_round.py          # Single-round flow with retry/parsing
+  phases.py              # Per-round phases (communication, trust, beliefs, choose)
   payoff_matrix.py       # Combination -> weight resolution
   prompt_creator.py      # Template fill (intro/opponent/length/phase blocks)
-  agent.py               # LLM-backed participant
-  fake_message_generator.py
+  agent.py               # LLM-backed and baseline participants
   io_managers/           # Config + file IO + Pydantic validation
-  llm_connectors/        # OpenAI / Anthropic / Mistral + factory
-  results_processing/    # DataFrame builder for CSV / S3 output
+  llm_connectors/        # Unified LiteLLM connector + factory
+  results_processing/    # Result-row builder (row_schema.py = column contract)
   template_translation/  # Placeholder-preserving translation pipeline
   utils/                 # Logger + helpers
-resources/
-  config/             # Example scenario configs
-  game_templates/     # Per-language prompt templates
-unit_tests/           # 54 tests; no LLM credentials required by default
-docs/                 # ARCHITECTURE / CONFIGURATION / DEPLOYMENT
+starter_library/      # Shipped defaults (game types, templates, configs) seeded on first run
+  game_types/         # One JSON per game type
+  templates/          # One Markdown-frontmatter file per prompt template
+  configurations/     # One JSON per ready-to-run configuration
+unit_tests/           # Test suite; no LLM credentials required by default
+docs/                 # ARCHITECTURE / CONFIGURATION / DEPLOYMENT / GAME_THEORY
 ```
 
 ## Quick start
@@ -72,43 +73,52 @@ python -m venv fairenv
 source fairenv/bin/activate
 pip install -e '.[server,test]'
 cp .env.example .env
-# Fill in API_KEY_OPENAI, API_KEY_ANTHROPIC, API_KEY_MISTRAL as needed.
+# Fill in OPENAI_API_KEY, ANTHROPIC_API_KEY, MISTRAL_API_KEY as needed.
 
 # Two ways to drive FAIRGAME:
 
 # 1) Web app — FastAPI backend + vanilla SPA (recommended for everyone):
-uvicorn fairgame_web:app --reload
-# Then open http://localhost:8000.
+uvicorn web_api.main:app --reload --port 4263
+# Then open http://localhost:4263  (4263 = "GAME" on a phone keypad).
 # Demo mode is on by default — no API keys needed to explore.
 
-# 2) The CLI:
-python main.py local
+# 2) The CLI (one config per invocation; see python main.py --help):
+python main.py local prisoner_dilemma/prisoner_dilemma_round_known_conventional
 ```
+
+> The CLI and other paper tooling read example configs/templates from the
+> sibling `Fairgame_paper_evaluations/resources/` folder (override with the
+> `FAIRGAME_RESOURCES_DIR` environment variable). The web app itself needs no
+> `resources/` — it ships its defaults in `starter_library/`.
 
 The web app exposes the same engine as a REST API, so you can drive it
 programmatically too:
 
 ```bash
-curl -X POST http://localhost:8000/api/runs \
+# Run a shipped configuration by id (the offline baseline needs no API keys):
+curl -X POST http://localhost:4263/api/configurations/seed_cfg_pd_baseline_tournament/run
+
+# ...or run an inline config:
+curl -X POST http://localhost:4263/api/runs \
      -H 'Content-Type: application/json' \
-     -d '{"preset": "prisoner_dilemma/prisoner_dilemma_round_known_conventional", "demo_mode": true}'
+     -d '{"config": { /* game config */ }}'
 ```
 
 | Endpoint | Method | Purpose |
 | --- | --- | --- |
 | `/api/health` | GET | Liveness probe |
-| `/api/presets` | GET | List shipped scenarios, grouped by category |
-| `/api/presets/{id}` | GET | Load a preset's full JSON config |
-| `/api/runs` | POST | Run a config (inline or by preset id) and persist results |
+| `/api/configurations` | GET | List shipped + user configurations |
+| `/api/configurations/{id}/run` | POST | Run a stored configuration and persist results |
+| `/api/runs` | POST | Run an inline config and persist results |
 | `/api/runs` | GET | List past runs |
 | `/api/runs/{id}` | GET | Detail for one run (metadata + rows) |
 | `/api/runs/{id}/csv` | GET | Download the run's CSV |
-| `/api/translate` | POST | Translate a prompt template into a target language |
+| `/api/templates/{id}/translate` | POST | AI-translate a stored template into target languages |
 
 ## Tests
 
 ```bash
-pytest                              # 54 tests, no LLM access needed
+pytest                              # no LLM access needed (deterministic fake)
 FAIRGAME_LIVE_LLM=1 pytest          # also exercises live translation tests
 pytest --cov=src --cov-report=term-missing
 ```
@@ -121,19 +131,19 @@ provider-dependent tests (translation, end-to-end via real APIs).
 
 ```bash
 docker build -t fairgame:dev .
-docker run --rm -p 5003:5003 \
-  -e API_KEY_OPENAI=sk-... \
+docker run --rm -p 4263:4263 \
+  -e OPENAI_API_KEY=sk-... \
   fairgame:dev
 ```
 
-The image runs gunicorn as a non-root `fairgame` user and exposes a
-`/health` endpoint used by the built-in HEALTHCHECK.
+The image runs uvicorn as a non-root `fairgame` user on port 4263 and exposes
+an `/api/health` endpoint used by the built-in HEALTHCHECK.
 
 ## Documentation
 
 * [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — module map, data flow,
   retry/permutation/logging design.
-* [`docs/GUI.md`](docs/GUI.md) — Streamlit web UI walkthrough.
+* [`docs/GUI.md`](docs/GUI.md) — FastAPI web UI (SPA) walkthrough.
 * [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) — every JSON field, every
   env var, the canonical and legacy payoff-matrix shapes.
 * [`docs/GAME_THEORY.md`](docs/GAME_THEORY.md) — mixed strategies, baselines,
@@ -151,11 +161,11 @@ The image runs gunicorn as a non-root `fairgame` user and exposes a
 See [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md#environment-variables)
 for the full list. The minimum:
 
-* `API_KEY_OPENAI` and/or `API_KEY_ANTHROPIC` and/or `API_KEY_MISTRAL` —
-  required for the providers you actually use. Connectors load lazily, so an
-  unused provider does not need a key.
-* Optional: `S3_ENDPOINT`, `BUCKET_NAME`, `S3_KEY`, `S3_SECRET`, `S3_PREFIX`,
-  `DEFAULT_FOLDER` to persist results.
+* `OPENAI_API_KEY` and/or `ANTHROPIC_API_KEY` and/or `MISTRAL_API_KEY` —
+  required for the providers you actually use (LiteLLM reads the
+  provider-standard variable names). Unused providers need no key.
+
+Run results are persisted locally under `results/web/<run_id>/`.
 
 ## Governance & contributing
 

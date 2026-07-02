@@ -22,8 +22,10 @@ Build one from a config dict via :func:`build_utility_transform`.
 from __future__ import annotations
 
 import abc
+import inspect
 import math
-from typing import Any, Dict, List, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from src.utils.logger import get_logger
 
@@ -34,7 +36,7 @@ class UtilityTransform(abc.ABC):
     """Per-round utility mapping from raw payoffs to agent utilities."""
 
     @abc.abstractmethod
-    def transform(self, payoffs: Sequence[float]) -> List[float]:
+    def transform(self, payoffs: Sequence[float]) -> list[float]:
         """Return the utility vector for the given round."""
 
     @property
@@ -48,7 +50,7 @@ class IdentityTransform(UtilityTransform):
 
     name = "identity"
 
-    def transform(self, payoffs: Sequence[float]) -> List[float]:
+    def transform(self, payoffs: Sequence[float]) -> list[float]:
         return list(payoffs)
 
 
@@ -81,7 +83,7 @@ class CRRATransform(UtilityTransform):
             return math.log(z)
         return (z ** (1 - self.gamma) - 1) / (1 - self.gamma)
 
-    def transform(self, payoffs: Sequence[float]) -> List[float]:
+    def transform(self, payoffs: Sequence[float]) -> list[float]:
         return [self._u(float(p)) for p in payoffs]
 
 
@@ -105,13 +107,13 @@ class FehrSchmidtTransform(UtilityTransform):
         self.alpha = float(alpha)
         self.beta = float(beta)
 
-    def transform(self, payoffs: Sequence[float]) -> List[float]:
+    def transform(self, payoffs: Sequence[float]) -> list[float]:
         n = len(payoffs)
         if n == 0:
             return []
         if n == 1:
             return [float(payoffs[0])]
-        utilities: List[float] = []
+        utilities: list[float] = []
         for i, xi in enumerate(payoffs):
             envy = sum(max(xj - xi, 0.0) for j, xj in enumerate(payoffs) if j != i)
             guilt = sum(max(xi - xj, 0.0) for j, xj in enumerate(payoffs) if j != i)
@@ -138,7 +140,7 @@ _TRANSFORM_REGISTRY = {
 }
 
 
-def build_utility_transform(config: Dict[str, Any] | None) -> UtilityTransform:
+def build_utility_transform(config: dict[str, Any] | None) -> UtilityTransform:
     """Construct a :class:`UtilityTransform` from a config dict.
 
     Examples::
@@ -162,4 +164,17 @@ def build_utility_transform(config: Dict[str, Any] | None) -> UtilityTransform:
             f"Known: {sorted(set(_TRANSFORM_REGISTRY))}"
         )
     kwargs = {k: v for k, v in config.items() if k != "type"}
+    # Validate keys against the transform's signature so a misspelled config
+    # key (e.g. ``gammma``) yields a clear config error instead of an opaque
+    # ``TypeError: __init__() got an unexpected keyword argument``.
+    params = inspect.signature(cls).parameters
+    accepts_var_kw = any(p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values())
+    if not accepts_var_kw:
+        unknown = set(kwargs) - set(params)
+        if unknown:
+            raise ValueError(
+                f"Unknown parameter(s) for utility transform {raw_type!r}: "
+                f"{sorted(unknown)}. Accepted: "
+                f"{sorted(p for p in params if p != 'self')}."
+            )
     return cls(**kwargs)

@@ -1,5 +1,6 @@
 import os
 import unittest
+
 from langdetect import detect
 
 from src.fairgame_factory import FairGameFactory
@@ -80,11 +81,10 @@ class TestPrisonerDilemma(unittest.TestCase):
 
         # Verify the last (French) configuration uses French.
         prompt_template = self.game_factory.build_prompt_template(
-            config,
-            all_games_config.iloc[-1]['Language']
+            config, all_games_config.iloc[-1]["Language"]
         )
         language_detected = detect(prompt_template)
-        self.assertEqual(language_detected, 'fr')
+        self.assertEqual(language_detected, "fr")
 
         # Run the games and verify the results DataFrame length
         self.game_factory.run_games()

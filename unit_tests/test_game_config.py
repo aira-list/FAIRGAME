@@ -9,7 +9,7 @@ from __future__ import annotations
 import unittest
 
 from src.game_config import GameConfig
-from src.utility import IdentityTransform, FehrSchmidtTransform
+from src.utility import FehrSchmidtTransform, IdentityTransform
 
 
 def _matrix_data() -> dict:
@@ -43,6 +43,7 @@ def _minimal_config(**overrides) -> GameConfig:
 # Construction
 # ---------------------------------------------------------------------------
 
+
 class TestGameConfigConstruction(unittest.TestCase):
     def test_minimal_config_constructs_with_defaults(self) -> None:
         cfg = _minimal_config()
@@ -67,6 +68,7 @@ class TestGameConfigConstruction(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Validation
 # ---------------------------------------------------------------------------
+
 
 class TestGameConfigValidation(unittest.TestCase):
     def test_discount_factor_zero_rejected(self) -> None:
@@ -98,6 +100,7 @@ class TestGameConfigValidation(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # FairGame integration
 # ---------------------------------------------------------------------------
+
 
 class TestFairGameAcceptsConfig(unittest.TestCase):
     """``FairGame.from_config(cfg, agents=...)`` must construct an equivalent

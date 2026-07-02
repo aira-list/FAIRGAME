@@ -15,7 +15,8 @@ full Cartesian product is taken because agent identity matters.
 from __future__ import annotations
 
 import itertools
-from typing import Any, Dict, List, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import pandas as pd
 
@@ -25,7 +26,7 @@ class PermutationExpander:
 
     # ---- Public ---------------------------------------------------------
 
-    def expand(self, config: Dict[str, Any], language: str) -> pd.DataFrame:
+    def expand(self, config: dict[str, Any], language: str) -> pd.DataFrame:
         """Return a DataFrame of one row per (Agent, Personality, OpponentProb, LLM)
         combination for ``language``."""
         if config.get("allAgentPermutations"):
@@ -37,7 +38,7 @@ class PermutationExpander:
 
     # ---- LLM resolution -------------------------------------------------
 
-    def resolve_llms(self, full_config: Any, agents: Sequence[str]) -> List[str]:
+    def resolve_llms(self, full_config: Any, agents: Sequence[str]) -> list[str]:
         """Resolve the per-agent LLM identifiers for ``agents``.
 
         Accepts:
@@ -61,9 +62,7 @@ class PermutationExpander:
         single = full_config.get("llm")
         if isinstance(single, str):
             return [single] * n_agents
-        raise ValueError(
-            "Missing LLM configuration: provide 'llm', 'llms' list, or 'llms' dict."
-        )
+        raise ValueError("Missing LLM configuration: provide 'llm', 'llms' list, or 'llms' dict.")
 
     # ---- Internals ------------------------------------------------------
 
@@ -75,68 +74,64 @@ class PermutationExpander:
         return len(set(llms)) == 1
 
     def _all_permutations(
-        self, language: str, config_agents: Dict[str, Any], full_config: Any
+        self, language: str, config_agents: dict[str, Any], full_config: Any
     ) -> pd.DataFrame:
         n_agents = len(config_agents["names"])
         agent_combinations = [config_agents["names"]]
 
+        # Each agent's assignment is the JOINT pair (personality, prior). We
+        # must reduce symmetry / take the product over this joint per-agent
+        # space — NOT over each axis independently. Reducing personality and
+        # prior separately with ``combinations_with_replacement`` and then
+        # crossing them dropped genuinely distinct joint assignments (e.g.
+        # agent1=(coop,0.5), agent2=(selfish,0) could not be represented).
+        per_agent_attrs = list(
+            itertools.product(
+                config_agents["personalities"][language],
+                config_agents["opponentPersonalityProb"],
+            )
+        )
+
         same_llm = self._uses_same_llm_for_all(full_config, config_agents["names"])
         if same_llm:
-            personality_perms = list(
-                itertools.combinations_with_replacement(
-                    config_agents["personalities"][language], n_agents
-                )
-            )
-            knowledge_perms = list(
-                itertools.combinations_with_replacement(
-                    config_agents["opponentPersonalityProb"], n_agents
-                )
-            )
+            # Agents share an LLM, so agent identity is interchangeable:
+            # collapse order-equivalent joint assignments.
+            attr_perms = list(itertools.combinations_with_replacement(per_agent_attrs, n_agents))
         else:
-            personality_perms = list(
-                itertools.product(
-                    config_agents["personalities"][language], repeat=n_agents
-                )
-            )
-            knowledge_perms = list(
-                itertools.product(
-                    config_agents["opponentPersonalityProb"], repeat=n_agents
-                )
-            )
+            # Distinct LLMs → agent identity matters → full ordered product.
+            attr_perms = list(itertools.product(per_agent_attrs, repeat=n_agents))
 
         rows = []
         for agents in agent_combinations:
             n = len(agents)
-            for pers_tuple, know_tuple in itertools.product(personality_perms, knowledge_perms):
+            for attr_tuple in attr_perms:
                 rows.append(
                     {
-                        **{f"Agent{i+1}": agents[i] for i in range(n)},
-                        **{f"Personality{i+1}": pers_tuple[i] for i in range(n)},
-                        **{f"OpponentPersonalityProb{i+1}": know_tuple[i] for i in range(n)},
+                        **{f"Agent{i + 1}": agents[i] for i in range(n)},
+                        **{f"Personality{i + 1}": attr_tuple[i][0] for i in range(n)},
+                        **{f"OpponentPersonalityProb{i + 1}": attr_tuple[i][1] for i in range(n)},
                     }
                 )
         return pd.DataFrame(rows)
 
     def _single_configuration(
-        self, language: str, config_agents: Dict[str, Any], full_config: Any
+        self, language: str, config_agents: dict[str, Any], full_config: Any
     ) -> pd.DataFrame:
         n_agents = len(config_agents["names"])
         row = {
-            **{f"Agent{i+1}": config_agents["names"][i] for i in range(n_agents)},
+            **{f"Agent{i + 1}": config_agents["names"][i] for i in range(n_agents)},
             **{
-                f"Personality{i+1}": config_agents["personalities"][language][i]
+                f"Personality{i + 1}": config_agents["personalities"][language][i]
                 for i in range(n_agents)
             },
             **{
-                f"OpponentPersonalityProb{i+1}": config_agents["opponentPersonalityProb"][i]
+                f"OpponentPersonalityProb{i + 1}": config_agents["opponentPersonalityProb"][i]
                 for i in range(n_agents)
             },
         }
         return pd.DataFrame([row])
 
-    def _attach_llm_columns(
-        self, df: pd.DataFrame, full_config: Any
-    ) -> pd.DataFrame:
+    def _attach_llm_columns(self, df: pd.DataFrame, full_config: Any) -> pd.DataFrame:
         if df.empty:
             return df
 

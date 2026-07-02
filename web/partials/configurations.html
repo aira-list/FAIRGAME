@@ -1,0 +1,1100 @@
+      <section x-show="activePage === 'configurations'">
+        <h1 class="text-2xl font-semibold mb-1">⚙️ Configurations</h1>
+        <p class="text-slate-600 mb-6">Save runnable bundles of (template + game settings + languages) under your own names. Each configuration gets a stable id and timestamp. Configurations are <strong>built and saved here</strong>; running them is the <a class="text-blue-600 underline" @click.prevent="activePage='experiment'" href="#">Experiment</a> page's job.</p>
+
+        <!-- ============= CREATE / EDIT ============= -->
+        <div class="mb-2 flex items-center justify-between">
+          <h2 class="text-xl font-semibold" x-text="configsPage.editing ? '✏️ Edit configuration' : '✨ Create new configuration'"></h2>
+          <button x-show="configsPage.editing" class="text-sm text-slate-600 hover:underline"
+                  @click="resetConfigDraft()">+ Start fresh instead</button>
+        </div>
+        <!-- Builder tabs. The visual position is pinned with the flex
+             `order` property (= array index) so the strip always reads
+             left-to-right in builderTabs order, regardless of the DOM
+             insertion order Alpine's x-for produces. -->
+        <div class="flex flex-wrap gap-1 border-b border-slate-200 mb-4">
+          <template x-for="(t, i) in visibleBuilderTabs()" :key="t.id">
+            <a class="fg-tab"
+               :style="'order:' + i"
+               :class="{ active: builder.tab === t.id }"
+               @click="selectBuilderTab(t.id)"
+               x-text="t.label"></a>
+          </template>
+        </div>
+        <!-- Make hidden options discoverable so experts are never stuck -->
+        <p x-show="!advanced" x-cloak class="fg-help -mt-2 mb-4">
+          Showing essentials. <a class="text-blue-600 underline cursor-pointer" @click="setUiMode('advanced')">Switch to Advanced</a>
+          for beliefs &amp; theory-of-mind, game-theory treatments (mixed strategies, utilities, discounting, trust), tournaments, reproducibility, and the JSON view.
+        </p>
+
+        <!-- TEMPLATE & INFO (name + template pointer + languages) -->
+        <div x-show="builder.tab === 'template'" class="fg-card p-6">
+          <p class="fg-help mb-4">Start here: name the configuration, choose whether it uses <strong>LLM agents</strong> or <strong>baseline strategies</strong>, and (for LLM runs) pick the prompt template and the languages to run in. Everything else — agents, payoff matrix, game-theory settings, reproducibility — lives in the other tabs.</p>
+
+          <!-- Run type — the single switch that decides whether a template + languages are needed -->
+          <div class="mb-5">
+            <label class="fg-label">Agent type</label>
+            <div class="inline-flex gap-1 p-1 rounded-full bg-slate-100 border border-slate-200">
+              <button type="button" class="px-4 py-1.5 text-sm font-semibold rounded-full transition"
+                      :class="isLLMMode() ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'"
+                      @click="setRunType('llm')">🧠 LLM agents</button>
+              <button type="button" class="px-4 py-1.5 text-sm font-semibold rounded-full transition"
+                      :class="!isLLMMode() ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'"
+                      @click="setRunType('baseline')">🤖 Baselines only (no LLM)</button>
+            </div>
+            <p class="fg-help mt-1" x-show="isLLMMode()">Agents are queried as models, so a <strong>prompt template</strong> is required and the run is multilingual. You may add baseline agents too (e.g. for tournaments), but <strong>at least one agent must be a model</strong>.</p>
+            <p class="fg-help mt-1" x-show="!isLLMMode()" x-cloak>Agents are <strong>baseline strategies</strong> that act algorithmically — <strong>no prompt template and no language</strong> are needed. Behaviour comes from the payoff matrix and the <em>baseline semantics</em> mapping (Game-theory tab).</p>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="fg-label">Configuration name</label>
+              <input type="text" x-model="configsPage.draft.name" class="fg-input" placeholder="e.g. PD harsh, English+French, 5 seeds"/>
+            </div>
+            <div>
+              <label class="fg-label">Game</label>
+              <select x-model="configsPage.draft.game_type_id"
+                      @change="configsPage.draft.variation = ''; pruneSelectedLanguages()"
+                      class="fg-input">
+                <option value="">— pick a game —</option>
+                <template x-for="gt in gameTypes" :key="gt.id">
+                  <option :value="gt.id" x-text="gt.name"></option>
+                </template>
+              </select>
+              <p class="fg-help" x-show="!isLLMMode()" x-cloak>Used to file this configuration — no template is loaded for baseline runs.</p>
+            </div>
+
+            <!-- LLM-only: variant + languages + template preview -->
+            <div class="contents" x-show="isLLMMode()">
+              <div>
+                <label class="fg-label">Variant</label>
+                <select x-model="configsPage.draft.variation"
+                        @change="pruneSelectedLanguages()"
+                        class="fg-input" :disabled="!configsPage.draft.game_type_id">
+                  <option value="">— pick a variant —</option>
+                  <template x-for="v in variationsForGameType(configsPage.draft.game_type_id)" :key="v">
+                    <option :value="v" x-text="v"></option>
+                  </template>
+                </select>
+              </div>
+              <div class="md:col-span-2">
+                <label class="fg-label">Languages <span class="text-slate-400 font-normal">(from the template's availability)</span></label>
+                <p x-show="!configsPage.draft.game_type_id || !configsPage.draft.variation"
+                   class="fg-help italic mb-2">
+                  Pick a game and a variant first — only languages with a matching template are selectable.
+                </p>
+                <p x-show="configsPage.draft.game_type_id && configsPage.draft.variation && availableLanguages().length === 0"
+                   class="fg-help text-amber-700 mb-2">
+                  No template for this (game, variant) yet. Add one on the
+                  <a class="underline" @click.prevent="activePage='templates'" href="#">Templates</a> page,
+                  or AI-translate from an existing language.
+                </p>
+                <div x-show="availableLanguages().length > 0"
+                     class="grid grid-cols-2 md:grid-cols-3 gap-1.5 max-h-56 overflow-auto p-2 border border-slate-200 rounded-md">
+                  <template x-for="lang in availableLanguages()" :key="lang.code">
+                    <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-slate-50 px-1.5 py-1 rounded">
+                      <input type="checkbox" :value="lang.code" x-model="builder.cfg.languages" @change="syncLanguageFields()"/>
+                      <span class="text-base" x-text="lang.flag"></span>
+                      <span x-text="lang.name"></span>
+                      <span class="text-slate-400 text-xs" x-text="lang.code"></span>
+                      <span x-show="lang.shipped"
+                            class="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500"
+                            title="Default template shipped in resources/game_templates/"></span>
+                    </label>
+                  </template>
+                </div>
+                <p class="fg-help mt-1">Selected: <span x-text="builder.cfg.languages.join(', ') || 'none'"></span>. Each selected language gets its own <strong>mandatory</strong> personality &amp; strategy-label fields on the Agents and Payoff-matrix tabs.</p>
+              </div>
+
+              <!-- Read-only preview of the prompt template(s) this configuration uses -->
+              <div class="md:col-span-2" x-show="selectedTemplates().length > 0" x-cloak>
+                <label class="fg-label">Prompt template <span class="text-slate-400 font-normal">(read-only)</span></label>
+                <p class="fg-help mb-2">The exact prompt your agents will receive when this configuration runs — one per selected language. To change it, edit it on the
+                  <a class="underline" @click.prevent="activePage='templates'" href="#">Templates</a> page.</p>
+                <template x-for="tpl in selectedTemplates()" :key="tpl.code">
+                  <details class="border border-slate-200 rounded-md mb-2 bg-slate-50">
+                    <summary class="cursor-pointer select-none px-3 py-2 text-sm font-medium flex items-center gap-2">
+                      <span class="text-base" x-text="tpl.flag"></span>
+                      <span x-text="tpl.name"></span>
+                      <span class="text-slate-400 text-xs" x-text="tpl.code"></span>
+                      <span class="ml-auto text-xs text-slate-400" x-text="tpl.body.length + ' chars'"></span>
+                    </summary>
+                    <pre class="px-3 pb-3 pt-1 text-xs text-slate-700 whitespace-pre-wrap break-words max-h-80 overflow-auto" x-text="tpl.body"></pre>
+                  </details>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BASICS -->
+        <div x-show="builder.tab === 'basics'" class="fg-card p-6">
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="fg-label">Number of rounds</label>
+              <input type="number" min="1" x-model.number="builder.cfg.nRounds" class="fg-input"/>
+            </div>
+            <div class="md:col-span-2 flex flex-wrap gap-4 mt-2">
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" x-model="builder.cfg.nRoundsIsKnown"/>
+                <span>Agents know how many rounds will be played</span>
+              </label>
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" x-model="builder.cfg.randomizeBetweenIterations"/>
+                <span>Randomise agent order between iterations</span>
+              </label>
+            </div>
+
+            <!-- Communication block (advanced) -->
+            <div x-show="advanced" x-cloak class="md:col-span-2 mt-3 p-3 rounded-md bg-slate-50 border border-slate-200">
+              <h3 class="text-sm font-semibold mb-2">💬 Communication</h3>
+              <p x-show="!hasLLMAgents()" x-cloak class="fg-help text-violet-800 mb-2">
+                🤖 No LLM agents — inter-agent messages are generated/exchanged by the model, so communication doesn't apply to baseline-only runs. Disabled.
+              </p>
+              <div class="grid md:grid-cols-2 gap-3"
+                   :class="!hasLLMAgents() ? 'opacity-50 pointer-events-none select-none' : ''">
+                <div>
+                  <label class="fg-label">Communication style</label>
+                  <select x-model="builder.commStyle" class="fg-input" :disabled="!hasLLMAgents()">
+                    <option value="none">None — no inter-agent messages</option>
+                    <option value="real">Real — agents exchange free-text messages via the LLM</option>
+                    <option value="fake_dec">Fake (decimal) — random base-10 number sequences</option>
+                    <option value="fake_hex">Fake (hexadecimal) — random base-16 number sequences</option>
+                  </select>
+                  <p class="fg-help">Decoy-message modes test whether agents can hide strategy hints in a noisy channel.</p>
+                </div>
+                <div>
+                  <label class="fg-label">Decoy messages per round</label>
+                  <input type="number" min="1" max="50" x-model.number="builder.cfg.fakeMessageCount" class="fg-input"
+                         :disabled="!hasLLMAgents() || !builder.commStyle.startsWith('fake')"/>
+                  <p class="fg-help">How many number sequences each agent emits per round.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AGENTS -->
+        <div x-show="builder.tab === 'agents'" class="fg-card p-6">
+
+          <!-- Per-language recommendation lists (shared by personality inputs) -->
+          <template x-for="lang in builder.cfg.languages" :key="'pers-dl-'+lang">
+            <datalist :id="'sugg-pers-'+lang">
+              <template x-for="s in suggestionsFor('personality', lang)" :key="s">
+                <option :value="s"></option>
+              </template>
+            </datalist>
+          </template>
+
+          <!-- Model access notice -->
+          <div class="mb-4 p-3 rounded-md bg-amber-50 border border-amber-200 text-sm text-amber-900 flex items-start gap-2">
+            <span class="text-base leading-none mt-0.5">🔑</span>
+            <span>To run with a model you need access to it: set the matching provider
+              <strong>API key</strong> in the environment (e.g. <code>OPENAI_API_KEY</code>,
+              <code>ANTHROPIC_API_KEY</code>, <code>MISTRAL_API_KEY</code>), or use a model
+              <strong>served locally</strong> (e.g. via Ollama). Without access, runs that use
+              that model will fail.</span>
+          </div>
+
+          <!-- Non-LLM (baseline-only) banner -->
+          <div x-show="allBaselineAgents()" x-cloak
+               class="mb-4 p-3 rounded-md bg-violet-50 border border-violet-200 text-sm text-violet-900 flex items-start gap-2">
+            <span class="text-base leading-none mt-0.5">🤖</span>
+            <span><strong>Non-LLM simulation.</strong> Every agent is a baseline strategy, so no
+              model is queried. Prompt-facing settings — personalities, theory-of-mind &amp;
+              beliefs, communication, mixed strategies and the prompt template — don't apply and
+              are hidden or disabled. Baseline behaviour is driven by the
+              <strong>payoff matrix</strong> and the <em>baseline semantics</em> mapping
+              (Game-theory tab).</span>
+          </div>
+
+          <!-- Tournament toggle (advanced) -->
+          <div x-show="advanced" x-cloak class="mb-4 p-3 rounded-md bg-slate-50 border border-slate-200">
+            <label class="flex items-center gap-2 text-sm font-medium">
+              <input type="checkbox" x-model="builder.tournamentMode"/>
+              <span>🏆 Run as round-robin tournament</span>
+            </label>
+            <p class="fg-help mt-1">
+              When on, the engine runs <strong>every pair of agents as a separate game</strong>
+              instead of one big multi-agent game. Use this for benchmarking — say, three
+              baselines (TitForTat, AlwaysCooperate, AlwaysDefect) plus two LLM models — to get
+              a head-to-head matrix. With <em>n</em> agents you get <em>n·(n-1)/2</em> games per
+              language per iteration. Personalities are typically left blank in tournament mode;
+              the contestant <em>is</em> the agent.
+            </p>
+          </div>
+
+          <!-- LLM mode requires at least one model-backed agent -->
+          <div x-show="isLLMMode() && !hasLLMAgents()" x-cloak
+               class="mb-4 p-3 rounded-md bg-rose-50 border border-rose-200 text-sm text-rose-800">
+            ⚠ This is an <strong>LLM</strong> configuration but every agent is currently a baseline. Set at least one agent to a model, or switch to <em>Baselines only</em> on the Template tab.
+          </div>
+
+          <div class="mb-4" x-show="isLLMMode() && advanced" x-cloak>
+            <p class="text-sm font-medium mb-2">Personality assignment</p>
+            <label class="flex items-center gap-2 text-sm mb-1.5">
+              <input type="radio" name="pmode" value="per_agent" x-model="builder.personalityMode"/>
+              <span><strong>Per agent</strong> — each agent gets its own personality (positional).</span>
+            </label>
+            <label class="flex items-center gap-2 text-sm">
+              <input type="radio" name="pmode" value="pool" x-model="builder.personalityMode"/>
+              <span><strong>Pool with permutations</strong> — define a list of personality types; the engine generates one game per permutation across the agents.</span>
+            </label>
+          </div>
+
+          <!-- Mode A: per-agent -->
+          <div x-show="builder.personalityMode === 'per_agent'">
+            <template x-for="(agent, i) in builder.agents" :key="i">
+              <div class="border border-slate-200 rounded-md p-3 mb-2">
+                <div class="grid grid-cols-12 gap-2 items-center">
+                  <div class="col-span-5">
+                    <label class="fg-label">Name</label>
+                    <input type="text" :value="agent.name" @input="renameAgent(agent, $event.target.value)" class="fg-input"/>
+                  </div>
+                  <div class="col-span-6">
+                    <label class="fg-label" x-text="isLLMMode() ? 'LLM / baseline' : 'Baseline strategy'"></label>
+                    <select :value="modelSelectValue(agent.llm)" @change="setAgentModel(agent, $event.target.value)" class="fg-input">
+                      <template x-if="agent.llm && isLLMMode() && !llms.includes(agent.llm) && !isBaselineAgent(agent) && !isCustomModel(agent.llm)">
+                        <optgroup label="Current"><option :value="agent.llm" x-text="agent.llm"></option></optgroup>
+                      </template>
+                      <template x-if="isLLMMode()">
+                        <optgroup label="LLMs">
+                          <template x-for="m in llms" :key="m"><option :value="m" x-text="m"></option></template>
+                        </optgroup>
+                      </template>
+                      <optgroup label="Baselines">
+                        <template x-for="b in baselines" :key="b">
+                          <option :value="'baseline:'+b" x-text="'baseline:' + b"></option>
+                        </template>
+                      </optgroup>
+                      <optgroup label="Other" x-show="isLLMMode()">
+                        <option value="__custom__">✏️ Custom (any LiteLLM model)…</option>
+                      </optgroup>
+                    </select>
+                    <div x-show="isCustomModel(agent.llm)" x-cloak class="mt-1">
+                      <input type="text" class="fg-input"
+                             :value="customModelText(agent.llm)"
+                             @input="setCustomModelText(agent, $event.target.value)"
+                             placeholder="e.g. gemini/gemini-1.5-pro, ollama/llama3, groq/llama-3.1-70b-versatile"/>
+                      <p class="fg-help">Any model string <a class="underline" href="https://docs.litellm.ai/docs/providers" target="_blank" rel="noopener">LiteLLM supports</a>. Needs the matching provider key (or a local server for <code>ollama/…</code>).</p>
+                    </div>
+                  </div>
+                  <button class="col-span-1 text-rose-600 hover:text-rose-800 self-end pb-2"
+                          @click="builder.agents.splice(i,1)" title="Remove">✕</button>
+                </div>
+
+                <!-- Per-language personality (LLM mode only; baselines ignore prompts) -->
+                <div class="mt-3" x-show="isLLMMode()">
+                  <div class="flex items-center gap-2 mb-1">
+                    <label class="fg-label mb-0">Personality</label>
+                    <span x-show="isBaselineAgent(agent)" class="fg-pill fg-pill-violet">baseline — not used</span>
+                  </div>
+                  <p x-show="builder.cfg.languages.length === 0" class="fg-help italic">Pick languages on the Template tab first.</p>
+                  <div class="grid sm:grid-cols-2 gap-2">
+                    <template x-for="lang in builder.cfg.languages" :key="'pers-'+i+'-'+lang">
+                      <div class="flex items-center gap-2">
+                        <span class="text-base w-6 text-center flex-none" x-text="languageFlag(lang)" :title="lang"></span>
+                        <input type="text" class="fg-input"
+                               x-model="agent.personalities[lang]"
+                               :list="'sugg-pers-'+lang"
+                               :disabled="isBaselineAgent(agent)"
+                               :placeholder="isBaselineAgent(agent) ? 'n/a for baselines' : 'e.g. cooperative ('+lang+')'"/>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </template>
+            <p class="fg-help mt-1">Personalities are written into the prompt in each language; start typing to see values you've used before. Per-agent <strong>opponent-prior probability</strong> lives on the <em>Beliefs</em> tab — it's a belief-related setting, not an agent property.</p>
+            <button class="mt-2 px-4 py-1.5 rounded-md border border-slate-300 text-sm hover:bg-slate-50"
+                    @click="addAgent()">
+              + Add agent
+            </button>
+          </div>
+
+          <!-- Mode B: pool -->
+          <div x-show="builder.personalityMode === 'pool'">
+            <p class="fg-help mb-3">In pool mode, the engine generates one game per agent-personality permutation. With <em>k</em> personalities and <em>n</em> agents, you get <em>k<sup>n</sup></em> games (or smaller when same-LLM agents trigger combinations-with-replacement).</p>
+
+            <div class="fg-section">
+              <h3>Agent slots</h3>
+              <p class="fg-help mb-2">Names + LLM/baseline assignments still come from this list — only the personality column is replaced by the pool below.</p>
+              <div class="grid grid-cols-12 gap-2 text-xs font-medium text-slate-600 mb-2">
+                <div class="col-span-4">Name</div>
+                <div class="col-span-7">LLM / baseline</div>
+                <div class="col-span-1"></div>
+              </div>
+              <template x-for="(agent, i) in builder.agents" :key="i">
+                <div class="mb-2">
+                  <div class="grid grid-cols-12 gap-2">
+                    <input type="text" :value="agent.name" @input="renameAgent(agent, $event.target.value)" class="fg-input col-span-4"/>
+                    <select :value="modelSelectValue(agent.llm)" @change="setAgentModel(agent, $event.target.value)" class="fg-input col-span-7">
+                      <template x-if="agent.llm && !llms.includes(agent.llm) && !isBaselineAgent(agent) && !isCustomModel(agent.llm)">
+                        <optgroup label="Current"><option :value="agent.llm" x-text="agent.llm"></option></optgroup>
+                      </template>
+                      <optgroup label="LLMs">
+                        <template x-for="m in llms" :key="m"><option :value="m" x-text="m"></option></template>
+                      </optgroup>
+                      <optgroup label="Baselines">
+                        <template x-for="b in baselines" :key="b">
+                          <option :value="'baseline:'+b" x-text="'baseline:' + b"></option>
+                        </template>
+                      </optgroup>
+                      <optgroup label="Other">
+                        <option value="__custom__">✏️ Custom (any LiteLLM model)…</option>
+                      </optgroup>
+                    </select>
+                    <button class="col-span-1 text-rose-600 hover:text-rose-800" @click="builder.agents.splice(i,1)" title="Remove">✕</button>
+                  </div>
+                  <input x-show="isCustomModel(agent.llm)" x-cloak type="text" class="fg-input mt-1"
+                         :value="customModelText(agent.llm)"
+                         @input="setCustomModelText(agent, $event.target.value)"
+                         placeholder="e.g. gemini/gemini-1.5-pro, ollama/llama3"/>
+                </div>
+              </template>
+              <button class="mt-2 px-4 py-1.5 rounded-md border border-slate-300 text-sm hover:bg-slate-50"
+                      @click="addAgent()">
+                + Add agent slot
+              </button>
+            </div>
+
+            <div class="fg-section">
+              <h3>Personality pool (one per line, per language)</h3>
+              <p class="fg-help mb-2">Keep the <strong>same number of lines</strong> in every language and in the same order — line <em>k</em> in each language is the same personality, just translated. Start typing to reuse values from earlier configurations.</p>
+              <p x-show="builder.cfg.languages.length === 0" class="fg-help italic">Pick languages on the Template tab first.</p>
+              <div class="grid md:grid-cols-2 gap-3">
+                <template x-for="lang in builder.cfg.languages" :key="'pool-'+lang">
+                  <div>
+                    <label class="fg-label flex items-center gap-1.5">
+                      <span class="text-base" x-text="languageFlag(lang)"></span>
+                      <span x-text="lang"></span>
+                    </label>
+                    <textarea x-model="builder.personalityPoolByLang[lang]"
+                              class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm h-28"
+                              placeholder="cooperative&#10;selfish&#10;neutral"></textarea>
+                  </div>
+                </template>
+              </div>
+              <p class="fg-help mt-1">
+                The matching <em>opponent-knowledge probability pool</em> lives on the
+                <strong>Beliefs</strong> tab — that's a belief setting, not an agent property.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- HISTORY -->
+        <div x-show="builder.tab === 'history'" class="fg-card p-6">
+          <p class="text-sm text-slate-600 mb-4">Controls how much of past play the agent sees in its prompt.</p>
+
+          <div class="fg-section">
+            <h3>Full history (<code>{history}</code>)</h3>
+            <p class="fg-help">
+              The full per-round transcript is <strong>always injected</strong> via the
+              <code>{history}</code> placeholder for every round after the first. Agents have
+              episodic memory inside a Run — they can read every choice made so far, by every
+              agent, in order. There's nothing to toggle here; it's part of the engine.
+            </p>
+          </div>
+
+          <div class="fg-section">
+            <h3>Rolling reputation window</h3>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <label class="fg-label">Reputation window (rounds, optional)</label>
+                <input type="number" min="0" x-model.number="builder.cfg.reputationWindow" class="fg-input"/>
+                <p class="fg-help">
+                  When set, the placeholders <code>{coopRateN}</code> /
+                  <code>{reputationN}</code> average each opponent's behaviour over the last N
+                  rounds only. Leave 0 to use the full history.
+                </p>
+              </div>
+              <div class="self-end">
+                <label class="flex items-center gap-2 text-sm">
+                  <input type="checkbox" x-model="builder.cfg.reputationApplies"/>
+                  <span>Reputation labels apply (cooperate-rate framing)</span>
+                </label>
+                <p class="fg-help">
+                  Turn off for asymmetric coordination games (Battle of the Sexes), zero-sum
+                  games, or any setup where strategy1 doesn't mean "cooperate". When off, the
+                  reputation placeholders fill with <code>n/a</code> regardless of history.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="fg-section">
+            <h3>Memory across runs <span class="text-xs font-normal text-slate-400">— roadmap</span></h3>
+            <p class="fg-help">
+              Within one Run, agents see every past round through <code>{history}</code>.
+              Across separate Runs (different iterations or different Configurations) there is
+              <strong>no persistence</strong> today: every Run is a fresh start. Memory across runs
+              (online-learning / no-regret dynamics) is a planned engine extension; for
+              now use seed control + iterations to get reproducible replicates.
+            </p>
+          </div>
+        </div>
+
+        <!-- INTERACTION GRAPH -->
+        <div x-show="builder.tab === 'interaction'" class="fg-card p-6">
+          <p class="text-sm text-slate-600 mb-4">
+            Choose <strong>who perceives whom</strong>. The graph mirrors your
+            <strong>Agents</strong> and starts <strong>fully connected</strong> — every agent
+            sees and can message every other. Edit it for hierarchies, one-way observation, or
+            isolated agents. Prompt-facing, so it applies to <strong>LLM runs</strong> only;
+            payoffs are unaffected.
+          </p>
+
+          <div x-show="!hasLLMAgents()" x-cloak class="fg-help text-amber-700 mb-2">
+            Add at least one LLM agent to configure interactions.
+          </div>
+
+          <div x-show="hasLLMAgents()" x-cloak>
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-2 mb-3">
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" x-model="builder.interaction.directed"/>
+                <span>Directed <span class="fg-help">(off = mirror every edge)</span></span>
+              </label>
+              <button type="button" class="text-xs text-blue-600 hover:underline"
+                      @click="interactionSetAll('talk')">Connect all</button>
+              <button type="button" class="text-xs text-blue-600 hover:underline"
+                      @click="interactionSetAll('none'); builder.interaction.selected=null">Clear all</button>
+            </div>
+
+            <div class="grid md:grid-cols-[auto,1fr] gap-5 items-start">
+              <!-- The graph (SVG string injected via x-html; clicks delegated) -->
+              <div class="rounded-lg border border-slate-200 bg-slate-50/60 p-2 overflow-x-auto"
+                   x-html="interactionSvg()"
+                   @click="onInteractionSvgClick($event)"></div>
+
+              <!-- legend + instructions -->
+              <div class="text-sm text-slate-600 space-y-3">
+                <p>
+                  <span class="font-medium">Click a node</span> to pick a source (it turns blue),
+                  then <span class="font-medium">click another node</span> to cycle the arrow
+                  <em>source → target</em>:
+                  <span class="font-mono">none</span> → <span class="font-mono">See</span> →
+                  <span class="font-mono">Talk</span>. Click the source again to deselect, or click
+                  an existing arrow to cycle it directly.
+                </p>
+                <p x-show="builder.interaction.selected" class="text-blue-700">
+                  Source: <strong x-text="builder.interaction.selected"></strong> — click a target.
+                </p>
+                <ul class="space-y-1">
+                  <li class="flex items-center gap-2">
+                    <svg width="34" height="10"><line x1="0" y1="5" x2="30" y2="5" stroke="#0284c7" stroke-width="2"/></svg>
+                    <span><strong>See</strong> — target observes the source's plays.</span>
+                  </li>
+                  <li class="flex items-center gap-2">
+                    <svg width="34" height="10"><line x1="0" y1="5" x2="30" y2="5" stroke="#059669" stroke-width="4"/></svg>
+                    <span><strong>Talk</strong> — target also receives the source's messages.</span>
+                  </li>
+                  <li class="flex items-center gap-2">
+                    <span class="inline-block w-[34px] text-center text-slate-400">·</span>
+                    <span><strong>none</strong> — no link; the target perceives nothing of the source.</span>
+                  </li>
+                </ul>
+                <p class="fg-help">
+                  An arrow <em>A → B</em> means B perceives A. Takes visible effect with templates
+                  that use <code>{history}</code> (and <code>{message}</code> for communication).
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BELIEFS -->
+        <div x-show="builder.tab === 'beliefs'" class="fg-card p-6">
+          <p class="text-sm text-slate-600 mb-4">Controls what the agent reasons about its opponents and whether the engine elicits and scores those beliefs.</p>
+
+          <div x-show="!hasLLMAgents()" x-cloak
+               class="mb-4 p-3 rounded-md bg-violet-50 border border-violet-200 text-sm text-violet-900">
+            🤖 No LLM agents — beliefs and theory-of-mind are prompt-facing and don't apply to baseline strategies. These controls are disabled.
+          </div>
+
+          <div :class="!hasLLMAgents() ? 'opacity-50 pointer-events-none select-none' : ''">
+          <div class="grid md:grid-cols-2 gap-4">
+            <label class="flex items-center gap-2 text-sm md:col-span-2">
+              <input type="checkbox" x-model="builder.cfg.elicitBeliefs" :disabled="!hasLLMAgents()"/>
+              <span><strong>Elicit beliefs</strong> — agent emits a probability distribution over the opponent's strategies each round (Brier score is computed afterwards).</span>
+            </label>
+
+            <div>
+              <label class="fg-label">Theory-of-mind depth<span class="fg-tip" tabindex="0">?<span class="fg-tip-body">How much the agent reasons about its opponent. 0 = told nothing about the opponent; 1 = knows the opponent's likely personality; 2 = also reasons "they think I think…".</span></span></label>
+              <select x-model.number="builder.cfg.tomOrder" class="fg-input">
+                <option :value="0">0 — opponent personality / prior is suppressed</option>
+                <option :value="1">1 — first-order (default; opponent intro shown)</option>
+                <option :value="2">2 — second-order ("they think we…" block kept)</option>
+              </select>
+              <p class="fg-help">Order 0 strips <code>{opponentIntro}</code> entirely; order 2 keeps <code>{secondOrder}</code> too.</p>
+            </div>
+          </div>
+
+          <div
+            x-show="builder.cfg.elicitBeliefs && builder.cfg.tomOrder >= 2"
+            class="fg-section mt-4"
+          >
+            <h3>Second-order belief elicitation (active)</h3>
+            <p class="fg-help mb-2">
+              With <strong>elicit beliefs ON</strong> and <strong>theory-of-mind depth ≥ 2</strong> the engine
+              also asks each agent <em>"what does your opponent think YOU will do?"</em> every round,
+              and scores the answer against the opponent's actual first-order belief from the same
+              round (soft-target Brier). The template must carry a
+              <code>{believe2}: […]</code> block — without it the phase is skipped.
+            </p>
+            <p class="fg-help">
+              Surfaces in results as
+              <code>agentN_belief_2nd_order_per_round_brier</code> /
+              <code>agentN_belief_2nd_order_mean_brier</code>.
+            </p>
+          </div>
+
+          <div class="fg-section mt-4">
+            <h3>Per-agent opponent-prior probability</h3>
+            <p class="fg-help mb-2">
+              This is what each agent is <strong>told</strong> about its opponents. If you set
+              <em>agent1</em>'s value to <code>0.7</code> and <em>agent2</em>'s personality is
+              <em>"cooperative"</em>, agent1's prompt will read
+              <em>"agent2 has a 70% probability of being cooperative"</em>.
+            </p>
+            <ul class="fg-help list-disc pl-5 mb-2 space-y-1">
+              <li><code>0</code> — agent is told <strong>nothing</strong> about the opponent (the entire <code>{opponentIntro}</code> block is stripped).</li>
+              <li><code>0&lt;p&lt;1</code> — agent is told the opponent has personality X with probability p × 100%.</li>
+              <li><code>1</code> — common knowledge: agent is told the personality is certain.</li>
+            </ul>
+            <p class="fg-help mb-2">
+              Drives the <code>{opponentPersonalityProbability1}</code> placeholder in the prompt.
+              Setting all opponents to 0 has the same effect as <code>tomOrder = 0</code>: the
+              agent gets no opponent intro at all.
+            </p>
+            <div x-show="builder.personalityMode === 'pool'" class="mb-3">
+              <label class="fg-label">Chance each agent knows its opponent's personality (0–1, one per line)</label>
+              <textarea x-model="builder.opponentPriorPoolText"
+                        class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm h-24"
+                        placeholder="0&#10;0.5&#10;1"></textarea>
+              <p class="fg-help">
+                Pool mode is on — the per-agent values below are ignored. Each line is a
+                probability (0..1); the engine permutes the pool across agent slots the same
+                way as the personality pool on the Agents tab.
+              </p>
+            </div>
+            <div x-show="builder.personalityMode === 'per_agent'">
+              <div class="grid grid-cols-12 gap-2 text-xs font-medium text-slate-600 mb-2">
+                <div class="col-span-6">Agent</div>
+                <div class="col-span-6">Opponent prior (0..1)</div>
+              </div>
+              <template x-for="(agent, i) in builder.agents" :key="i">
+                <div class="grid grid-cols-12 gap-2 mb-2 items-center">
+                  <div class="col-span-6 text-sm" x-text="agent.name + ' (' + agentPersonalityDisplay(agent) + ')'"></div>
+                  <input type="number" step="0.1" min="0" max="1" x-model.number="agent.opponentPersonalityPr" class="fg-input col-span-6"/>
+                </div>
+              </template>
+            </div>
+          </div>
+          </div><!-- /dim wrapper -->
+        </div>
+
+        <!-- GAME THEORY -->
+        <div x-show="builder.tab === 'theory'">
+          <!-- Principle banner: the whole tab is organised by what the agent sees. -->
+          <div class="fg-card p-4 mb-4 flex gap-3 items-start" style="background:var(--brand-50);border-color:var(--brand-100);">
+            <span class="mt-0.5 text-brand-700" style="color:var(--brand-600)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01"/><path d="M11 12h1v4h1"/></svg>
+            </span>
+            <p class="text-sm leading-relaxed" style="color:var(--brand-900)">
+              FAIRGAME measures how an LLM responds to <strong>what it is told</strong>. Settings below are grouped by whether the
+              agent actually sees them — so a behavioural treatment (in the prompt) is never confused with a post-hoc analysis lens
+              (applied only to the score).
+            </p>
+          </div>
+
+          <!-- ================= ZONE 1 · SEEN BY THE AGENT ================= -->
+          <div class="fg-zone fg-zone-agent">
+            <span class="fg-zone-eyebrow">Seen by the agent · in the prompt</span>
+            <p class="fg-help mb-4">This text goes into the agent's prompt and can directly change its choices.</p>
+            <p x-show="!hasLLMAgents()" x-cloak class="fg-help text-violet-800 mb-2">
+              🤖 No LLM agents — prompt-facing treatments don't apply to baseline strategies. Disabled.
+            </p>
+
+            <label class="flex items-start gap-3 text-sm"
+                   :class="!hasLLMAgents() ? 'opacity-50 pointer-events-none select-none' : ''">
+              <input type="checkbox" x-model="builder.cfg.mixedStrategies" class="mt-1" :disabled="!hasLLMAgents()"/>
+              <span>
+                <span class="font-medium">Mixed strategies</span>
+                <span class="fg-channel-badge fg-channel-prompt ml-2 align-middle">In the prompt</span>
+                <span class="fg-help block mt-0.5">The agent is instructed to output a probability distribution over strategies (the <code>{mixedChoose}</code> block); the engine then samples its move. Requires a <code>{mixedChoose}</code> block in the template.</span>
+              </span>
+            </label>
+
+            <!-- Trust / costly monitoring -->
+            <div class="mt-4" :class="!hasLLMAgents() ? 'opacity-50 pointer-events-none select-none' : ''">
+              <label class="flex items-start gap-3 text-sm">
+                <input type="checkbox" x-model="builder.trust.enabled" class="mt-1" :disabled="!hasLLMAgents()"/>
+                <span>
+                  <span class="font-medium">🔍 Trust / costly monitoring</span>
+                  <span class="fg-channel-badge fg-channel-prompt ml-2 align-middle">In the prompt</span>
+                  <span class="fg-help block mt-0.5">Each round the agent first decides whether to <strong>LOOK</strong> (pay a monitoring cost to see the opponent's history) or <strong>NO_LOOK</strong> (act on trust, with no history). Requires a <code>{trust}</code> block in the template; the cost is deducted from the round payoff. Baselines always NO_LOOK.</span>
+                </span>
+              </label>
+              <div x-show="builder.trust.enabled" x-cloak class="mt-2 ml-7 max-w-xs">
+                <label class="fg-label">Monitoring cost per LOOK</label>
+                <input type="number" step="0.05" min="0" x-model.number="builder.trust.lookCost"
+                       class="fg-input" :disabled="!hasLLMAgents()"/>
+                <p class="fg-help">Points subtracted from the round score whenever the agent pays to LOOK.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ================= ZONE 2 · ROUTABLE TREATMENTS ================= -->
+          <div class="fg-zone fg-zone-route">
+            <span class="fg-zone-eyebrow">Preference treatments · you choose the channel</span>
+            <p class="fg-help mb-4">
+              Time-discounting and risk / inequity preferences can act as a <strong>behavioural treatment</strong> (written into the prompt),
+              an <strong>analysis lens</strong> (applied only to the score), or <strong>both</strong>. The badge on each shows where it currently acts.
+              Setting it to "both" double-counts the same preference, so prefer one channel unless you mean to.
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <div class="flex items-center justify-between gap-2 mb-1">
+                  <label class="fg-label mb-0">Discount factor δ<span class="fg-tip" tabindex="0">?<span class="fg-tip-body">How much future rounds matter. Each round's payoff is multiplied by δ^(round−1). δ=1 means no discounting; δ&lt;1 makes later rounds worth less.</span></span></label>
+                  <span class="fg-channel-badge"
+                        :class="builder.cfg.discountMode === 'prompt' ? 'fg-channel-prompt' : builder.cfg.discountMode === 'both' ? 'fg-channel-both' : 'fg-channel-analysis'"
+                        x-text="builder.cfg.discountMode === 'prompt' ? 'In the prompt' : builder.cfg.discountMode === 'both' ? 'Prompt + score' : 'Analysis only'"></span>
+                </div>
+                <input type="number" step="0.01" min="0" max="1" x-model.number="builder.cfg.discountFactor" class="fg-input"/>
+                <p class="fg-help">δ &lt; 1 means future rounds matter less. 1.0 = no discount.</p>
+              </div>
+              <div>
+                <label class="fg-label">Apply discount to</label>
+                <select x-model="builder.cfg.discountMode" class="fg-input">
+                  <option value="score">Score only — post-hoc lens, agent isn't told (default)</option>
+                  <option value="prompt">Prompt only — described to the agent, shapes its choices</option>
+                  <option value="both">Both — describe AND discount the score</option>
+                </select>
+                <p class="fg-help">"Prompt" makes δ a behavioural treatment on the LLM's choices and skips the score-side discount, so the same preference isn't counted twice.</p>
+              </div>
+
+              <div class="md:col-span-2">
+                <div class="flex items-center justify-between gap-2 mb-1">
+                  <label class="fg-label mb-0">Utility transform<span class="fg-tip" tabindex="0">?<span class="fg-tip-body">Reshape raw payoffs into utility. CRRA models risk aversion; Fehr-Schmidt models inequity aversion (caring about fairness). Identity = use payoffs as-is.</span></span></label>
+                  <span class="fg-channel-badge"
+                        x-show="builder.utilityType !== 'identity'"
+                        :class="builder.utilityType === 'FehrSchmidt' ? 'fg-channel-analysis' : builder.cfg.riskMode === 'prompt' ? 'fg-channel-prompt' : builder.cfg.riskMode === 'both' ? 'fg-channel-both' : 'fg-channel-analysis'"
+                        x-text="builder.utilityType === 'FehrSchmidt' ? 'Analysis only' : builder.cfg.riskMode === 'prompt' ? 'In the prompt' : builder.cfg.riskMode === 'both' ? 'Prompt + score' : 'Analysis only'"></span>
+                </div>
+                <select x-model="builder.utilityType" class="fg-input">
+                  <option value="identity">Identity (no transform)</option>
+                  <option value="CRRA">CRRA (constant relative risk aversion)</option>
+                  <option value="FehrSchmidt">Fehr-Schmidt (inequity aversion)</option>
+                </select>
+              </div>
+              <div x-show="builder.utilityType === 'CRRA'">
+                <label class="fg-label">CRRA γ (risk aversion)</label>
+                <input type="number" step="0.05" min="0" x-model.number="builder.utilityParams.gamma" class="fg-input"/>
+              </div>
+              <div x-show="builder.utilityType === 'CRRA'">
+                <label class="fg-label">CRRA offset</label>
+                <input type="number" step="0.5" x-model.number="builder.utilityParams.offset" class="fg-input"/>
+              </div>
+              <div x-show="builder.utilityType === 'CRRA'" class="md:col-span-2">
+                <label class="fg-label">Apply risk preference to</label>
+                <select x-model="builder.cfg.riskMode" class="fg-input">
+                  <option value="score">Score only — transform payoffs post-hoc, agent isn't told (default)</option>
+                  <option value="prompt">Prompt only — describe risk aversion to the agent, shapes its choices</option>
+                  <option value="both">Both — describe AND transform the score</option>
+                </select>
+                <p class="fg-help">"Prompt" turns CRRA into a behavioural treatment: the agent is told it is risk-averse and the score is left untransformed. Prompt-side framing is only available for CRRA; Fehr-Schmidt always applies to the score.</p>
+              </div>
+              <div x-show="builder.utilityType === 'FehrSchmidt'">
+                <label class="fg-label">α (envy weight)</label>
+                <input type="number" step="0.05" min="0" x-model.number="builder.utilityParams.alpha" class="fg-input"/>
+              </div>
+              <div x-show="builder.utilityType === 'FehrSchmidt'">
+                <label class="fg-label">β (guilt weight)</label>
+                <input type="number" step="0.05" min="0" x-model.number="builder.utilityParams.beta" class="fg-input"/>
+              </div>
+              <p x-show="builder.utilityType === 'FehrSchmidt'" class="fg-help md:col-span-2 -mt-1">Inequity aversion is applied to the score only — the agent is not told. (Prompt-side framing is available for CRRA only.)</p>
+            </div>
+          </div>
+
+          <!-- ================= ZONE 3 · NOT SHOWN TO THE AGENT ================= -->
+          <div class="fg-zone fg-zone-analysis">
+            <span class="fg-zone-eyebrow">Not shown to the agent</span>
+            <p class="fg-help mb-3">The agent never sees any of these. They split into mechanics that govern how a game actually unfolds and metrics that change only how results are evaluated.</p>
+
+            <div class="fg-zone-sub">Game mechanics — affect how play unfolds</div>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <label class="fg-label">Continuation probability</label>
+                <input type="number" step="0.01" min="0" max="1" x-model.number="builder.cfg.continuationProbability" class="fg-input"/>
+                <p class="fg-help">After each round the game continues with this probability (a random game length). Affects how many rounds are actually played; the agents aren't told.</p>
+              </div>
+              <div class="md:col-span-2 p-3 rounded-md border" style="background:var(--surface);border-color:var(--border);">
+                <h4 class="text-sm font-semibold mb-2">Baseline strategy semantics</h4>
+                <p class="fg-help mb-2">Tells canonical <em>baseline</em> agents (Tit-for-Tat, GrimTrigger, …) which strategy keys to read as "cooperate" and "defect". Required when you use baselines in non-PD games. Affects baseline behaviour, not the LLM prompt.</p>
+                <div class="grid md:grid-cols-2 gap-3">
+                  <div>
+                    <label class="fg-label">"Cooperate" maps to</label>
+                    <input type="text" x-model="builder.baselineCooperate" class="fg-input" placeholder="strategy1"/>
+                  </div>
+                  <div>
+                    <label class="fg-label">"Defect" maps to</label>
+                    <input type="text" x-model="builder.baselineDefect" class="fg-input" placeholder="strategy2"/>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="fg-zone-sub mt-5">Analysis &amp; scoring — affect only evaluation</div>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="md:col-span-2">
+                <label class="fg-label">Known equilibria (for scoring)<span class="fg-tip" tabindex="0">?<span class="fg-tip-body">Strategy combinations that are Nash equilibria — no agent can do better by changing alone. Used only to score how often play lands on one; never shown to agents. "auto" computes them with nashpy.</span></span></label>
+                <select x-model="builder.equilibriaMode" class="fg-input">
+                  <option value="none">Don't declare any</option>
+                  <option value="auto">"auto" — compute pure-strategy Nash via nashpy at validation time</option>
+                  <option value="manual">Manual list of combination keys (comma-separated)</option>
+                </select>
+                <input x-show="builder.equilibriaMode === 'manual'"
+                       type="text" x-model="builder.equilibriaCsv" class="fg-input mt-2"
+                       placeholder="combination4, combination1"/>
+                <p class="fg-help">Used only to score results (the equilibrium rate). Never shown to the agents — that would bias them toward the answer.</p>
+              </div>
+              <div>
+                <label class="fg-label">Pareto-optimal sum (optional)</label>
+                <input type="number" step="0.5" x-model.number="builder.cfg.paretoOptimalSum" class="fg-input"/>
+                <p class="fg-help">Sum of payoffs at the Pareto-optimal cell. Lets the welfare report emit an efficiency ratio.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PAYOFF MATRIX -->
+        <div x-show="builder.tab === 'matrix'" class="fg-card p-6">
+          <p class="text-sm text-slate-600 mb-4">Edit the payoff matrix. The grid below covers any 2-agent game; for each combination of strategies you set the payoff each agent receives.</p>
+
+          <div class="fg-section" x-show="advanced" x-cloak>
+            <h3>Payoff variants <span class="text-xs font-normal text-slate-500">(optional — sweep multiple matrices in one configuration)</span></h3>
+            <p class="fg-help mb-2">
+              Define one or more named payoff matrices. On Save, each variant becomes its own runnable configuration named
+              <code>&lt;config name&gt; · &lt;variant name&gt;</code> — keep the configuration name short and the
+              variant names descriptive (<em>mild</em>, <em>harsh</em>, …). Leave this empty for a single-matrix
+              (leaf) configuration.
+            </p>
+            <div class="flex items-center gap-2 flex-wrap mb-1">
+              <template x-for="(v, i) in configsPage.variants" :key="i">
+                <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs cursor-pointer"
+                      :class="configsPage.activeVariantIdx === i ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'"
+                      @click="switchPayoffVariant(i)">
+                  <input type="text" x-model="v.name" class="bg-transparent outline-none text-xs w-20"
+                         :class="configsPage.activeVariantIdx === i ? 'text-white placeholder-blue-200' : 'text-slate-700'"
+                         placeholder="variant name"
+                         @click.stop/>
+                  <button class="text-xs hover:font-bold" @click.stop="removePayoffVariant(i)" title="Remove variant">✕</button>
+                </span>
+              </template>
+              <button class="px-3 py-0.5 text-xs rounded-full border border-slate-300 hover:bg-slate-50"
+                      @click="addPayoffVariant()">+ Add variant</button>
+            </div>
+            <p x-show="configsPage.variants.length > 0" class="fg-help">
+              Editing the grid below saves into the <strong x-text="configsPage.activeVariantIdx !== null ? configsPage.variants[configsPage.activeVariantIdx].name : ''"></strong> variant. Click a chip to switch.
+            </p>
+          </div>
+
+          <div class="fg-section">
+            <h3>Strategies</h3>
+            <p class="fg-help mb-2" x-show="isLLMMode()">Each strategy has a <strong>key</strong> (used internally, language-neutral) and a <strong>display label per language</strong> — the label is what the agent reads in the prompt, so translate it for every language you run.</p>
+            <p class="fg-help mb-2" x-show="!isLLMMode()" x-cloak>Each strategy has a <strong>key</strong> (used internally) and a single display <strong>label</strong> — baselines have no prompt, so one language-neutral label is enough (it's only used in results).</p>
+            <!-- Per-language strategy-label recommendation lists -->
+            <template x-for="lang in builder.cfg.languages" :key="'strat-dl-'+lang">
+              <datalist :id="'sugg-strat-'+lang">
+                <template x-for="s in suggestionsFor('strategy', lang)" :key="s">
+                  <option :value="s"></option>
+                </template>
+              </datalist>
+            </template>
+            <template x-for="(strat, i) in builder.matrix.strategies" :key="i">
+              <div class="border border-slate-200 rounded-md p-3 mb-2">
+                <div class="flex items-center gap-2">
+                  <div class="flex-none w-40">
+                    <label class="fg-label">Key</label>
+                    <input type="text" x-model="strat.key" class="fg-input" placeholder="strategy1"/>
+                  </div>
+                  <button class="text-rose-600 hover:text-rose-800 self-end pb-2 ml-auto"
+                          @click="builder.matrix.strategies.splice(i,1); rebuildCombos()" title="Remove strategy">✕</button>
+                </div>
+                <!-- LLM mode: one label per selected language (mandatory) -->
+                <div class="mt-2" x-show="isLLMMode()">
+                  <label class="fg-label">Display label per language</label>
+                  <p x-show="builder.cfg.languages.length === 0" class="fg-help italic">Pick languages on the Template tab first.</p>
+                  <div class="grid sm:grid-cols-2 gap-2">
+                    <template x-for="lang in builder.cfg.languages" :key="'lbl-'+i+'-'+lang">
+                      <div class="flex items-center gap-2">
+                        <span class="text-base w-6 text-center flex-none" x-text="languageFlag(lang)" :title="lang"></span>
+                        <input type="text" class="fg-input"
+                               x-model="strat.labels[lang]"
+                               :list="'sugg-strat-'+lang"
+                               :placeholder="'Label ('+lang+')'"/>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+                <!-- Baseline mode: a single language-neutral label -->
+                <div class="mt-2" x-show="!isLLMMode()" x-cloak>
+                  <label class="fg-label">Label</label>
+                  <input type="text" class="fg-input"
+                         x-model="strat.labels['en']"
+                         placeholder="e.g. Cooperate"/>
+                </div>
+              </div>
+            </template>
+            <button class="px-4 py-1.5 rounded-md border border-slate-300 text-sm hover:bg-slate-50"
+                    @click="addStrategy()">+ Add strategy</button>
+          </div>
+
+          <div class="fg-section">
+            <h3>Payoff cells</h3>
+            <p class="fg-help mb-2">For every combination of strategies, set the payoff each agent receives. Row = agent 1's choice; column = agent 2's choice. The cell shows <code>(payoff to agent 1, payoff to agent 2)</code>.</p>
+            <div class="overflow-auto">
+              <table class="border-collapse">
+                <thead>
+                  <tr>
+                    <th class="border p-2 bg-slate-50 text-xs"></th>
+                    <template x-for="col in builder.matrix.strategies" :key="col.key">
+                      <th class="border p-2 bg-slate-50 text-xs"
+                          x-text="stratLabel(col) + ' (col)'"></th>
+                    </template>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="row in builder.matrix.strategies" :key="row.key">
+                    <tr>
+                      <td class="border p-2 bg-slate-50 text-xs font-medium"
+                          x-text="stratLabel(row) + ' (row)'"></td>
+                      <template x-for="col in builder.matrix.strategies" :key="col.key">
+                        <td class="border p-1">
+                          <div class="flex gap-1">
+                            <input type="number" step="0.5"
+                                   class="fg-input text-xs w-20"
+                                   :value="cellValue(row.key, col.key, 0)"
+                                   @input="setCellValue(row.key, col.key, 0, $event.target.value)"/>
+                            <input type="number" step="0.5"
+                                   class="fg-input text-xs w-20"
+                                   :value="cellValue(row.key, col.key, 1)"
+                                   @input="setCellValue(row.key, col.key, 1, $event.target.value)"/>
+                          </div>
+                        </td>
+                      </template>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+            <p class="fg-help mt-2">For 3+ agents the engine still understands the schema — open the JSON view tab to add multi-agent combinations.</p>
+          </div>
+
+          <div class="fg-section" x-show="advanced" x-cloak>
+            <h3>Stop-game conditions (optional)</h3>
+            <p class="fg-help mb-2">Comma-separated combination keys that end the game when reached (e.g. <code>combination4</code> for tragedy-of-the-commons in Volunteer's Dilemma).</p>
+            <input type="text" x-model="builder.stopGameWhenCsv" class="fg-input"/>
+          </div>
+        </div>
+
+        <!-- REPRODUCIBILITY -->
+        <div x-show="builder.tab === 'repro'" class="fg-card p-6">
+          <p class="fg-help mb-4">
+            These fields only matter when something in the configuration is
+            <strong>actually stochastic</strong>. The list below highlights which of your current
+            settings consume randomness — if none of them are on, the engine is fully
+            deterministic and seed / seed count are no-ops.
+          </p>
+          <div class="mb-4 p-3 rounded-md bg-slate-50 border border-slate-200 text-sm">
+            <div class="font-medium mb-1">Stochastic features in this configuration</div>
+            <ul class="space-y-0.5">
+              <li :class="builder.personalityMode === 'pool' ? 'text-emerald-700 font-medium' : 'text-slate-400'">
+                <span x-text="builder.personalityMode === 'pool' ? '✓' : '○'"></span>
+                Personality permutations across the pool
+              </li>
+              <li :class="builder.cfg.mixedStrategies ? 'text-emerald-700 font-medium' : 'text-slate-400'">
+                <span x-text="builder.cfg.mixedStrategies ? '✓' : '○'"></span>
+                Mixed strategies (engine samples from the LLM's distribution)
+              </li>
+              <li :class="builder.commStyle?.startsWith('fake') ? 'text-emerald-700 font-medium' : 'text-slate-400'">
+                <span x-text="builder.commStyle?.startsWith('fake') ? '✓' : '○'"></span>
+                Decoy-message generation (random base-10 / base-16 sequences)
+              </li>
+              <li :class="(builder.cfg.continuationProbability || 1) < 1 ? 'text-emerald-700 font-medium' : 'text-slate-400'">
+                <span x-text="(builder.cfg.continuationProbability || 1) < 1 ? '✓' : '○'"></span>
+                Stochastic horizon (continuation probability &lt; 1)
+              </li>
+              <li :class="builder.tournamentMode ? 'text-emerald-700 font-medium' : 'text-slate-400'">
+                <span x-text="builder.tournamentMode ? '✓' : '○'"></span>
+                Tournament pair scheduling
+              </li>
+              <li :class="builder._raw?.agents?.types ? 'text-emerald-700 font-medium' : 'text-slate-400'">
+                <span x-text="builder._raw?.agents?.types ? '✓' : '○'"></span>
+                Bayesian-game type draws
+              </li>
+            </ul>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="fg-label">Master seed<span class="fg-tip" tabindex="0">?<span class="fg-tip-body">Anchors all randomness. The same seed reproduces the exact same run. Only matters when something is stochastic (pools, mixed strategies, decoy messages, random horizon).</span></span></label>
+              <input type="number" x-model.number="builder.cfg.seed" class="fg-input"/>
+              <p class="fg-help">
+                Anchors the random number generator. Same seed → same outcome. The Experiment
+                page offsets this per iteration (<code>seed + iteration_index</code>) so independent
+                iterations differ deterministically.
+              </p>
+            </div>
+            <div>
+              <label class="fg-label">Seed count<span class="fg-tip" tabindex="0">?<span class="fg-tip-body">Averages the run over N internal seeds in one go, emitting mean ± 95% CI columns. Different from the Experiment page's "iterations" (which produce N separate runs).</span></span></label>
+              <input type="number" min="1" x-model.number="builder.cfg.seedCount" class="fg-input"/>
+              <p class="fg-help">
+                Engine-side multi-seed averaging within a single Run. Set to N&gt;1 and the
+                engine reruns internally with N child seeds, emitting aggregated
+                <code>mean ± 95% CI</code> columns. Distinct from the Experiment page's
+                <em>iterations</em> (which produce N separate Runs).
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- JSON VIEW -->
+        <div x-show="builder.tab === 'json'" class="fg-card p-6">
+          <div class="flex items-center justify-between gap-3 flex-wrap mb-2">
+            <p class="text-sm text-slate-600">Raw config JSON. It's regenerated from your inputs whenever you open this tab; edit it here and apply it back to the form if you prefer.</p>
+            <div class="flex gap-2 flex-none">
+              <button class="px-3 py-1.5 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+                      @click="refreshBuilderJson()" title="Rebuild the JSON from the current form inputs">
+                ↻ Update from form
+              </button>
+              <button class="px-3 py-1.5 rounded-md border border-slate-300 text-sm hover:bg-slate-50"
+                      @click="syncJsonToForm()" title="Parse the JSON below and load it back into the form">
+                ↧ Apply to form
+              </button>
+            </div>
+          </div>
+          <textarea x-model="builder.json"
+                    @blur="syncJsonToForm()"
+                    class="w-full border border-slate-300 rounded-md px-3 py-2 font-mono text-xs h-96"></textarea>
+        </div>
+
+        <!-- SAVE BAR -->
+        <div class="fg-card p-4 mt-4 flex items-center gap-3 flex-wrap">
+          <button class="px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+                  :disabled="!configsPage_canSave"
+                  @click="saveConfiguration()">
+            <span x-text="configsPage.editing ? '💾 Update' : '💾 Save'"></span>
+          </button>
+          <button x-show="configsPage.editing" class="px-4 py-2 rounded-md border border-slate-300 text-sm"
+                  @click="resetConfigDraft()">Cancel edit</button>
+          <button class="px-4 py-2 rounded-md border border-slate-300 text-sm hover:bg-slate-50"
+                  @click="downloadJson(buildConfig(), (configsPage.draft.name||'scenario')+'.json')">
+            Download config JSON ↓
+          </button>
+          <span class="text-xs text-amber-700" x-show="builderIncompleteReason()" x-cloak
+                x-text="builderIncompleteReason()"></span>
+          <span class="text-xs text-slate-500 ml-auto" x-text="agentSummary()"></span>
+        </div>
+
+        <div x-show="configsPage.error" class="mt-3 p-3 bg-rose-50 border border-rose-200 rounded text-rose-800 text-sm" x-text="configsPage.error"></div>
+
+        <!-- List of saved configurations -->
+        <!-- ============= SAVED LIST ============= -->
+        <div class="flex items-center justify-between mt-8 mb-2 gap-3 flex-wrap">
+          <h2 class="text-xl font-bold tracking-tight">Saved configurations</h2>
+          <div>
+            <input type="file" accept=".json,application/json" class="hidden"
+                   x-ref="importFile" @change="importConfiguration($event)"/>
+            <button class="px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 inline-flex items-center gap-2"
+                    :disabled="configsPage.importing"
+                    @click="$refs.importFile.click()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14a2 2 0 0 0 2-2v-4"/></svg>
+              <span x-text="configsPage.importing ? 'Importing…' : 'Import configuration'"></span>
+            </button>
+          </div>
+        </div>
+        <p class="text-slate-600 text-sm mb-3">Click <em>Edit</em> to load any of these into the form above (prefilled, ready to tweak). To actually run one, head to <a class="text-blue-600 underline" @click.prevent="activePage='experiment'" href="#">Experiment</a>. <strong>Export</strong> any configuration to download it bundled with its results; <strong>Import</strong> brings that bundle into this instance.</p>
+
+        <div x-show="configsPage.importMsg" x-transition
+             class="fg-card p-3 mb-3 text-sm flex items-start gap-2"
+             style="background:#ecfdf5;border-color:#c7f0dc;color:#047857;">
+          <svg class="mt-0.5 flex-none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          <span x-text="configsPage.importMsg"></span>
+        </div>
+        <div x-show="configsPage.importError" x-transition
+             class="fg-card p-3 mb-3 text-sm flex items-start gap-2"
+             style="background:#fef2f2;border-color:#fecaca;color:#b91c1c;">
+          <span x-text="configsPage.importError"></span>
+        </div>
+        <div class="fg-card p-6">
+          <div x-show="configurations.length === 0"
+               class="fg-card p-4 text-sm text-slate-700 bg-blue-50 border-blue-200">
+            <strong>No configurations yet.</strong> Build one with the form above.<span x-show="communityUrl"> Or explore
+            published FAIRGAME experiments — with ready-to-use configs and results — on the
+            <a class="text-blue-600 underline" :href="communityUrl" target="_blank" rel="noopener">FAIRGAME community website ↗</a>.</span>
+          </div>
+
+          <div class="space-y-2">
+            <template x-for="cfg in pagedConfigurations()" :key="cfg.id">
+              <div class="border border-slate-200 rounded-md">
+                <div class="p-3 flex items-center gap-3">
+                  <div class="flex-1">
+                    <div class="font-medium flex items-center gap-2">
+                      <span x-text="cfg.name"></span>
+                      <span x-show="isGroupConfig(cfg)" class="fg-pill fg-pill-violet"
+                            x-text="(cfg.variations || []).length + ' payoffs'"></span>
+                    </div>
+                    <div class="text-xs text-slate-500">
+                      <code x-text="cfg.id"></code>
+                      · <span x-text="cfg.created_at"></span>
+                      · <span x-text="gameTypeName(cfg.game_type_id) + ' / ' + cfg.variation"></span>
+                      · <span x-text="cfg.languages.map(l => languageFlag(l)).join(' ') + ' (' + cfg.languages.join(', ') + ')'"></span>
+                    </div>
+                  </div>
+                  <button x-show="resultsForConfig(cfg.id).length" class="fg-pill fg-pill-blue hover:opacity-80"
+                          @click="viewConfigResults(cfg.id)"
+                          x-text="resultsForConfig(cfg.id).length + ' results'"
+                          title="View the results linked to this configuration"></button>
+                  <button class="text-blue-600 hover:underline text-sm" @click="loadConfigForEdit(cfg)">Edit</button>
+                  <button class="text-emerald-700 hover:underline text-sm" @click="cloneConfiguration(cfg.id)">Clone</button>
+                  <a class="text-slate-600 hover:underline text-sm" :href="`/api/configurations/${cfg.id}/export`"
+                     :download="`fairgame_${cfg.name}.fgbundle.json`" title="Download this configuration bundled with its results">Export</a>
+                  <button class="text-rose-600 hover:underline text-sm" @click="deleteConfiguration(cfg.id)">Delete</button>
+                </div>
+                <div x-show="isGroupConfig(cfg)" class="border-t border-slate-200 bg-slate-50 px-3 py-2">
+                  <div class="text-xs uppercase tracking-wider text-slate-500 mb-1">Payoff variants</div>
+                  <ul class="text-sm text-slate-700 space-y-0.5">
+                    <template x-for="v in (cfg.variations || [])" :key="v.name">
+                      <li>
+                        <span class="text-slate-400">└─</span>
+                        <code x-text="cfg.name + ' · ' + v.name"></code>
+                      </li>
+                    </template>
+                  </ul>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Pager: browse saved configurations a page at a time -->
+          <div x-show="configurations.length > configsPage.perPage"
+               class="flex items-center justify-center gap-2 mt-5 flex-wrap">
+            <button class="px-3 py-1 text-sm rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                    :disabled="configsPage.page <= 1" @click="goToConfigsPage(configsPage.page - 1)">← Prev</button>
+            <template x-for="p in configsTotalPages()" :key="p">
+              <button class="px-3 py-1 text-sm rounded-md border"
+                      :class="p === configsPage.page
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'border-slate-300 text-slate-600 hover:bg-slate-100'"
+                      @click="goToConfigsPage(p)" x-text="p"></button>
+            </template>
+            <button class="px-3 py-1 text-sm rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                    :disabled="configsPage.page >= configsTotalPages()" @click="goToConfigsPage(configsPage.page + 1)">Next →</button>
+            <span class="text-xs text-slate-400 ml-2"
+                  x-text="`page ${configsPage.page} / ${configsTotalPages()}`"></span>
+          </div>
+        </div>
+      </section>

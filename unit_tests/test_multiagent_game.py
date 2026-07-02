@@ -1,8 +1,8 @@
 import unittest
 from pathlib import Path
 
-from src.io_managers.io_manager import IoManager
 from src.fairgame_factory import FairGameFactory
+from src.io_managers.io_manager import IoManager
 
 
 class PayoffCalculator:
@@ -15,7 +15,7 @@ class PayoffCalculator:
       2. Determine the combination name for the chosen strategies.
       3. Retrieve the corresponding weight keys for that combination.
       4. Convert the weight keys into their numeric payoff values.
-    
+
     If any step in this chain fails, a default zero payoff is returned.
     """
 
@@ -32,7 +32,7 @@ class PayoffCalculator:
     def _get_strategy_map(self) -> dict:
         """
         Reverse the 'strategies' mapping in the configuration.
-        
+
         Returns:
             dict: A reverse mapping from literal representation to internal key.
                   For example, {"OptionA": "strategy1"}.
@@ -159,10 +159,10 @@ class TestMultiAgentConfigFile(unittest.TestCase):
         consistent access to file locations.
         """
         cls.BASE_PATH = Path(__file__).resolve().parent
-        cls.CONFIG_DIR = cls.BASE_PATH / 'config'
-        cls.CONFIG_FILE_VOLUNTEER_DILEMMA = cls.CONFIG_DIR / 'volunteer_dilemma_one_game.json'
+        cls.CONFIG_DIR = cls.BASE_PATH / "config"
+        cls.CONFIG_FILE_VOLUNTEER_DILEMMA = cls.CONFIG_DIR / "volunteer_dilemma_one_game.json"
         cls.CONFIG_FILE_VOLUNTEER_DILEMMA_PERMUTATIONS = (
-            cls.CONFIG_DIR / 'volunteer_dilemma_multiple_games.json'
+            cls.CONFIG_DIR / "volunteer_dilemma_multiple_games.json"
         )
 
     def setUp(self):
@@ -192,8 +192,9 @@ class TestMultiAgentConfigFile(unittest.TestCase):
         payoff structure.
         """
         config = self._load_and_validate_config(self.CONFIG_FILE_VOLUNTEER_DILEMMA)
-        self.assertIn('matrix', config['payoffMatrix'], 
-                      msg="The 'payoffMatrix' must contain a 'matrix' key.")
+        self.assertIn(
+            "matrix", config["payoffMatrix"], msg="The 'payoffMatrix' must contain a 'matrix' key."
+        )
 
     def test_create_one_game(self):
         """
@@ -202,24 +203,28 @@ class TestMultiAgentConfigFile(unittest.TestCase):
         """
         config = self._load_and_validate_config(self.CONFIG_FILE_VOLUNTEER_DILEMMA)
         games = self.game_factory.create_games(config)
-        self.assertEqual(len(games), 1, 
-                         msg="Expected exactly one game to be created.")
+        self.assertEqual(len(games), 1, msg="Expected exactly one game to be created.")
 
     def test_create_multiple_games(self):
         """
         Verify that a configuration supporting multiple permutations leads to
         the correct number of created games.
 
-        With 3 agents and 2 personalities, ``combinations_with_replacement``
-        yields 4 personality combos. The opponent-prob axis (2 values across
-        3 agents) likewise yields 4 combos. 4 x 4 = 16 dedup'd games when
-        every agent shares the same LLM.
+        Each agent's assignment is the JOINT pair (personality, opponent-prob).
+        With 2 personalities x 2 prob values there are 4 distinct joint
+        per-agent attributes; for 3 agents sharing one LLM the symmetric
+        reduction is ``combinations_with_replacement(4, 3) = 20`` games.
+
+        (The previous expectation of 16 reduced each axis *independently* and
+        then crossed them — 4 x 4 — which silently dropped genuinely distinct
+        joint assignments. See the permutation-expander axis-coupling fix.)
         """
         config = self.io_manager.load_config(self.CONFIG_FILE_VOLUNTEER_DILEMMA_PERMUTATIONS)
         games = self.game_factory.create_games(config)
         self.assertEqual(
-            len(games), 16,
-            msg="Expected 16 games from the multiple-game configuration.",
+            len(games),
+            20,
+            msg="Expected 20 games from the multiple-game configuration.",
         )
 
     def test_run_single_game(self):
@@ -237,18 +242,19 @@ class TestMultiAgentConfigFile(unittest.TestCase):
         outcomes = self.game_factory.create_and_run_games(config)
 
         # Extract outcomes from the first round of the first game (named 'game_0').
-        round1_outcomes = outcomes['game_0']['history']['round_1']
-        scores = [outcome['score'] for outcome in round1_outcomes]
-        decisions = [outcome['strategy'] for outcome in round1_outcomes]
+        round1_outcomes = outcomes["game_0"]["history"]["round_1"]
+        scores = [outcome["score"] for outcome in round1_outcomes]
+        decisions = [outcome["strategy"] for outcome in round1_outcomes]
 
         # Use PayoffCalculator to derive expected payoffs.
         calculator = PayoffCalculator(config)
         calculated_payoffs = calculator.get_payoffs(decisions)
 
         # Validate that the game engine's recorded scores match the calculated payoffs.
-        self.assertEqual(scores, calculated_payoffs,
-                        msg="Recorded scores should match the calculated payoffs.")
+        self.assertEqual(
+            scores, calculated_payoffs, msg="Recorded scores should match the calculated payoffs."
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

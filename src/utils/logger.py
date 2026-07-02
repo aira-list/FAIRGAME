@@ -10,14 +10,13 @@ from __future__ import annotations
 import logging
 import os
 import sys
-from typing import Optional
 
 _DEFAULT_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 _CONFIGURED = False
 
 
 def configure_logging(
-    level: Optional[str] = None,
+    level: str | None = None,
     fmt: str = _DEFAULT_FORMAT,
     force: bool = False,
 ) -> None:
@@ -45,7 +44,7 @@ def configure_logging(
     root.addHandler(handler)
 
     # Quiet noisy third-party loggers we don't own.
-    for noisy in ("urllib3", "botocore", "s3fs", "aiobotocore", "httpx"):
+    for noisy in ("urllib3", "httpx"):
         logging.getLogger(noisy).setLevel(logging.WARNING)
 
     _CONFIGURED = True

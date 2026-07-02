@@ -1,100 +1,90 @@
+from __future__ import annotations
+
+from typing import Any
+
+from src.utils.utils import round_index
+
+# One round's records, keyed by agent name; each agent maps field name -> value.
+RoundData = dict[str, dict[str, Any]]
+
 
 class GameHistory:
-    """
-    Manages round-by-round history data.
-    The round data structure is maintained as a dictionary.
-    """
+    """Round-by-round history, stored as a ``{round_key: {agent: {field: value}}}`` dict."""
 
-    def __init__(self):
-        """
-        Initialize the GameHistory with an empty rounds dictionary.
-        """
-        self.rounds = {}
+    # Audit-only fields recorded for results/output but NEVER fed back into a
+    # prompt. They hold full rendered prompts, which themselves embed the
+    # ``{history}`` placeholder; echoing them into the next round's prompt
+    # re-embeds all prior prompts and makes the history grow exponentially
+    # (a 5-round ToM-2 game ballooned to ~21 GB). See ``prompt_view``.
+    _PROMPT_ONLY_FIELDS = ("belief_prompt", "belief_2nd_order_prompt")
 
-    def update_round(self, round_number, agent_name, data):
-        """
-        Update the record for a specific round and agent with new data.
+    def __init__(self) -> None:
+        self.rounds: dict[str, RoundData] = {}
 
-        Args:
-            round_number (int): The round index to update.
-            agent_name (str): The identifier of the agent.
-            data (dict): The data to store for this agent in this round.
-        """
-        round_key = f'round_{round_number}'
+    def update_round(self, round_number: int, agent_name: str, data: dict[str, Any]) -> None:
+        """Merge ``data`` into the record for ``agent_name`` in the given round."""
+        round_key = f"round_{round_number}"
         if round_key not in self.rounds:
             self.rounds[round_key] = {}
         self.rounds[round_key].setdefault(agent_name, {}).update(data)
 
-    def get_round_data(self, round_number):
-        """
-        Retrieve data for a specific round.
+    def prompt_view(self) -> dict[str, RoundData]:
+        """Return a history view safe to embed in a prompt via ``{history}``.
 
-        Args:
-            round_number (int): The round index.
-
-        Returns:
-            dict: A dictionary of agent data for the specified round.
+        Excludes the bulky ``*_prompt`` audit fields (see
+        :attr:`_PROMPT_ONLY_FIELDS`) so rendering the history into a new
+        prompt never re-embeds prior prompts — which would grow the history
+        exponentially round over round. The underlying :attr:`rounds` is not
+        mutated; ``describe()`` still exposes the full record for output.
         """
-        return self.rounds.get(f'round_{round_number}', {})
-
-    def get_last_round_choices(self):
-        """
-        Retrieve the strategies chosen by each agent in the last recorded round.
-
-        Returns:
-            dict or None: A dict mapping agent names to their 'strategy' choice in
-                          the last round, or None if no rounds have been recorded.
-        """
-        if not self.rounds:
-            return None
-        last_round_key = max(self.rounds.keys(), key=lambda k: int(k.split('_')[1]))
-        return {agent: outcome.get('strategy')
-                for agent, outcome in self.rounds[last_round_key].items()}
+        return {
+            round_key: {
+                agent_name: {k: v for k, v in data.items() if k not in self._PROMPT_ONLY_FIELDS}
+                for agent_name, data in agents_data.items()
+            }
+            for round_key, agents_data in self.rounds.items()
+        }
 
     @property
-    def all_rounds(self):
-        """
-        dict: All round data stored so far.
-        """
+    def all_rounds(self) -> dict[str, RoundData]:
+        """All round data stored so far."""
         return self.rounds
-    
-    def __str__(self):
-        """
-        String representation of the entire history dictionary.
-        """
+
+    def __str__(self) -> str:
         return str(self.rounds)
 
-    def describe(self):
-        """
-        Returns a dict where keys are round strings like 'round_1', 'round_2', etc.
-        Each value is a list of agent data dictionaries.
+    def describe(self) -> dict[str, list[dict[str, Any]]]:
+        """Return an ordered, round-keyed summary.
 
-        Returns:
-            dict: A round-keyed dictionary describing the game history.
+        Keys are round strings (``'round_1'``, ``'round_2'``, ...) in numeric
+        order; each value is a list of per-agent record dicts.
         """
-        summary = {}
-        
+        summary: dict[str, list[dict[str, Any]]] = {}
+
         # Sort round keys by the numeric part to ensure correct ordering
-        sorted_round_keys = sorted(self.rounds.keys(),
-                                   key=lambda k: int(k.split('_')[1]))
-        
+        sorted_round_keys = sorted(self.rounds.keys(), key=round_index)
+
         for round_key in sorted_round_keys:
             agents_data = self.rounds[round_key]
-            round_list = []
-            
+            round_list: list[dict[str, Any]] = []
+
             for agent_name, data in agents_data.items():
-                round_list.append({
-                    "agent": agent_name,
-                    "message": data.get("message"),
-                    "message_prompt": data.get("message_prompt"),
-                    "choice_prompt": data.get("choice_prompt"),
-                    "strategy": data.get("strategy"),
-                    "score": data.get("score"),
-                    "belief": data.get("belief"),
-                    "belief_prompt": data.get("belief_prompt"),
-                    "mixed_distribution": data.get("mixed_distribution"),
-                })
-            
+                round_list.append(
+                    {
+                        "agent": agent_name,
+                        "message": data.get("message"),
+                        "strategy": data.get("strategy"),
+                        "score": data.get("score"),
+                        "belief": data.get("belief"),
+                        "belief_prompt": data.get("belief_prompt"),
+                        "belief_2nd_order": data.get("belief_2nd_order"),
+                        "belief_2nd_order_prompt": data.get("belief_2nd_order_prompt"),
+                        "mixed_distribution": data.get("mixed_distribution"),
+                        "trust_action": data.get("trust_action"),
+                        "trust_cost": data.get("trust_cost"),
+                    }
+                )
+
             summary[round_key] = round_list
-        
+
         return summary

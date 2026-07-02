@@ -2,35 +2,20 @@
 
 * Installs a deterministic fake LLM connector for every model name the
   test configurations reference (skip with ``FAIRGAME_LIVE_LLM=1``).
-* Strips any S3 credentials the developer may have in their ``.env`` so
-  tests can never hit a live bucket (skip with ``FAIRGAME_LIVE_S3=1``).
 """
 
 from __future__ import annotations
 
 import os
 import re
-from typing import List
 
 import pytest
 
 from src.llm_connectors import register_model
 from src.llm_connectors.abstract_connector import AbstractConnector
 
-# Clear S3-related env vars at import time so dotenv-loaded credentials
-# from a developer's ``.env`` don't leak into the test process.
-if os.getenv("FAIRGAME_LIVE_S3") != "1":
-    for _key in (
-        "S3_ENDPOINT",
-        "S3_KEY",
-        "S3_SECRET",
-        "BUCKET_NAME",
-        "S3_PREFIX",
-    ):
-        os.environ.pop(_key, None)
-
 # Model names referenced by configs in unit_tests/config and resources/config.
-_TEST_MODEL_NAMES: List[str] = [
+_TEST_MODEL_NAMES: list[str] = [
     "Claude35Sonnet",
     "Claude4Sonnet",
     "MistralLarge",
@@ -70,6 +55,10 @@ class _DeterministicFakeConnector(AbstractConnector):
         self.provider_model = provider_model
 
     def _send_prompt(self, prompt: str) -> str:
+        # Recognise the trust monitoring-decision prompt (offers LOOK/NO_LOOK)
+        # and always elect to LOOK so tests exercise the cost + gating path.
+        if "LOOK" in prompt and "NO_LOOK" in prompt:
+            return "LOOK"
         # Recognise the belief-elicitation prompt and return a valid JSON.
         if self._is_belief_prompt(prompt):
             return self._fake_belief_json(prompt)
@@ -83,7 +72,10 @@ class _DeterministicFakeConnector(AbstractConnector):
 
     @staticmethod
     def _is_belief_prompt(prompt: str) -> bool:
-        return "JSON" in prompt and "probability" in prompt.lower() or "predict" in prompt.lower()
+        # Parenthesized deliberately: without them this parsed as
+        # (JSON and probability) or predict, which classified ANY prompt
+        # containing the word "predict" as a belief prompt suite-wide.
+        return "JSON" in prompt and ("probability" in prompt.lower() or "predict" in prompt.lower())
 
     def _fake_belief_json(self, prompt: str) -> str:
         # Pull the labels out of the JSON example in the prompt; if that

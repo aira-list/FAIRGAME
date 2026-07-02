@@ -56,7 +56,7 @@ class TestConfigureLogging(_LoggerTestBase):
 
     def test_quiets_known_noisy_loggers(self) -> None:
         logger_module.configure_logging(level="DEBUG")
-        for noisy in ("urllib3", "botocore", "s3fs", "aiobotocore", "httpx"):
+        for noisy in ("urllib3", "httpx"):
             self.assertEqual(
                 logging.getLogger(noisy).level,
                 logging.WARNING,
@@ -95,8 +95,7 @@ class TestEnvVarFallback(_LoggerTestBase):
 
     def test_unset_env_var_falls_back_to_info(self) -> None:
         env_without_level = {
-            k: v for k, v in __import__("os").environ.items()
-            if k != "FAIRGAME_LOG_LEVEL"
+            k: v for k, v in __import__("os").environ.items() if k != "FAIRGAME_LOG_LEVEL"
         }
         with mock.patch.dict("os.environ", env_without_level, clear=True):
             logger_module.configure_logging(force=True)

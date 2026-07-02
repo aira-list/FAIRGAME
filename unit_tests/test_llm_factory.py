@@ -7,17 +7,17 @@ import unittest
 from unittest import mock
 
 from src.llm_connectors import (
-    ChatModelFactory,
     MODEL_PROVIDER_MAP,
+    ChatModelFactory,
     execute_prompt,
     register_model,
 )
 from src.llm_connectors.abstract_connector import AbstractConnector
 
-
 # ---------------------------------------------------------------------------
 # Test-only connectors
 # ---------------------------------------------------------------------------
+
 
 class _RecordingConnector(AbstractConnector):
     """Records prompts and returns a canned response."""
@@ -81,20 +81,29 @@ class _NonRetryableErrorConnector(AbstractConnector):
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 class _RegistryIsolation(unittest.TestCase):
     """Snapshot the registry around each test so mutations don't leak."""
 
     def setUp(self) -> None:
+        from src.llm_connectors.llm_factory_connector import _CONNECTOR_OVERRIDES
+
         self._snapshot = dict(MODEL_PROVIDER_MAP)
+        self._overrides_snapshot = dict(_CONNECTOR_OVERRIDES)
 
     def tearDown(self) -> None:
+        from src.llm_connectors.llm_factory_connector import _CONNECTOR_OVERRIDES
+
         MODEL_PROVIDER_MAP.clear()
         MODEL_PROVIDER_MAP.update(self._snapshot)
+        _CONNECTOR_OVERRIDES.clear()
+        _CONNECTOR_OVERRIDES.update(self._overrides_snapshot)
 
 
 # ---------------------------------------------------------------------------
 # ChatModelFactory.get_model
 # ---------------------------------------------------------------------------
+
 
 class TestGetModel(_RegistryIsolation):
     def test_unknown_model_raises_value_error_with_known_list(self) -> None:
@@ -121,6 +130,7 @@ class TestGetModel(_RegistryIsolation):
 # register_model
 # ---------------------------------------------------------------------------
 
+
 class TestRegisterModel(_RegistryIsolation):
     def test_register_adds_to_map(self) -> None:
         register_model("NewName", _RecordingConnector, "x")
@@ -129,13 +139,13 @@ class TestRegisterModel(_RegistryIsolation):
     def test_register_overrides_existing(self) -> None:
         register_model("Name", _RecordingConnector, "v1")
         register_model("Name", _RecordingConnector, "v2")
-        loader, model = MODEL_PROVIDER_MAP["Name"]
-        self.assertEqual(model, "v2")
+        self.assertEqual(MODEL_PROVIDER_MAP["Name"], "v2")
 
 
 # ---------------------------------------------------------------------------
 # execute_prompt happy path
 # ---------------------------------------------------------------------------
+
 
 class TestExecutePromptHappyPath(_RegistryIsolation):
     def test_returns_connector_response(self) -> None:
@@ -148,17 +158,17 @@ class TestExecutePromptHappyPath(_RegistryIsolation):
         self.assertEqual(execute_prompt("Recorder", "first"), "ok")
         self.assertEqual(execute_prompt("Recorder", "second"), "ok")
         # Per-call instance, so no shared state — but each instance got
-        # exactly one call. Pulling the latest instance verifies that.
-        loader, _ = MODEL_PROVIDER_MAP["Recorder"]
-        # We can't introspect the instance after the fact; assert via
-        # behaviour: a fresh instance starts with empty calls.
-        instance = loader()()
+        # exactly one call. We can't introspect the instance after the
+        # fact; assert via behaviour: a fresh instance starts with empty
+        # calls.
+        instance = _RecordingConnector("rec-test")
         self.assertEqual(instance.calls, [])
 
 
 # ---------------------------------------------------------------------------
 # Retry behaviour
 # ---------------------------------------------------------------------------
+
 
 class TestRetryBehaviour(_RegistryIsolation):
     def _fast_retries(self) -> dict[str, str]:

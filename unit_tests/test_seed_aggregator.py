@@ -36,6 +36,7 @@ def _frame(values_per_seed: list[float]) -> pd.DataFrame:
 # Existing-behaviour invariants (Normal-approx CI)
 # ---------------------------------------------------------------------------
 
+
 class TestNormalCI(unittest.TestCase):
     def test_collapses_into_one_row_per_configuration(self) -> None:
         agg = aggregate_seeds(_frame([1.0, 2.0, 3.0, 4.0, 5.0]))
@@ -63,6 +64,7 @@ class TestNormalCI(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # t-distribution CI (new feature)
 # ---------------------------------------------------------------------------
+
 
 class TestTDistributionCI(unittest.TestCase):
     def test_use_t_widens_ci_for_small_samples(self) -> None:
@@ -103,18 +105,15 @@ class TestTDistributionCI(unittest.TestCase):
     def test_confidence_level_widens_ci(self) -> None:
         # Higher confidence → wider CI.
         df = _frame([1.0, 2.0, 3.0, 4.0, 5.0])
-        ci_90 = aggregate_seeds(df, confidence=0.90, use_t=True).iloc[0][
-            "metric_ci_half_width"
-        ]
-        ci_99 = aggregate_seeds(df, confidence=0.99, use_t=True).iloc[0][
-            "metric_ci_half_width"
-        ]
+        ci_90 = aggregate_seeds(df, confidence=0.90, use_t=True).iloc[0]["metric_ci_half_width"]
+        ci_99 = aggregate_seeds(df, confidence=0.99, use_t=True).iloc[0]["metric_ci_half_width"]
         self.assertGreater(ci_99, ci_90)
 
 
 # ---------------------------------------------------------------------------
 # Edge cases
 # ---------------------------------------------------------------------------
+
 
 class TestEdgeCases(unittest.TestCase):
     def test_no_seed_column_returns_input_copy(self) -> None:

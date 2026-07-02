@@ -13,8 +13,9 @@ LLMs frequently wrap the JSON in prose. The parser:
 from __future__ import annotations
 
 import json
-from typing import Dict, Mapping
+from collections.abc import Mapping
 
+from src.payoff_matrix import label_to_key_map
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -51,7 +52,7 @@ def parse_belief(
     strategies: Mapping[str, str],
     *,
     sum_tolerance: float = 0.05,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Parse a belief response into ``{strategy_key: probability}``.
 
     Args:
@@ -74,17 +75,17 @@ def parse_belief(
 
     blob = _extract_json_blob(response)
     try:
-        raw: Dict[str, object] = json.loads(blob)
+        raw: dict[str, object] = json.loads(blob)
     except json.JSONDecodeError as exc:
         raise BeliefParseError(f"Invalid JSON in belief response: {exc}") from exc
 
     if not isinstance(raw, dict) or not raw:
         raise BeliefParseError("Belief response must be a non-empty JSON object.")
 
-    label_to_key = {label.lower(): key for key, label in strategies.items()}
+    label_to_key = {label.lower(): key for label, key in label_to_key_map(strategies).items()}
     key_to_label = dict(strategies)
 
-    distribution: Dict[str, float] = {}
+    distribution: dict[str, float] = {}
     for raw_key, raw_value in raw.items():
         try:
             probability = float(raw_value)
@@ -110,9 +111,7 @@ def parse_belief(
         raise BeliefParseError("Belief probabilities sum to zero.")
 
     if abs(total - 1.0) > 5 * sum_tolerance:
-        raise BeliefParseError(
-            f"Belief probabilities sum to {total:.3f}, expected ~1.0."
-        )
+        raise BeliefParseError(f"Belief probabilities sum to {total:.3f}, expected ~1.0.")
 
     if abs(total - 1.0) > sum_tolerance:
         logger.debug("Re-normalising belief distribution from sum=%.3f", total)

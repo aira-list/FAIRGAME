@@ -18,8 +18,9 @@ researcher reach for whichever the reviewers prefer.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -37,11 +38,11 @@ class ComparisonResult:
     mannwhitney_u: float | None
     mannwhitney_p: float | None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
-def extract_numeric(df: pd.DataFrame, column: str) -> List[float]:
+def extract_numeric(df: pd.DataFrame, column: str) -> list[float]:
     """Pull ``column`` out of ``df`` as a list of floats, dropping NaN/non-numeric."""
     if column not in df.columns:
         return []
@@ -120,26 +121,21 @@ def compare_metrics(
     """
     method = correction.lower()
     if method not in {"none", "bonferroni", "holm"}:
-        raise ValueError(
-            f"Unknown correction {correction!r}. "
-            "Use 'none', 'bonferroni', or 'holm'."
-        )
+        raise ValueError(f"Unknown correction {correction!r}. Use 'none', 'bonferroni', or 'holm'.")
 
-    rows: List[Dict[str, Any]] = [
-        compare_metric(df_a, df_b, m).to_dict() for m in metrics
-    ]
+    rows: list[dict[str, Any]] = [compare_metric(df_a, df_b, m).to_dict() for m in metrics]
     welch_raw = [r["welch_p"] for r in rows]
     mw_raw = [r["mannwhitney_p"] for r in rows]
     welch_adj = _adjust_pvalues(welch_raw, method)
     mw_adj = _adjust_pvalues(mw_raw, method)
-    for row, w, m_ in zip(rows, welch_adj, mw_adj):
+    for row, w, m_ in zip(rows, welch_adj, mw_adj, strict=True):
         row["welch_p_adjusted"] = w
         row["mannwhitney_p_adjusted"] = m_
         row["correction"] = method
     return pd.DataFrame(rows)
 
 
-def _adjust_pvalues(raw: List[Optional[float]], method: str) -> List[Optional[float]]:
+def _adjust_pvalues(raw: list[float | None], method: str) -> list[float | None]:
     """Apply the chosen multiple-comparison correction in place.
 
     Implements three rules:
@@ -165,7 +161,7 @@ def _adjust_pvalues(raw: List[Optional[float]], method: str) -> List[Optional[fl
         ((p, i) for i, p in enumerate(raw) if p is not None),
         key=lambda t: t[0],
     )
-    adjusted: List[Optional[float]] = list(raw)
+    adjusted: list[float | None] = list(raw)
     running_max = 0.0
     for rank, (p, idx) in enumerate(indexed):
         candidate = p * (n - rank)
@@ -174,7 +170,7 @@ def _adjust_pvalues(raw: List[Optional[float]], method: str) -> List[Optional[fl
     return adjusted
 
 
-def default_comparison_metrics(df: pd.DataFrame) -> List[str]:
+def default_comparison_metrics(df: pd.DataFrame) -> list[str]:
     """Pick a reasonable default set of scalar metrics to compare."""
     candidates = [
         "welfare_mean_sum",

@@ -1,39 +1,21 @@
+# Example values for the FAIRGAME Helm chart. Replace the registry and host
+# placeholders with your own before deploying.
 image:
-  repository: artefacts.list.lu/aida/ai-sandbox/fairgame
+  repository: registry.example.com/your-org/fairgame
   tag: dev
   pullPolicy: Always
-  pullSecret: artefactory-secret
+  pullSecret: registry-pull-secret
 
 service:
   type: ClusterIP
-  port: 8000
+  port: 4263  # "GAME" on a phone keypad — matches the app's default port
 
 ingress:
   enabled: true
   annotations:
     kubernetes.io/ingress.class: public
   rules:
-    - host: ai-sandbox-fairgame.isp-cap-n11.private.list.lu
-      http:
-        paths:
-          - backend:
-              service:
-                name: fairgame
-                port:
-                  name: http
-            path: /
-            pathType: Prefix
-    - host: ai-sandbox-fairgame.isp-cap-n13.private.list.lu
-      http:
-        paths:
-          - backend:
-              service:
-                name: fairgame
-                port:
-                  name: http
-            path: /
-            pathType: Prefix
-    - host: ai-sandbox-fairgame.isp-cap-n15.private.list.lu
+    - host: fairgame.example.com
       http:
         paths:
           - backend:
@@ -45,14 +27,8 @@ ingress:
             pathType: Prefix
   tls:
     - hosts:
-        - ai-sandbox-fairgame.isp-cap-n11.private.list.lu
-      secretName: subdomains-tls-generic
-    - hosts:
-        - ai-sandbox-fairgame.isp-cap-n13.private.list.lu
-      secretName: subdomains-tls-generic
-    - hosts:
-        - ai-sandbox-fairgame.isp-cap-n15.private.list.lu
-      secretName: subdomains-tls-generic
+        - fairgame.example.com
+      secretName: fairgame-tls
 
 resources:
   {}

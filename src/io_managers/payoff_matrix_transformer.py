@@ -1,5 +1,3 @@
-
-
 class PayoffMatrixTransformer:
     """
     Handles transformation and validation of the payoffMatrix field.
@@ -18,18 +16,26 @@ class PayoffMatrixTransformer:
         If the payoffMatrix does not have the required keys in correct structure,
         transform it to the necessary structure.
         """
+        if "payoffMatrix" not in config_data:
+            raise KeyError("Config is missing required key 'payoffMatrix'.")
         original_matrix = config_data["payoffMatrix"]
+        # Name the specific absent key instead of letting a bare ``["weights"]``
+        # raise an opaque KeyError that the caller then rewraps as a confusing
+        # "validation failed after transformation".
+        for required in ("weights", "strategies", "combinations"):
+            if required not in original_matrix:
+                raise KeyError(f"payoffMatrix is missing required key {required!r}.")
         updated_payoff_matrix = {
             "weights": original_matrix["weights"],
             "strategies": original_matrix["strategies"],
             "combinations": {},
-            "matrix": {}
+            "matrix": {},
         }
 
         # Iterate over each combination to split pairs into strategies & weights.
         for comb_key, pairs in original_matrix["combinations"].items():
             strategies = [pair[0] for pair in pairs]  # Extract strategy
-            weights = [pair[1] for pair in pairs]     # Extract weight
+            weights = [pair[1] for pair in pairs]  # Extract weight
 
             updated_payoff_matrix["combinations"][comb_key] = strategies
             updated_payoff_matrix["matrix"][comb_key] = weights

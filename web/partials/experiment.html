@@ -1,0 +1,150 @@
+      <section x-show="activePage === 'experiment'">
+        <h1 class="text-2xl font-semibold mb-1">🧪 Experiment</h1>
+        <p class="text-slate-600 mb-3">
+          Pick one of your saved <strong>Configurations</strong>, choose how many iterations to
+          run, and go. Each iteration becomes a separate Run with its own id, browseable in
+          <a class="text-blue-600 underline" @click.prevent="activePage='results'" href="#">Results</a>.
+        </p>
+        <p class="text-slate-600 text-sm mb-6">
+          Don't see what you want? Save a configuration first in
+          <a class="text-blue-600 underline" @click.prevent="activePage='configurations'" href="#">⚙️ Configurations</a>.
+        </p>
+
+        <!-- Live run progress (driven by the SSE stream) -->
+        <div x-show="experiment.progress.active" x-cloak
+             class="fg-card p-4 mb-6 sticky top-2 z-10 border-blue-200">
+          <div class="flex items-center justify-between mb-2 gap-3">
+            <h3 class="font-semibold text-sm flex items-center gap-2">
+              <svg class="animate-spin text-blue-600" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.2-8.6"/></svg>
+              Running experiment
+            </h3>
+            <span class="text-xs font-mono text-slate-500"
+                  x-text="experiment.progress.total
+                    ? Math.round(100 * experiment.progress.completed / experiment.progress.total) + '%'
+                    : '…'"></span>
+          </div>
+          <div class="w-full h-3 rounded-full bg-slate-200 overflow-hidden">
+            <div class="h-full bg-blue-600 transition-all duration-300 ease-out"
+                 :style="`width: ${experiment.progress.total
+                    ? (100 * experiment.progress.completed / experiment.progress.total)
+                    : 0}%`"></div>
+          </div>
+          <p class="fg-help mt-2" x-text="experiment.progress.label"></p>
+        </div>
+
+        <div class="fg-card p-6 mb-6">
+          <h3 class="font-semibold mb-2">1. Pick a configuration</h3>
+          <div x-show="configurations.length === 0" class="text-sm text-slate-500 italic">
+            No saved configurations yet.
+          </div>
+          <div class="space-y-2">
+            <template x-for="(group, gameTypeId) in configurationsByGameType()" :key="gameTypeId">
+              <div class="border border-slate-200 rounded-md">
+                <details>
+                  <summary class="px-3 py-2 cursor-pointer bg-slate-50 rounded-t-md text-sm font-medium">
+                    <span x-text="gameTypeName(gameTypeId)"></span>
+                    <span class="text-slate-400 font-normal" x-text="'· ' + group.length + ' configuration' + (group.length === 1 ? '' : 's')"></span>
+                  </summary>
+                  <div class="p-2 space-y-1">
+                    <template x-for="cfg in group" :key="cfg.id">
+                      <div x-data="{ inspecting: false }">
+                        <div class="flex items-start gap-2 py-1.5 px-2 rounded transition"
+                             :class="experiment.selectedConfig === cfg.id ? 'bg-blue-50 ring-2 ring-blue-300' : 'hover:bg-slate-50'">
+                          <label class="flex flex-1 items-start gap-2 text-sm cursor-pointer">
+                            <input type="radio"
+                                   name="exp-cfg"
+                                   :value="cfg.id"
+                                   x-model="experiment.selectedConfig"
+                                   class="mt-0.5"/>
+                            <div class="flex-1">
+                              <div class="font-medium" x-text="cfg.name"></div>
+                              <div class="text-xs text-slate-500">
+                                <span x-text="cfg.variation"></span>
+                                · <span x-text="cfg.languages.map(l => languageFlag(l)).join(' ')"></span>
+                                · <code x-text="cfg.id"></code>
+                              </div>
+                            </div>
+                          </label>
+                          <button type="button"
+                                  class="flex-none text-xs text-blue-600 hover:underline mt-0.5"
+                                  @click="inspecting = !inspecting"
+                                  x-text="inspecting ? 'Hide details' : '🔍 Inspect'"></button>
+                        </div>
+                        <div x-show="inspecting" x-cloak
+                             class="ml-6 mr-2 mb-1 border border-slate-200 rounded-md bg-slate-50">
+                          <dl class="px-3 py-2 text-xs text-slate-600 border-b border-slate-200 space-y-1">
+                            <div class="flex gap-2">
+                              <dt class="font-medium text-slate-500 w-20 flex-none">📄 Template</dt>
+                              <dd>
+                                <span x-text="gameTypeName(cfg.game_type_id) + ' / ' + cfg.variation"></span>
+                                <span class="text-slate-400"> — </span>
+                                <span x-text="cfg.languages.map(l => languageFlag(l) + ' ' + l).join(', ')"></span>
+                              </dd>
+                            </div>
+                            <div class="flex gap-2">
+                              <dt class="font-medium text-slate-500 w-20 flex-none">📅 Created</dt>
+                              <dd x-text="cfg.created_at || '—'"></dd>
+                            </div>
+                            <div class="flex gap-2" x-show="(cfg.variations || []).length">
+                              <dt class="font-medium text-slate-500 w-20 flex-none">🎲 Variants</dt>
+                              <dd x-text="(cfg.variations || []).length + ' payoff variant(s)'"></dd>
+                            </div>
+                          </dl>
+                          <pre class="px-3 py-2 text-xs text-slate-700 whitespace-pre-wrap break-words max-h-80 overflow-auto"
+                               x-text="JSON.stringify(cfg.game_config || {}, null, 2)"></pre>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </details>
+              </div>
+            </template>
+          </div>
+
+          <h3 class="font-semibold mb-2 mt-6">2. Iterations</h3>
+          <div class="md:w-1/2">
+            <label class="fg-label">Number of iterations</label>
+            <input type="number" min="1" x-model.number="experiment.nIterations" class="fg-input"/>
+            <p class="fg-help">
+              How many times to run the selected configuration. Each iteration is a fresh Run
+              with its own id. Anything else — seed, seed count, nRounds, agents, payoffs — is
+              owned by the configuration itself; edit those on the
+              <a class="text-blue-600 underline" @click.prevent="activePage='configurations'" href="#">Configurations</a> page.
+            </p>
+          </div>
+
+          <button class="mt-5 px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+                  :disabled="!experiment.selectedConfig || experiment.running"
+                  @click="runExperiment()">
+            <span x-show="!experiment.running">▶ Run experiment</span>
+            <span x-show="experiment.running">Running…</span>
+          </button>
+
+          <p class="fg-help mt-3" x-show="experiment.selectedConfig">
+            Will produce
+            <strong x-text="Math.max(1, experiment.nIterations || 1)"></strong>
+            Run<span x-text="(experiment.nIterations || 1) === 1 ? '' : 's'"></span>.
+          </p>
+
+          <div x-show="experiment.error" class="mt-4 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-sm" x-text="experiment.error"></div>
+        </div>
+
+        <div x-show="experiment.results.length > 0" class="fg-card p-6">
+          <h2 class="text-lg font-semibold mb-3">Generated runs</h2>
+          <ul class="space-y-1 text-sm">
+            <template x-for="(r, ri) in experiment.results" :key="r.run_id || ('err_' + ri)">
+              <li>
+                <span x-show="r.run_id">
+                  <a class="text-blue-600 underline" @click.prevent="openRun(r.run_id)" href="#"
+                     x-text="r.run_id"></a>
+                  <span class="text-slate-500"> · iteration <span x-text="r.iteration"></span></span>
+                  <span class="text-slate-500" x-text="' · ' + r.n_rows + ' games'"></span>
+                </span>
+                <span x-show="r.error" class="text-rose-700">
+                  iteration <span x-text="r.iteration"></span> · error: <span x-text="r.error"></span>
+                </span>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </section>

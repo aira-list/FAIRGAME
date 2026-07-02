@@ -8,10 +8,10 @@ from unittest import mock
 from src.agent import Agent, BaselineAgent, LLMAgent
 from src.baseline_strategies import AlwaysCooperate
 
-
 # ---------------------------------------------------------------------------
 # Hierarchy
 # ---------------------------------------------------------------------------
+
 
 class TestHierarchy(unittest.TestCase):
     def test_llm_agent_is_an_agent(self) -> None:
@@ -31,6 +31,7 @@ class TestHierarchy(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # LLMAgent behaviour
 # ---------------------------------------------------------------------------
+
 
 class TestLLMAgent(unittest.TestCase):
     def test_calls_execute_prompt_with_llm_service_and_prompt(self) -> None:
@@ -53,6 +54,7 @@ class TestLLMAgent(unittest.TestCase):
 # BaselineAgent behaviour
 # ---------------------------------------------------------------------------
 
+
 class TestBaselineAgent(unittest.TestCase):
     def test_get_info_includes_baseline_strategy_name(self) -> None:
         agent = BaselineAgent("a", AlwaysCooperate(), "n/a", 0)
@@ -74,44 +76,26 @@ class TestBaselineAgent(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Backward compatibility: the legacy ``Agent(...)`` factory still works.
+# Explicit construction contract
 # ---------------------------------------------------------------------------
 
-class TestLegacyConstructor(unittest.TestCase):
-    def test_legacy_agent_call_returns_llm_agent_when_no_baseline(self) -> None:
-        # Pre-refactor code: Agent("a1", "OpenAIGPT4o", "neutral", 0.5)
-        # Should still work and produce an LLM-driven agent.
-        a = Agent("a1", "OpenAIGPT4o", "neutral", 0.5)
-        self.assertIsInstance(a, LLMAgent)
 
-    def test_legacy_agent_call_returns_baseline_agent_when_baseline_set(self) -> None:
-        a = Agent(
-            "a1",
-            "Baseline:AlwaysCooperate",
-            "n/a",
-            0,
-            baseline_strategy=AlwaysCooperate(),
-        )
-        self.assertIsInstance(a, BaselineAgent)
+class TestExplicitConstruction(unittest.TestCase):
+    def test_agent_base_class_is_abstract(self) -> None:
+        # No dispatch magic: Agent is an ABC and cannot be instantiated —
+        # callers pick LLMAgent or BaselineAgent explicitly.
+        with self.assertRaises(TypeError):
+            Agent("a1", "OpenAIGPT4o", "neutral", 0.5)
 
-    def test_agent_keyword_form_with_baseline_strategy(self) -> None:
-        # Some call sites build agents purely via kwargs (matches the
-        # Agent.__init__ signature); this must dispatch to BaselineAgent
-        # and not raise a TypeError on the renamed positional in
-        # BaselineAgent.__init__.
-        a = Agent(
-            name="a1",
-            llm_service="dummy",
-            personality="neutral",
-            opponent_personality_prob=0.0,
-            baseline_strategy=AlwaysCooperate(),
-        )
-        self.assertIsInstance(a, BaselineAgent)
-        self.assertEqual(a.name, "a1")
-        self.assertEqual(a.personality, "neutral")
-        # llm_service was provided explicitly — preserve it rather than
-        # auto-deriving "Baseline:AlwaysCooperate".
-        self.assertEqual(a.llm_service, "dummy")
+    def test_baseline_agent_derives_llm_service_from_strategy(self) -> None:
+        a = BaselineAgent("a1", AlwaysCooperate(), "n/a", 0)
+        self.assertEqual(a.llm_service, "Baseline:always_cooperate")
+
+    def test_baseline_agent_llm_service_override_preserved(self) -> None:
+        # The factory passes the user's exact model id so results columns
+        # show what the config said.
+        a = BaselineAgent("a1", AlwaysCooperate(), "n/a", 0, llm_service="baseline:AlwaysCooperate")
+        self.assertEqual(a.llm_service, "baseline:AlwaysCooperate")
         self.assertIs(a.baseline_strategy.__class__, AlwaysCooperate)
 
 

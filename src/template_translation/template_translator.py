@@ -1,14 +1,15 @@
 import re
+from collections import Counter
 
 import langcodes
-from sentence_transformers import SentenceTransformer, util
 
 from src.llm_connectors import execute_prompt
+
 
 class TemplateTranslator:
     """
     A utility for translating prompt templates using a Large Language Model (LLM),
-    while preserving specific formatting and placeholders, and verifying quality 
+    while preserving specific formatting and placeholders, and verifying quality
     via cosine similarity from an off-the-shelf solution.
     """
 
@@ -18,15 +19,18 @@ class TemplateTranslator:
         the SentenceTransformer model for off-the-shelf cosine similarity.
 
         Args:
-            llm: A Large Language Model connector identifier or instance 
+            llm: A Large Language Model connector identifier or instance
                  compatible with `execute_prompt`.
-            model_name: The name of the SentenceTransformer model used to 
+            model_name: The name of the SentenceTransformer model used to
                         embed text for similarity. Defaults to
                         a popular sentence-transformers model.
         """
         self.llm = llm
-        # Load a pre-trained SentenceTransformer for embedding & cosine similarity
-        self.model = SentenceTransformer(model_name)
+        # The SentenceTransformer model is loaded lazily on first use (see
+        # ``model``). Importing/constructing it eagerly pulls in torch and can
+        # download ~90 MB, which would block import and the test loop.
+        self._model_name = model_name
+        self._model = None
 
     def translate(self, prompt_template: str, lang_code: str, cosine_threshold: float = 0.6) -> str:
         """
@@ -73,8 +77,7 @@ class TemplateTranslator:
         """
         language_name = langcodes.get(lang_code).language_name()
         filled_prompt = self._template.format(
-            prompt_template=prompt_template,
-            language=language_name
+            prompt_template=prompt_template, language=language_name
         )
         return execute_prompt(self.llm, filled_prompt)
 
@@ -102,7 +105,7 @@ class TemplateTranslator:
         Returns:
             List of placeholder strings found.
         """
-        return re.findall(r'\{(.*?)\}', text)
+        return re.findall(r"\{(.*?)\}", text)
 
     def _validate_placeholders(self, original: str, translated: str):
         """
@@ -117,7 +120,10 @@ class TemplateTranslator:
         """
         original_ph = self._extract_placeholders(original)
         translated_ph = self._extract_placeholders(translated)
-        if original_ph != translated_ph:
+        # Compare as multisets, not ordered lists: a faithful translation may
+        # legitimately reorder ``{a} ... {b}`` (word order differs by
+        # language). Only the set-with-multiplicity of placeholders must match.
+        if Counter(original_ph) != Counter(translated_ph):
             raise ValueError("Translation did not preserve the placeholders.")
 
     def check_all_placeholders_preserved(self, original_text, second_text):
@@ -136,11 +142,26 @@ class TemplateTranslator:
         Returns:
             A float representing the cosine similarity between the texts.
         """
+        from sentence_transformers import util
+
         # Embed the two texts
         embeddings = self.model.encode([text1, text2], convert_to_tensor=True)
         # Compute the cosine similarity with an off-the-shelf method
         similarity = util.cos_sim(embeddings[0], embeddings[1]).item()
         return similarity
+
+    @property
+    def model(self):
+        """Lazily construct (and cache) the SentenceTransformer model.
+
+        The heavy ``sentence_transformers`` import and model load happen only
+        on first cosine-similarity computation, never at import or construction.
+        """
+        if self._model is None:
+            from sentence_transformers import SentenceTransformer
+
+            self._model = SentenceTransformer(self._model_name)
+        return self._model
 
     @property
     def _template(self) -> str:
@@ -152,7 +173,7 @@ class TemplateTranslator:
         """
         return (
             "You must provide a translation in {language} of the following sentence:\n\n"
-            "\"{prompt_template}\"\n\n"
+            '"{prompt_template}"\n\n'
             "It is CRITICAL to maintain the exact semantic meaning.\n"
             "It is CRITICAL not to translate placeholders in the format {{PLACEHOLDER}}.\n"
             "It is CRITICAL to preserve the indentation, so:\n"

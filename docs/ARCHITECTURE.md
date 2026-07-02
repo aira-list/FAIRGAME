@@ -15,8 +15,8 @@ framework — for end-user instructions see [`../README.md`](../README.md).
                                                                               │
                                                                               ▼
                                                               ┌────────────────────────────┐
-                                                              │ ResultsProcessor → CSV /   │
-                                                              │ S3-compatible bucket       │
+                                                              │ ResultsProcessor → rows    │
+                                                              │ (rows.json + CSV export)   │
                                                               └────────────────────────────┘
 ```
 
@@ -24,7 +24,7 @@ Two parallel paths drive the engine:
 
 * **CLI** (`main.py`): loads a JSON config + a prompt template, calls the
   factory directly (`local`) or via HTTP (`web`).
-* **Web** (`fairgame_web.py`): a FastAPI app exposing the engine behind
+* **Web** (`web_api/`, entry `web_api.main:app`): a FastAPI app exposing the engine behind
   `/api/runs` (plus presets, run history, CSV download, translation,
   health) and serving a vanilla SPA from `web/` at `/`.
 
@@ -37,17 +37,17 @@ Two parallel paths drive the engine:
 | `src/payoff_matrix.py` | `PayoffMatrix`: combination → weight resolution, score attribution; lazy O(1) reverse cache. |
 | `src/prompt_creator.py` | Template fill: handles optional intro / opponent / round-length blocks and the choose/communicate phase blocks. |
 | `src/agent.py` | `Agent`: thin wrapper around an LLM connector with strategy + score history. |
-| `src/fairgame_factory.py` | `FairGameFactory`: load config, expand permutations, build `FairGame`s, run them. Houses `FakeCommunicationConfig`. |
-| `src/fake_message_generator.py` | Random decimal/hex strings used in the optional fake-communication phase. |
+| `src/fairgame_factory.py` | `FairGameFactory`: load config, expand permutations, build `FairGame`s, run them. |
+| `src/fake_message_generator.py` | `FakeCommunicationConfig` + random decimal/hex strings for the optional fake-communication phase. |
 | `src/io_managers/io_manager.py` | Routes config + template loads through `FileManager` and `ConfigValidator`. |
 | `src/io_managers/configuration_validator.py` | Pydantic v2 schema + cross-field validation. |
 | `src/io_managers/payoff_matrix_transformer.py` | Tolerates the legacy `[strategy, weight]` payoff format and rewrites it. |
 | `src/io_managers/file_manager.py` | JSON / `.txt` / `.rtf` reading; CSV writing. |
-| `src/llm_connectors/` | Provider connectors (OpenAI, Anthropic, Mistral) and the `ChatModelFactory`. |
-| `src/results_processing/` | Flatten run output into a `pandas` DataFrame for CSV / S3. |
+| `src/llm_connectors/` | Unified LiteLLM connector, retry/rate-limit machinery, and the `ChatModelFactory`. |
+| `src/results_processing/` | Flatten run output into result rows (`row_schema.py` is the column contract). |
 | `src/template_translation/` | Placeholder-preserving translation pipeline. |
 | `src/utils/logger.py` | Centralized logging configuration. |
-| `src/utils/utils.py` | Slug / dedup / path helpers. |
+| `src/utils/utils.py` | Slug / path helpers. |
 
 ## LLM connectors
 
@@ -112,19 +112,16 @@ If the legacy `[strategy, weight]` matrix shape is passed in, the
 
 All modules log via `src.utils.logger.get_logger(__name__)`. The first call
 configures the root logger at the level of `FAIRGAME_LOG_LEVEL` (default
-`INFO`) and silences noisy third-party loggers (`urllib3`, `botocore`,
-`httpx`, …). Application entry points (`fairgame_web.py`, `main.py`)
+`INFO`) and silences noisy third-party loggers (`urllib3`, `httpx`).
+Application entry points (`web_api.main:app`, `main.py`)
 call `configure_logging()` explicitly to lock in the format early.
 
 There are no `print` statements left in the runtime path.
 
 ## Backwards compatibility shims
 
-* `src/llm_factory_connector.py` — re-exports the unified module and emits a
-  `DeprecationWarning`.
-* `FairGame.print_game_info` — alias of the new `log_game_info`.
-* `FairGameFactory._resolve_llms_for_agents` — accepts a bare LLM string for
-  legacy test fixtures that pass a model identifier where a config dict is
-  expected.
+None. Historical shims (the `src/llm_factory_connector.py` re-export module,
+`Agent(...)` subclass dispatch, the factory's permutation wrappers) have been
+removed; callers use the current APIs directly.
 
 These shims exist for migration and may be removed in a future release.

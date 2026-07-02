@@ -10,10 +10,10 @@ import unittest
 
 from src.results_processing.regret import best_response_payoff, regret_per_round
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _pd_matrix() -> dict:
     """Canonical 2x2 Prisoner's Dilemma. Defection (strategy2) dominates."""
@@ -113,20 +113,17 @@ def _three_player_matrix() -> dict:
 # best_response_payoff
 # ---------------------------------------------------------------------------
 
+
 class TestBestResponseAgainstFixedOpponent(unittest.TestCase):
     """Behavioural tests of best-response selection."""
 
     def test_against_cooperator_defection_is_best(self) -> None:
         # Opp plays C → defect pays 10, cooperate pays 6 → best = 10.
-        self.assertEqual(
-            best_response_payoff(_pd_matrix(), "en", 0, ["Cooperate"]), 10
-        )
+        self.assertEqual(best_response_payoff(_pd_matrix(), "en", 0, ["Cooperate"]), 10)
 
     def test_against_defector_defection_is_best(self) -> None:
         # Opp plays D → defect pays 2, cooperate pays 0 → best = 2.
-        self.assertEqual(
-            best_response_payoff(_pd_matrix(), "en", 0, ["Defect"]), 2
-        )
+        self.assertEqual(best_response_payoff(_pd_matrix(), "en", 0, ["Defect"]), 2)
 
     def test_returns_max_payoff_under_ties(self) -> None:
         # Both strategies pay 5 against either opponent ⇒ best = 5 (not None).
@@ -141,21 +138,15 @@ class TestBestResponseAgainstFixedOpponent(unittest.TestCase):
 
     def test_three_player_best_response_index_0(self) -> None:
         # Agent 0, others (A, A): A→AAA pays 2; B→BAA pays 4. Best = 4.
-        self.assertEqual(
-            best_response_payoff(_three_player_matrix(), "en", 0, ["A", "A"]), 4
-        )
+        self.assertEqual(best_response_payoff(_three_player_matrix(), "en", 0, ["A", "A"]), 4)
 
     def test_three_player_best_response_higher_index(self) -> None:
         # Agent at middle (index 1), others (A, A): A→AAA pays 2; B→ABA pays 4.
-        self.assertEqual(
-            best_response_payoff(_three_player_matrix(), "en", 1, ["A", "A"]), 4
-        )
+        self.assertEqual(best_response_payoff(_three_player_matrix(), "en", 1, ["A", "A"]), 4)
 
     def test_three_player_best_response_last_index(self) -> None:
         # Agent at index 2, others (A, A): A→AAA pays 2; B→AAB pays 4.
-        self.assertEqual(
-            best_response_payoff(_three_player_matrix(), "en", 2, ["A", "A"]), 4
-        )
+        self.assertEqual(best_response_payoff(_three_player_matrix(), "en", 2, ["A", "A"]), 4)
 
     def test_returns_none_when_strategies_block_missing(self) -> None:
         m = _pd_matrix()
@@ -211,6 +202,7 @@ class TestBestResponseAgainstFixedOpponent(unittest.TestCase):
 # regret_per_round
 # ---------------------------------------------------------------------------
 
+
 class TestRegretPerRound(unittest.TestCase):
     def test_full_regret_when_cooperated_against_defector(self) -> None:
         regret = regret_per_round(
@@ -218,7 +210,6 @@ class TestRegretPerRound(unittest.TestCase):
             language="en",
             agent_index=0,
             own_strategies=["Cooperate"],
-            own_scores=[0],
             others_strategies_per_round=[["Defect"]],
         )
         self.assertEqual(regret, [2.0])
@@ -229,22 +220,21 @@ class TestRegretPerRound(unittest.TestCase):
             language="en",
             agent_index=0,
             own_strategies=["Defect"],
-            own_scores=[2],
             others_strategies_per_round=[["Defect"]],
         )
         self.assertEqual(regret, [0.0])
 
-    def test_returns_none_for_round_with_missing_score(self) -> None:
+    def test_actual_payoff_is_resolved_from_the_matrix(self) -> None:
+        # Regret is computed in raw matrix units on both sides — recorded
+        # (post-transform) scores never enter the comparison.
         regret = regret_per_round(
             _pd_matrix(),
             language="en",
             agent_index=0,
             own_strategies=["Cooperate", "Defect"],
-            own_scores=[0],  # length-1, second round has no score
             others_strategies_per_round=[["Defect"], ["Cooperate"]],
         )
-        self.assertEqual(regret[0], 2.0)
-        self.assertIsNone(regret[1])
+        self.assertEqual(regret, [2.0, 0.0])
 
     def test_returns_none_for_round_with_missing_opponent_data(self) -> None:
         regret = regret_per_round(
@@ -252,21 +242,17 @@ class TestRegretPerRound(unittest.TestCase):
             language="en",
             agent_index=0,
             own_strategies=["Cooperate", "Defect"],
-            own_scores=[0, 2],
             others_strategies_per_round=[["Defect"]],  # second round absent
         )
         self.assertEqual(regret[0], 2.0)
         self.assertIsNone(regret[1])
 
     def test_regret_is_never_negative(self) -> None:
-        # Even if the recorded score exceeds the matrix-best (e.g. the
-        # utility transform inflated it), regret must clamp to 0.
         regret = regret_per_round(
             _pd_matrix(),
             language="en",
             agent_index=0,
             own_strategies=["Defect", "Defect"],
-            own_scores=[1000.0, 1000.0],  # absurdly high
             others_strategies_per_round=[["Defect"], ["Defect"]],
         )
         for r in regret:
@@ -280,18 +266,16 @@ class TestRegretPerRound(unittest.TestCase):
             language="en",
             agent_index=0,
             own_strategies=["Cooperate", "Defect", "Cooperate"],
-            own_scores=[0, 2, 6],
             others_strategies_per_round=[["Defect"], ["Defect"], ["Cooperate"]],
         )
         self.assertEqual(len(regret), 3)
 
-    def test_non_numeric_score_recorded_as_none(self) -> None:
+    def test_unknown_own_label_recorded_as_none(self) -> None:
         regret = regret_per_round(
             _pd_matrix(),
             language="en",
             agent_index=0,
-            own_strategies=["Cooperate"],
-            own_scores=["not-a-number"],
+            own_strategies=["Treason"],
             others_strategies_per_round=[["Defect"]],
         )
         self.assertEqual(regret, [None])
@@ -304,7 +288,6 @@ class TestRegretPerRound(unittest.TestCase):
             language="en",
             agent_index=0,
             own_strategies=["B"],
-            own_scores=[-5],
             others_strategies_per_round=[["A"]],
         )
         self.assertEqual(regret, [10.0])
@@ -317,7 +300,6 @@ class TestRegretPerRound(unittest.TestCase):
             language="en",
             agent_index=0,
             own_strategies=["A"],
-            own_scores=[2],
             others_strategies_per_round=[["A", "A"]],
         )
         self.assertEqual(regret, [2.0])
@@ -328,7 +310,6 @@ class TestRegretPerRound(unittest.TestCase):
             language="en",
             agent_index=0,
             own_strategies=[],
-            own_scores=[],
             others_strategies_per_round=[],
         )
         self.assertEqual(regret, [])
@@ -344,7 +325,6 @@ class TestRegretPerRound(unittest.TestCase):
             language="en",
             agent_index=0,
             own_strategies=["Cooperate", "Defect", "Cooperate"],
-            own_scores=[0, 2, 6],
             others_strategies_per_round=[["Defect"]],
         )
         self.assertEqual(len(regret), 3)
@@ -361,24 +341,7 @@ class TestRegretPerRound(unittest.TestCase):
             language="en",
             agent_index=0,
             own_strategies=["Cooperate", "Cooperate"],
-            own_scores=[0, 0],
             others_strategies_per_round=[["Treason"], ["Defect"]],
-        )
-        self.assertEqual(len(regret), 2)
-        self.assertIsNone(regret[0])
-        self.assertEqual(regret[1], 2.0)
-
-    def test_non_numeric_score_does_not_truncate_subsequent_rounds(self) -> None:
-        # Round 0 has a non-numeric score (regret unrecoverable), but
-        # round 1 is well-formed. The bad round must record None and the
-        # loop MUST continue to round 1.
-        regret = regret_per_round(
-            _pd_matrix(),
-            language="en",
-            agent_index=0,
-            own_strategies=["Cooperate", "Cooperate"],
-            own_scores=["nope", 0],
-            others_strategies_per_round=[["Defect"], ["Defect"]],
         )
         self.assertEqual(len(regret), 2)
         self.assertIsNone(regret[0])
@@ -388,6 +351,7 @@ class TestRegretPerRound(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # best_response_payoff — corrupt-matrix edge cases (mutmut-driven coverage)
 # ---------------------------------------------------------------------------
+
 
 class TestBestResponseCorruptMatrix(unittest.TestCase):
     def test_returns_none_when_weight_keys_shorter_than_agent_index(self) -> None:

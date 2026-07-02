@@ -36,7 +36,7 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.fairgame_factory import FairGameFactory
 from src.io_managers.io_manager import IoManager
@@ -57,13 +57,13 @@ class ExperimentError(RuntimeError):
 class Manifest:
     name: str
     output_dir: Path
-    configs: List[Path]
-    seeds: Optional[List[int]] = None
+    configs: list[Path]
+    seeds: list[int] | None = None
     aggregate_seeds: bool = True
-    config_overrides: Optional[Dict[str, Any]] = None
+    config_overrides: dict[str, Any] | None = None
 
     @classmethod
-    def load(cls, path: Path) -> "Manifest":
+    def load(cls, path: Path) -> Manifest:
         path = path.resolve()
         with path.open("r", encoding="utf-8") as fh:
             data = json.load(fh)
@@ -90,13 +90,13 @@ class Manifest:
         )
 
 
-def run_manifest(manifest: Manifest) -> Dict[str, Path]:
+def run_manifest(manifest: Manifest) -> dict[str, Path]:
     """Execute every config in ``manifest`` and write CSV outputs.
 
     Returns a mapping ``{config_stem: csv_path}``.
     """
     manifest.output_dir.mkdir(parents=True, exist_ok=True)
-    written: Dict[str, Path] = {}
+    written: dict[str, Path] = {}
     processor = ResultsProcessor()
 
     for config_path in manifest.configs:
@@ -106,7 +106,11 @@ def run_manifest(manifest: Manifest) -> Dict[str, Path]:
             config = json.load(fh)
         if manifest.config_overrides:
             config = {**config, **manifest.config_overrides}
-        if manifest.seeds is not None and not config.get("seeds"):
+        # Only inject manifest seeds when the config doesn't specify the key
+        # at all. ``not config.get("seeds")`` also fired for an explicit
+        # ``"seeds": []`` (a deliberate "no seeds" choice), silently
+        # overriding it.
+        if manifest.seeds is not None and "seeds" not in config:
             config["seeds"] = list(manifest.seeds)
 
         logger.info("Running %s", config_path.name)

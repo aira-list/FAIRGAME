@@ -7,10 +7,10 @@ import unittest
 
 from src.io_managers.configuration_validator import ConfigValidator
 
-
 # ---------------------------------------------------------------------------
 # Fixture
 # ---------------------------------------------------------------------------
+
 
 def _base_config() -> dict:
     return {
@@ -44,6 +44,7 @@ def _base_config() -> dict:
 # Happy path
 # ---------------------------------------------------------------------------
 
+
 class TestHappyPath(unittest.TestCase):
     def setUp(self) -> None:
         self.validator = ConfigValidator()
@@ -61,6 +62,26 @@ class TestHappyPath(unittest.TestCase):
         self.assertEqual(result.get("mixedStrategies"), False)
         self.assertEqual(result.get("equilibria"), [])
 
+    def test_all_agent_permutations_defaults_to_false_when_omitted(self) -> None:
+        """Stored library configs predating this field must still validate.
+        Reason: data/configurations.json on installs older than 2026-05-16
+        is missing this key for the first seeded entry."""
+        config = _base_config()
+        del config["allAgentPermutations"]
+        # When allAgentPermutations is False, opponentPersonalityProb is a
+        # 1:1 list with agents, not a permutation pool.
+        config["agents"]["opponentPersonalityProb"] = [0, 0]
+        result = self.validator.validate_config_structure(config)
+        self.assertEqual(result.get("allAgentPermutations"), False)
+
+    def test_stop_game_when_defaults_to_empty_list_when_omitted(self) -> None:
+        """Missing ``stopGameWhen`` means no early-stop conditions — safer
+        than rejecting the config outright."""
+        config = _base_config()
+        del config["stopGameWhen"]
+        result = self.validator.validate_config_structure(config)
+        self.assertEqual(result.get("stopGameWhen"), [])
+
     def test_input_dict_is_not_mutated(self) -> None:
         config = _base_config()
         snapshot = copy.deepcopy(config)
@@ -71,6 +92,7 @@ class TestHappyPath(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Template binding (mutual exclusivity)
 # ---------------------------------------------------------------------------
+
 
 class TestTemplateBinding(unittest.TestCase):
     def setUp(self) -> None:
@@ -100,6 +122,7 @@ class TestTemplateBinding(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # LLM resolution
 # ---------------------------------------------------------------------------
+
 
 class TestLLMResolution(unittest.TestCase):
     def setUp(self) -> None:
@@ -150,6 +173,7 @@ class TestLLMResolution(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Personality / probability validation
 # ---------------------------------------------------------------------------
+
 
 class TestPersonalityValidation(unittest.TestCase):
     def setUp(self) -> None:
@@ -207,6 +231,7 @@ class TestPersonalityValidation(unittest.TestCase):
 # Fake communication
 # ---------------------------------------------------------------------------
 
+
 class TestFakeCommunication(unittest.TestCase):
     def setUp(self) -> None:
         self.validator = ConfigValidator()
@@ -246,6 +271,7 @@ class TestFakeCommunication(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Game-theory extensions
 # ---------------------------------------------------------------------------
+
 
 class TestGameTheoryExtensions(unittest.TestCase):
     def setUp(self) -> None:
@@ -312,6 +338,7 @@ class TestGameTheoryExtensions(unittest.TestCase):
 # Payoff matrix transformation
 # ---------------------------------------------------------------------------
 
+
 class TestPayoffMatrixTransformation(unittest.TestCase):
     def setUp(self) -> None:
         self.validator = ConfigValidator()
@@ -337,9 +364,7 @@ class TestPayoffMatrixTransformation(unittest.TestCase):
         self.assertEqual(
             result["payoffMatrix"]["combinations"], before["payoffMatrix"]["combinations"]
         )
-        self.assertEqual(
-            result["payoffMatrix"]["matrix"], before["payoffMatrix"]["matrix"]
-        )
+        self.assertEqual(result["payoffMatrix"]["matrix"], before["payoffMatrix"]["matrix"])
 
 
 if __name__ == "__main__":

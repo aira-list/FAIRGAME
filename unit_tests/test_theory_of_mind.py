@@ -18,10 +18,10 @@ from src.io_managers.io_manager import IoManager
 from src.payoff_matrix import PayoffMatrix
 from src.prompt_creator import PromptCreator
 from src.results_processing.results_processor import ResultsProcessor
-
+from src.utils.utils import get_resources_dir
 
 BASE_DIR = Path(__file__).resolve().parent
-RESOURCES_PATH = Path(__file__).resolve().parent.parent / "resources"
+RESOURCES_PATH = get_resources_dir()
 
 
 def _payoff_matrix_data() -> dict:
@@ -67,8 +67,12 @@ class TestPromptCreatorToMOrder(unittest.TestCase):
     def _render(self, tom_order: int) -> str:
         pm = PayoffMatrix(_payoff_matrix_data(), "en")
         creator = PromptCreator(
-            "en", self.TEMPLATE, n_rounds=1, n_rounds_known=False,
-            payoff_matrix=pm, tom_order=tom_order,
+            "en",
+            self.TEMPLATE,
+            n_rounds=1,
+            n_rounds_known=False,
+            payoff_matrix=pm,
+            tom_order=tom_order,
         )
         agent = _StubAgent("agent1")
         opp = _StubAgent("agent2", personality="selfish", prob=80)
@@ -154,6 +158,7 @@ class TestResultsProcessorEmitsBeliefMetrics(unittest.TestCase):
 # Invariants and determinism
 # ---------------------------------------------------------------------------
 
+
 class TestBriefScoreInvariants(unittest.TestCase):
     """Properties that must hold for every emitted Brier score."""
 
@@ -191,17 +196,11 @@ class TestDeterminism(unittest.TestCase):
         def _types() -> list:
             factory = FairGameFactory()
             factory.set_io_manager(io_manager)
-            config = factory.load_config(
-                "prisoner_dilemma_tom/prisoner_dilemma_tom.json"
-            )
+            config = factory.load_config("prisoner_dilemma_tom/prisoner_dilemma_tom.json")
             config["seed"] = 42
             config = io_manager.process_and_validate_configuration(config)
-            config["_resolved_seed"] = 42
-            factory.create_games(config)
-            return [
-                [agent.agent_type for agent in game.agents.values()]
-                for game in factory.games
-            ]
+            factory.create_games(config, resolved_seed=42)
+            return [[agent.agent_type for agent in game.agents.values()] for game in factory.games]
 
         self.assertEqual(_types(), _types())
 

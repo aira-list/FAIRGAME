@@ -1,0 +1,148 @@
+      <section x-show="activePage === 'results'">
+        <h1 class="text-2xl font-bold tracking-tight mb-1">Results</h1>
+        <p class="text-slate-600 mb-5">Every run on this machine. Each run is linked to the configuration that produced it.</p>
+
+        <div class="flex items-center gap-3 mb-4 flex-wrap">
+          <button class="text-sm text-blue-600 hover:underline" @click="loadRuns()">↻ Refresh</button>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-slate-600">Configuration</label>
+            <select x-model="results.configFilter" @change="results.page = 1" class="fg-input" style="width:auto;min-width:16rem;">
+              <option value="" x-text="`All configurations (${runs.length})`"></option>
+              <template x-for="c in configurations" :key="c.id">
+                <option :value="c.id" x-text="`${c.name} (${resultsForConfig(c.id).length})`"></option>
+              </template>
+            </select>
+            <button x-show="results.configFilter" class="text-sm text-slate-500 hover:underline"
+                    @click="results.configFilter = ''; results.page = 1">clear</button>
+          </div>
+          <span class="text-sm text-slate-400" x-text="`${filteredRuns().length} total`"></span>
+        </div>
+
+        <!-- Selected run's results (tables + plots) sit at the TOP so they are
+             visible immediately; the run carousel is below. Charts use fixed
+             canvas IDs, so this panel exists exactly once in the DOM. -->
+        <div x-show="activeRun && !compare.open" class="fg-card p-6 mb-6">
+          <div class="flex items-baseline justify-between mb-3">
+            <h2 class="text-lg font-semibold" x-text="activeRun?.name"></h2>
+            <div class="text-sm">
+              <a x-show="communityUrl" class="text-blue-600 hover:underline mr-3" :href="communityUrl" target="_blank" rel="noopener">🔗 Related work on the FAIRGAME community ↗</a>
+              <a class="text-blue-600 hover:underline mr-3" :href="`/api/runs/${activeRun?.id}/csv`">Download CSV ↓</a>
+              <a class="text-blue-600 hover:underline" @click.prevent="downloadJson(activeRun?.config, 'config.json')" href="#">Download config ↓</a>
+            </div>
+          </div>
+
+          <div class="flex gap-1 border-b border-slate-200 mb-4">
+            <a class="fg-tab" :class="{active: results.tab==='charts'}" @click="renderCharts()">📈 Charts</a>
+            <a class="fg-tab" :class="{active: results.tab==='table'}" @click="results.tab='table'">📋 DataFrame</a>
+            <a class="fg-tab" :class="{active: results.tab==='config'}" @click="results.tab='config'">⚙️ Config</a>
+          </div>
+
+          <div x-show="results.tab === 'charts'">
+            <!-- Charts are chosen per-run by the backend (/api/runs/<id>/dashboard):
+                 only panels relevant to the features this run used are rendered. -->
+            <div id="dash-root"></div>
+          </div>
+
+          <div x-show="results.tab === 'table'">
+            <div x-html="renderTable(pagedRows())"></div>
+
+            <!-- Pager: browse the dataframe rows a page at a time -->
+            <div x-show="(activeRun?.rows?.length || 0) > results.tablePerPage"
+                 class="flex items-center justify-center gap-2 mt-3 flex-wrap">
+              <button class="px-3 py-1 text-sm rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                      :disabled="results.tablePage <= 1" @click="goToTablePage(results.tablePage - 1)">← Prev</button>
+              <template x-for="p in tableTotalPages()" :key="p">
+                <button class="px-3 py-1 text-sm rounded-md border"
+                        :class="p === results.tablePage
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'border-slate-300 text-slate-600 hover:bg-slate-100'"
+                        @click="goToTablePage(p)" x-text="p"></button>
+              </template>
+              <button class="px-3 py-1 text-sm rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                      :disabled="results.tablePage >= tableTotalPages()" @click="goToTablePage(results.tablePage + 1)">Next →</button>
+              <span class="text-xs text-slate-400 ml-2"
+                    x-text="`rows ${(results.tablePage-1)*results.tablePerPage + 1}–${Math.min(results.tablePage*results.tablePerPage, activeRun?.rows?.length || 0)} of ${activeRun?.rows?.length || 0}`"></span>
+            </div>
+          </div>
+
+          <div x-show="results.tab === 'config'">
+            <pre class="text-xs bg-slate-100 rounded-md p-3 overflow-auto"
+                 x-text="activeRun ? JSON.stringify(activeRun.config, null, 2) : ''"></pre>
+          </div>
+        </div>
+
+        <div x-show="runs.length === 0"
+             class="fg-card p-4 text-sm text-slate-700 bg-blue-50 border-blue-200">
+          <strong>No results yet.</strong> Save a configuration in
+          <a class="text-blue-600 underline" @click.prevent="activePage='configurations'" href="#">Configurations</a>
+          and run it.<span x-show="communityUrl"> Or browse published FAIRGAME experiments and their results on the
+          <a class="text-blue-600 underline" :href="communityUrl" target="_blank" rel="noopener">FAIRGAME community website ↗</a>.</span>
+        </div>
+
+        <!-- Hint when there are runs but none is open yet. -->
+        <p x-show="runs.length > 0 && !activeRun" class="text-sm text-slate-500 mb-3">
+          Pick a run below to see its tables and plots above.
+        </p>
+
+        <!-- Cross-model comparison: tick runs, then compare them grouped by model. -->
+        <div x-show="runs.length > 1" class="flex items-center gap-3 mb-3">
+          <span class="text-sm text-slate-600" x-text="`Compare: ${compare.selected.length} run(s) selected`"></span>
+          <button class="text-sm px-3 py-1 rounded border border-blue-500 text-blue-600 hover:bg-blue-50 disabled:opacity-40"
+                  :disabled="compare.selected.length < 1" @click="runCompare()">Compare models ⚖</button>
+          <button x-show="compare.selected.length" class="text-xs text-blue-600 underline"
+                  @click="compare.selected = []; compare.open = false">clear</button>
+        </div>
+
+        <div x-show="compare.open" class="fg-card p-6 mb-6">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold">Cross-model comparison</h2>
+            <button class="text-sm text-slate-500 hover:underline" @click="compare.open = false">✕ close</button>
+          </div>
+          <div id="compare-root"></div>
+        </div>
+
+        <div class="grid gap-3 mb-4">
+          <template x-for="run in pagedRuns()" :key="run.id">
+            <div class="fg-card p-4 cursor-pointer hover:shadow-md transition"
+                 :class="{ 'ring-2 ring-blue-400': activeRun?.id === run.id }"
+                 @click="openRun(run.id)">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <input type="checkbox" title="Select for model comparison"
+                         :checked="compare.selected.includes(run.id)"
+                         @click.stop="toggleCompare(run.id)">
+                  <div>
+                    <div class="font-medium" x-text="run.name"></div>
+                    <div class="text-xs text-slate-500">
+                      <span x-text="run.timestamp"></span> ·
+                      <span x-text="run.n_rows + ' games'"></span>
+                      <span x-show="run.configuration_id" class="fg-pill fg-pill-blue ml-1"
+                            x-text="'⚙ ' + configName(run.configuration_id)"></span>
+                    </div>
+                  </div>
+                </div>
+                <code class="text-xs text-slate-400" x-text="run.id"></code>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Pager: keeps the run list short (10 per page) so the selected run's
+             results panel above stays the focus instead of an endless list. -->
+        <div x-show="filteredRuns().length > results.perPage"
+             class="flex items-center justify-center gap-2 mb-6 flex-wrap">
+          <button class="px-3 py-1 text-sm rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                  :disabled="results.page <= 1" @click="goToPage(results.page - 1)">← Prev</button>
+          <template x-for="p in totalPages()" :key="p">
+            <button class="px-3 py-1 text-sm rounded-md border"
+                    :class="p === results.page
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'border-slate-300 text-slate-600 hover:bg-slate-100'"
+                    @click="goToPage(p)" x-text="p"></button>
+          </template>
+          <button class="px-3 py-1 text-sm rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                  :disabled="results.page >= totalPages()" @click="goToPage(results.page + 1)">Next →</button>
+          <span class="text-xs text-slate-400 ml-2"
+                x-text="`page ${results.page} / ${totalPages()}`"></span>
+        </div>
+      </section>

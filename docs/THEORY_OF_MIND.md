@@ -84,17 +84,16 @@ For >2 agents, each round's metric is averaged across opponents.
 
 ## Example
 
-`resources/config/prisoner_dilemma_tom/prisoner_dilemma_tom.json` ships a
-two-agent Prisoner's Dilemma at `tomOrder=2` with belief elicitation, a
-binary type system (`trusting` vs `cynical`) drawn from a uniform prior, and
-the prior declared common knowledge.
+The shipped `seed_cfg_pd_tom` configuration
+(`starter_library/configurations/05-seed_cfg_pd_tom.json`) is a two-agent
+Prisoner's Dilemma at `tomOrder=2` with belief elicitation, a binary type
+system (`trusting` vs `cynical`) drawn from a uniform prior, and the prior
+declared common knowledge.
 
 ```bash
-python -m src.fairgame_factory  # programmatic
-# or via the API:
-curl -X POST http://localhost:5003/create_and_run_games \
-     -H 'Content-Type: application/json' \
-     -d @resources/config/prisoner_dilemma_tom/prisoner_dilemma_tom.json
+# Run the shipped ToM configuration by id (live models need the relevant
+# provider API key):
+curl -X POST http://localhost:4263/api/configurations/seed_cfg_pd_tom/run
 ```
 
 ## Research recipes

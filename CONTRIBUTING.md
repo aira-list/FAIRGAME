@@ -12,15 +12,15 @@ Project maintainers will be eager to listen from you and help you out. Please, t
 
 ## Reporting Issues
 
-Do you have you identified a reproducible problem in our code? or have a feature request? We want to hear about it! Please follow the next steps:
+Have you identified a reproducible problem in our code, or have a feature request? We want to hear about it! Please follow the next steps:
 
 ### Look for an Existing Issue
 
 Sometimes the issue you want to report is being already addressed, or is planned to be addressed soon. Before you create a new issue, please do a search in [open issues](https://github.com/aira-list/FAIRGAME/issues) to see if the issue or feature request has already been filed.
 
-If you find your issue already exists, do not hesittate to make relevant comments and add your [reaction](https://github.com/blog/2119-add-reactions-to-pull-requests-issues-and-comments). Please, use a reaction in place of a "+1" comment, we believe it's easy: 👍 for upvoting and 👎 for downvoting.
+If you find your issue already exists, do not hesitate to make relevant comments and add your [reaction](https://github.com/blog/2119-add-reactions-to-pull-requests-issues-and-comments). Please, use a reaction in place of a "+1" comment, we believe it's easy: 👍 for upvoting and 👎 for downvoting.
 
-If you cannot find an existing issue that describes your bug or feature, [create a new issue](https://github.com/SOM-Research/aira-list/FAIRGAME/issues/new?assignees=&labels=&template=proposal.md). The template will guide you on the issue reporting.
+If you cannot find an existing issue that describes your bug or feature, [create a new issue](https://github.com/aira-list/FAIRGAME/issues/new/choose) and pick the appropriate template. The template will guide you on the issue reporting.
 
 ### Writing Good Bug Reports and Feature Requests
 

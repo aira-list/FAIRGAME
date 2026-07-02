@@ -7,9 +7,9 @@ import unittest
 from collections import Counter
 
 from src.baseline_strategies import (
+    BASELINE_PREFIX,
     AlwaysCooperate,
     AlwaysDefect,
-    BASELINE_PREFIX,
     GrimTrigger,
     RandomChoice,
     RandomMixed,
@@ -21,10 +21,10 @@ from src.baseline_strategies import (
     parse_baseline_id,
 )
 
-
 # ---------------------------------------------------------------------------
 # Stubs
 # ---------------------------------------------------------------------------
+
 
 class _StubAgent:
     def __init__(self, name: str) -> None:
@@ -57,6 +57,7 @@ def _two_agent_game(semantics=None, seed=0):
 # cooperate_key / defect_key helpers
 # ---------------------------------------------------------------------------
 
+
 class TestSemanticsResolution(unittest.TestCase):
     def test_uses_explicit_semantics_when_provided(self) -> None:
         game = _StubGame(semantics={"cooperate": "strategy1", "defect": "strategy2"})
@@ -79,6 +80,7 @@ class TestSemanticsResolution(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Always-strategies
 # ---------------------------------------------------------------------------
+
 
 class TestAlwaysCooperate(unittest.TestCase):
     def test_returns_cooperate_key(self) -> None:
@@ -115,6 +117,7 @@ class TestAlwaysDefect(unittest.TestCase):
 # RandomChoice
 # ---------------------------------------------------------------------------
 
+
 class TestRandomChoice(unittest.TestCase):
     def test_only_returns_strategy_keys(self) -> None:
         game, a, _ = _two_agent_game()
@@ -150,6 +153,7 @@ class TestRandomChoice(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # TitForTat
 # ---------------------------------------------------------------------------
+
 
 class TestTitForTat(unittest.TestCase):
     def test_first_move_cooperates(self) -> None:
@@ -196,6 +200,7 @@ class TestTitForTat(unittest.TestCase):
 # GrimTrigger
 # ---------------------------------------------------------------------------
 
+
 class TestGrimTrigger(unittest.TestCase):
     def test_first_move_cooperates(self) -> None:
         game, a, _ = _two_agent_game()
@@ -231,6 +236,7 @@ class TestGrimTrigger(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # RandomMixed
 # ---------------------------------------------------------------------------
+
 
 class TestRandomMixed(unittest.TestCase):
     def test_empty_distribution_rejected(self) -> None:
@@ -277,9 +283,19 @@ class TestRandomMixed(unittest.TestCase):
 # Registry / parsing
 # ---------------------------------------------------------------------------
 
+
 class TestRegistry(unittest.TestCase):
     def test_is_baseline_id_recognises_prefix(self) -> None:
         self.assertTrue(is_baseline_id(f"{BASELINE_PREFIX}TitForTat"))
+
+    def test_is_baseline_id_accepts_lowercase_gui_prefix(self) -> None:
+        # The web GUI emits the lowercase ``baseline:`` form; the factory must
+        # still resolve it to a baseline rather than treat it as an LLM id.
+        self.assertTrue(is_baseline_id("baseline:TitForTat"))
+        self.assertEqual(make_baseline("baseline:AlwaysCooperate").name, "always_cooperate")
+        name, kwargs = parse_baseline_id("baseline:RandomMixed(strategy1=0.7)")
+        self.assertEqual(name, "RandomMixed")
+        self.assertEqual(kwargs, {"strategy1": 0.7})
 
     def test_is_baseline_id_rejects_plain_model_names(self) -> None:
         self.assertFalse(is_baseline_id("OpenAIGPT4o"))
@@ -328,9 +344,7 @@ class TestRegistry(unittest.TestCase):
         self.assertIsInstance(s, TitForTat)
         s = make_baseline(f"{BASELINE_PREFIX}AlwaysCooperate")
         self.assertIsInstance(s, AlwaysCooperate)
-        s = make_baseline(
-            f"{BASELINE_PREFIX}RandomMixed(strategy1=0.5,strategy2=0.5)"
-        )
+        s = make_baseline(f"{BASELINE_PREFIX}RandomMixed(strategy1=0.5,strategy2=0.5)")
         self.assertIsInstance(s, RandomMixed)
 
 
