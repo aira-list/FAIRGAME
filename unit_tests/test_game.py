@@ -2,9 +2,9 @@ import logging
 import unittest
 from pathlib import Path
 
-from src.fairgame import FairGame, PayoffMatrix
-from src.fairgame_factory import FairGameFactory
-from src.game_config import GameConfig
+from src.factory.fairgame_factory import FairGameFactory
+from src.game.fairgame import FairGame, PayoffMatrix
+from src.game.game_config import GameConfig
 from src.io_managers.io_manager import IoManager
 
 # Configure logging at the module level

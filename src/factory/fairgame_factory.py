@@ -20,10 +20,10 @@ from typing import Any
 
 import pandas as pd
 
-from src.agent import Agent, BaselineAgent, LLMAgent
+from src.agents.agent import Agent, BaselineAgent, LLMAgent
+from src.communication.interaction import InteractionGraph
 from src.factory import PermutationExpander, TournamentBuilder
-from src.fairgame import FairGame
-from src.interaction import InteractionGraph
+from src.game.fairgame import FairGame
 from src.io_managers.io_manager import IoManager
 from src.utils.logger import get_logger
 from src.utils.rng import make_rng
@@ -67,7 +67,7 @@ class FairGameFactory:
         if types_config is not None:
             self._assign_agent_types(agents, types_config, rng=rng)
 
-        from src.game_config import GameConfig
+        from src.game.game_config import GameConfig
 
         # Input-config shape (keys, defaults, coercions) lives in
         # ``GameConfig.from_raw``; the factory only supplies the per-game
@@ -118,7 +118,7 @@ class FairGameFactory:
             agent.agent_type = rng.choices(labels, weights=probs, k=1)[0]
 
     def create_agents(self, game_config_row: dict[str, Any]) -> dict[str, Agent]:
-        from src.baseline_strategies import is_baseline_id, make_baseline  # local import
+        from src.agents.baseline_strategies import is_baseline_id, make_baseline  # local import
 
         agents: dict[str, Agent] = {}
         i = 1

@@ -13,9 +13,9 @@ from tenacity import (
     wait_fixed,
 )
 
-from src.belief_parser import BeliefParseError, parse_belief
-from src.fake_message_generator import FakeMessageGenerator
-from src.prompt_creator import PromptCreator
+from src.agents.belief_parser import BeliefParseError, parse_belief
+from src.communication.fake_message_generator import FakeMessageGenerator
+from src.prompting.prompt_creator import PromptCreator
 from src.utils.logger import get_logger
 
 # parse_belief is imported above; alias kept for clarity in mixed-strategy code.
@@ -102,7 +102,7 @@ class GameRound:
         choose (always). Only the choose phase produces a value the
         engine cares about; the others are pure side-effects on history.
         """
-        from src.phases import ChoosePhase  # local: avoid cycles
+        from src.game.phases import ChoosePhase  # local: avoid cycles
 
         result: list[str] = []
         # Frozen, resolved-once phase list owned by the game.
@@ -112,7 +112,7 @@ class GameRound:
                 result = output  # type: ignore[assignment]
         return result
 
-    # Entry point for ChoosePhase (see src.phases): collects one strategy
+    # Entry point for ChoosePhase (see src.game.phases): collects one strategy
     # per agent and returns the round's strategy keys in agent order.
     def execute_choose_phase(self) -> list[str]:
         choose_phase = "mixedChoose" if self.game.mixed_strategies else "choose"
@@ -156,8 +156,8 @@ class GameRound:
         with the ``{trust}`` block and their reply is parsed; anything
         ambiguous falls back to ``NO_LOOK``.
         """
-        from src.agent import BaselineAgent  # local import to avoid cycle
-        from src.trust import NO_LOOK, TrustConfig
+        from src.agents.agent import BaselineAgent  # local import to avoid cycle
+        from src.communication.trust import NO_LOOK, TrustConfig
 
         for agent in self.game.agents.values():
             if isinstance(agent, BaselineAgent):
@@ -192,7 +192,7 @@ class GameRound:
         3. **Interaction graph** — the surviving history is then filtered to
            what this agent is allowed to perceive: a source's plays only if
            the agent can *see* it, and a source's message only if the agent
-           can *hear* it (see :class:`src.interaction.InteractionGraph`).
+           can *hear* it (see :class:`src.communication.interaction.InteractionGraph`).
 
         With trust disabled and no (or a complete) graph this is the full
         prompt-safe view — unchanged legacy behaviour.
@@ -213,7 +213,7 @@ class GameRound:
             }
         trust_cfg = getattr(self.game, "trust_config", None)
         if trust_cfg and getattr(trust_cfg, "enabled", False):
-            from src.trust import LOOK
+            from src.communication.trust import LOOK
 
             if phase == "trust" or self.trust_decisions.get(agent.name) != LOOK:
                 base = {}
@@ -391,7 +391,7 @@ class GameRound:
     def _execute_agent_strategy(self, agent, prompt: str) -> str:
         # Polymorphic dispatch: BaselineAgent picks via its strategy
         # object, LLMAgent goes through the LLM call.
-        from src.agent import BaselineAgent  # local import to avoid cycle
+        from src.agents.agent import BaselineAgent  # local import to avoid cycle
 
         if isinstance(agent, BaselineAgent):
             strategy_key = agent.baseline_strategy.choose(agent, self.game, self.round_number)
@@ -467,7 +467,7 @@ class GameRound:
         trust_cfg = getattr(self.game, "trust_config", None)
         trust_on = bool(trust_cfg and getattr(trust_cfg, "enabled", False))
         look_cost = float(getattr(trust_cfg, "look_cost", 0.0) or 0.0) if trust_on else 0.0
-        from src.trust import LOOK
+        from src.communication.trust import LOOK
 
         for agent in self.game.agents.values():
             data = {

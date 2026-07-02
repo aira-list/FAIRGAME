@@ -10,10 +10,10 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from src.game_history import GameHistory
-from src.game_round import GameRound
-from src.interaction import InteractionGraph
-from src.trust import LOOK, NO_LOOK
+from src.communication.interaction import InteractionGraph
+from src.communication.trust import LOOK, NO_LOOK
+from src.game.game_history import GameHistory
+from src.game.game_round import GameRound
 
 
 def _round(strategy, score, message):

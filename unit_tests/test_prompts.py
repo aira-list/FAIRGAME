@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from src.fairgame import FairGame, GameRound, PayoffMatrix
-from src.fairgame_factory import FairGameFactory
-from src.game_config import GameConfig
+from src.factory.fairgame_factory import FairGameFactory
+from src.game.fairgame import FairGame, GameRound, PayoffMatrix
+from src.game.game_config import GameConfig
 from src.io_managers.io_manager import IoManager
 from unit_tests.support import RESOURCES_SKIP_REASON, resources_available
 

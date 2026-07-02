@@ -1,11 +1,11 @@
-"""Tests for :mod:`src.utility`."""
+"""Tests for :mod:`src.game_theory.utility`."""
 
 from __future__ import annotations
 
 import math
 import unittest
 
-from src.utility import (
+from src.game_theory.utility import (
     CRRATransform,
     FehrSchmidtTransform,
     IdentityTransform,

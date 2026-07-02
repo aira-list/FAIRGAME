@@ -249,9 +249,9 @@ The runner writes one ``<config>_per_seed.csv`` (raw rows) and one
 
 ## Files
 
-* `src/utility.py` — utility-function transforms.
-* `src/baseline_strategies.py` — canonical non-LLM strategies.
+* `src/game_theory/utility.py` — utility-function transforms.
+* `src/agents/baseline_strategies.py` — canonical non-LLM strategies.
 * `src/results_processing/game_metrics.py` — equilibrium + welfare math.
 * `src/results_processing/seed_aggregator.py` — multi-seed CIs.
-* `src/experiment.py` — manifest runner.
+* `src/factory/experiment.py` — manifest runner.
 * `src/utils/rng.py` — deterministic RNG plumbing.

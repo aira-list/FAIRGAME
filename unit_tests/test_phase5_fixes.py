@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.game_theory.utility import build_utility_transform
 from src.results_processing.belief_metrics import brier_score
 from src.results_processing.seed_aggregator import _normal_inverse, aggregate_seeds
-from src.utility import build_utility_transform
 from src.utils.utils import get_project_root
 
 
@@ -83,14 +83,14 @@ class TestBuildUtilityTransform(unittest.TestCase):
 
 class TestTemplatePlaceholderOrder(unittest.TestCase):
     def test_reordered_placeholders_accepted(self) -> None:
-        from src.template_translation.template_translator import TemplateTranslator
+        from src.prompting.template_translator import TemplateTranslator
 
         tr = TemplateTranslator("fake")
         # Same placeholders, different order — must NOT raise.
         tr.check_all_placeholders_preserved("a {x} b {y}", "d {y} c {x}")
 
     def test_missing_placeholder_still_rejected(self) -> None:
-        from src.template_translation.template_translator import TemplateTranslator
+        from src.prompting.template_translator import TemplateTranslator
 
         tr = TemplateTranslator("fake")
         with self.assertRaises(ValueError):

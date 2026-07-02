@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.interaction import NONE, SEE, TALK, InteractionGraph
+from src.communication.interaction import NONE, SEE, TALK, InteractionGraph
 
 # ---- Defaults / backward compatibility ----------------------------------
 

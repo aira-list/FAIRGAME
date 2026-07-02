@@ -1,4 +1,4 @@
-"""Tests for :mod:`src.equilibrium`.
+"""Tests for :mod:`src.game_theory.equilibrium`.
 
 Covers known-good cases (the shipped 2x2 games), degenerate inputs that
 should return an empty list, and the validator's auto-resolution path.
@@ -14,7 +14,7 @@ from unittest import mock
 
 import pytest
 
-from src.equilibrium import _two_player_payoff_arrays, compute_nash_equilibria
+from src.game_theory.equilibrium import _two_player_payoff_arrays, compute_nash_equilibria
 from src.io_managers.io_manager import IoManager
 from src.utils.utils import get_resources_dir
 from unit_tests.support import RESOURCES_SKIP_REASON, resources_available

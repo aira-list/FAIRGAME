@@ -75,15 +75,15 @@ class TestPermutationJointAxis(unittest.TestCase):
 
 class TestAssignAgentTypesRequiresRng(unittest.TestCase):
     def test_rng_is_required(self) -> None:
-        from src.fairgame_factory import FairGameFactory
+        from src.factory.fairgame_factory import FairGameFactory
 
         with self.assertRaises(TypeError):
             # Missing the now-required rng argument.
             FairGameFactory._assign_agent_types({}, {"labels": ["x"], "probs": [1]})
 
     def test_seeded_assignment_is_deterministic(self) -> None:
-        from src.agent import LLMAgent
-        from src.fairgame_factory import FairGameFactory
+        from src.agents.agent import LLMAgent
+        from src.factory.fairgame_factory import FairGameFactory
 
         def assign(seed: int) -> list:
             agents = {

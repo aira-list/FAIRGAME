@@ -21,7 +21,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any
 
-from src.payoff_matrix import label_to_key_map
+from src.game.payoff_matrix import label_to_key_map
 
 
 def _matrix_blocks(

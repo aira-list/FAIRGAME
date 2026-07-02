@@ -137,7 +137,7 @@ class TestFactoryStillWorks(unittest.TestCase):
     after the collaborator extraction."""
 
     def test_create_games_uses_expander(self) -> None:
-        from src.fairgame_factory import FairGameFactory
+        from src.factory.fairgame_factory import FairGameFactory
 
         factory = FairGameFactory()
         config = factory.io_manager.process_and_validate_configuration(

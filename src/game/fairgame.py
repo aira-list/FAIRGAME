@@ -11,10 +11,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.game_config import CONFIG_FIELD_NAMES, GameConfig
-from src.game_history import GameHistory
-from src.game_round import GameRound
-from src.payoff_matrix import PayoffMatrix
+from src.game.game_config import CONFIG_FIELD_NAMES, GameConfig
+from src.game.game_history import GameHistory
+from src.game.game_round import GameRound
+from src.game.payoff_matrix import PayoffMatrix
 from src.utils.logger import get_logger
 from src.utils.rng import make_rng
 
@@ -85,7 +85,7 @@ class FairGame:
         game rather than something re-derived from attributes every round.
         """
         if self._phases_cache is None:
-            from src.phases import phases_for_game  # local: avoid import cycle
+            from src.game.phases import phases_for_game  # local: avoid import cycle
 
             self._phases_cache = phases_for_game(self)
         return self._phases_cache
@@ -167,7 +167,7 @@ class FairGame:
             discount = self.discount_factor ** (self.current_round - 1)
 
         # Stage 3: trust look-costs.
-        from src.trust import LOOK  # local: avoid import cycle
+        from src.communication.trust import LOOK  # local: avoid import cycle
 
         trust_cfg = self.trust_config
         trust_on = bool(trust_cfg and getattr(trust_cfg, "enabled", False))

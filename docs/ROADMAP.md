@@ -137,6 +137,6 @@ becomes "form coalitions, split surplus" rather than "play strategies".
 ---
 
 If you want to pick up one of these, the existing
-`src/baseline_strategies.py` and `src/results_processing/game_metrics.py`
+`src/agents/baseline_strategies.py` and `src/results_processing/game_metrics.py`
 are good models for how to add a new analysis layer without touching the
 core engine.

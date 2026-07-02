@@ -1,4 +1,4 @@
-"""Tests for :mod:`src.experiment`."""
+"""Tests for :mod:`src.factory.experiment`."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.experiment import Manifest, run_manifest
+from src.factory.experiment import Manifest, run_manifest
 
 
 def _inline_config() -> dict:
@@ -77,7 +77,7 @@ class TestManifest(unittest.TestCase):
         self.assertEqual(manifest.seeds, [1, 2])
 
     def test_manifest_missing_required_key_raises_experiment_error(self) -> None:
-        from src.experiment import ExperimentError
+        from src.factory.experiment import ExperimentError
 
         bad = self.tmp / "bad.json"
         with bad.open("w", encoding="utf-8") as fh:
@@ -170,7 +170,7 @@ class TestManifest(unittest.TestCase):
         self.assertTrue((df["max_rounds"] == 3).all())
 
     def test_missing_config_file_raises_experiment_error(self) -> None:
-        from src.experiment import ExperimentError
+        from src.factory.experiment import ExperimentError
 
         path = self.tmp / "missing.json"
         with path.open("w", encoding="utf-8") as fh:

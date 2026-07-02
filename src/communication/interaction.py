@@ -3,8 +3,8 @@
 By default FAIRGAME runs a *complete* interaction graph — every agent
 observes and can broadcast to every other agent. This module lets a
 configuration replace that implicit clique with an explicit, directed
-topology, mirroring how :mod:`src.trust` and ``FakeCommunicationConfig``
-attach optional per-game behaviour to a :class:`~src.fairgame.FairGame`.
+topology, mirroring how :mod:`src.communication.trust` and ``FakeCommunicationConfig``
+attach optional per-game behaviour to a :class:`~src.game.fairgame.FairGame`.
 
 Model
 -----

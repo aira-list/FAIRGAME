@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.trust import LOOK, NO_LOOK, TrustConfig
+from src.communication.trust import LOOK, NO_LOOK, TrustConfig
 
 
 def test_disabled_by_default_when_no_block():

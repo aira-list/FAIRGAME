@@ -11,7 +11,7 @@ from __future__ import annotations
 import unittest
 from types import SimpleNamespace
 
-from src.prompt_creator import PromptCreator
+from src.prompting.prompt_creator import PromptCreator
 
 _TEMPLATE = (
     "You are {currentPlayerName} vs {opponent1}. "

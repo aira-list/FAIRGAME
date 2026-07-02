@@ -1,10 +1,10 @@
-"""Tests for :mod:`src.belief_parser`."""
+"""Tests for :mod:`src.agents.belief_parser`."""
 
 from __future__ import annotations
 
 import unittest
 
-from src.belief_parser import BeliefParseError, parse_belief
+from src.agents.belief_parser import BeliefParseError, parse_belief
 
 STRATEGIES = {"strategy1": "Cooperate", "strategy2": "Defect"}
 THREE_STRATEGIES = {
@@ -217,7 +217,7 @@ class TestToleranceBoundary(unittest.TestCase):
 
     def test_sum_just_outside_5x_tolerance_is_rejected(self) -> None:
         # Sum = 1.30 is outside the 0.25 window → reject.
-        from src.belief_parser import BeliefParseError
+        from src.agents.belief_parser import BeliefParseError
 
         with self.assertRaises(BeliefParseError):
             parse_belief('{"Cooperate": 0.80, "Defect": 0.50}', STRATEGIES, sum_tolerance=0.05)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.trust import LOOK
+from src.communication.trust import LOOK
 
 
 def trust_summary(

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import unittest
 
-from src.payoff_matrix import PayoffMatrix
-from src.prompt_creator import PromptCreator
+from src.game.payoff_matrix import PayoffMatrix
+from src.prompting.prompt_creator import PromptCreator
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -282,7 +282,7 @@ class TestReputationApplies(unittest.TestCase):
 
     def test_default_flag_value_is_true_for_backwards_compat(self) -> None:
         # Don't break existing callers that rely on auto-injection.
-        from src.prompt_creator import PromptCreator as PC
+        from src.prompting.prompt_creator import PromptCreator as PC
 
         pm = PayoffMatrix(_matrix_data(), "en")
         # Construct without the new flag — must default to True.

@@ -15,7 +15,7 @@ from __future__ import annotations
 import unittest
 from unittest import mock
 
-from src.phases import (
+from src.game.phases import (
     BeliefPhase,
     ChoosePhase,
     CommunicationPhase,
@@ -32,8 +32,8 @@ class _FakeFairGame:
     """
 
     def __init__(self, **kwargs) -> None:
-        from src.fake_message_generator import FakeCommunicationConfig
-        from src.trust import TrustConfig
+        from src.communication.fake_message_generator import FakeCommunicationConfig
+        from src.communication.trust import TrustConfig
 
         self.agents_communicate = kwargs.get("agents_communicate", False)
         self.elicit_beliefs = kwargs.get("elicit_beliefs", False)

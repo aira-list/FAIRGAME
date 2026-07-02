@@ -15,7 +15,7 @@ import unittest
 
 from src.llm_connectors import register_model
 from src.llm_connectors.abstract_connector import AbstractConnector
-from src.template_translation.template_translator import TemplateTranslator
+from src.prompting.template_translator import TemplateTranslator
 
 
 class _EchoTranslator(AbstractConnector):
@@ -77,7 +77,7 @@ class TestTranslatorIsLLMOnly(unittest.TestCase):
         import sys
 
         sys.modules.pop("sentence_transformers", None)
-        module = importlib.import_module("src.template_translation.template_translator")
+        module = importlib.import_module("src.prompting.template_translator")
         importlib.reload(module)
         self.assertNotIn("sentence_transformers", sys.modules)
 

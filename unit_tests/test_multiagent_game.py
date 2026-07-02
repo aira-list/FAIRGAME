@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from src.fairgame_factory import FairGameFactory
+from src.factory.fairgame_factory import FairGameFactory
 from src.io_managers.io_manager import IoManager
 from unit_tests.support import RESOURCES_SKIP_REASON, resources_available
 

@@ -27,7 +27,7 @@ absolute). For each config, the runner:
 
 Invoke with::
 
-    python -m src.experiment path/to/manifest.json
+    python -m src.factory.experiment path/to/manifest.json
 """
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from src.fairgame_factory import FairGameFactory
+from src.factory.fairgame_factory import FairGameFactory
 from src.io_managers.io_manager import IoManager
 from src.results_processing.results_processor import ResultsProcessor
 from src.results_processing.seed_aggregator import aggregate_seeds
@@ -149,7 +149,7 @@ def run_manifest(manifest: Manifest) -> dict[str, Path]:
 
 def main() -> int:
     if len(sys.argv) < 2:
-        print("Usage: python -m src.experiment <manifest.json>", file=sys.stderr)
+        print("Usage: python -m src.factory.experiment <manifest.json>", file=sys.stderr)
         return 2
     manifest = Manifest.load(Path(sys.argv[1]))
     run_manifest(manifest)

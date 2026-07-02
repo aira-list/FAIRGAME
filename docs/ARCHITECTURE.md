@@ -32,20 +32,24 @@ Two parallel paths drive the engine:
 
 | Module | Role |
 |---|---|
-| `src/fairgame.py` | `FairGame` orchestrator: round loop, stop conditions, descriptive snapshot. |
-| `src/game_round.py` | `GameRound`: prompt build, communication phase, strategy selection (with retry). |
-| `src/payoff_matrix.py` | `PayoffMatrix`: combination → weight resolution, score attribution; lazy O(1) reverse cache. |
-| `src/prompt_creator.py` | Template fill: handles optional intro / opponent / round-length blocks and the choose/communicate phase blocks. |
-| `src/agent.py` | `Agent`: thin wrapper around an LLM connector with strategy + score history. |
-| `src/fairgame_factory.py` | `FairGameFactory`: load config, expand permutations, build `FairGame`s, run them. |
-| `src/fake_message_generator.py` | `FakeCommunicationConfig` + random decimal/hex strings for the optional fake-communication phase. |
+| `src/game/fairgame.py` | `FairGame` orchestrator: round loop, stop conditions, descriptive snapshot. |
+| `src/game/game_round.py` | `GameRound`: prompt build, communication phase, strategy selection (with retry). |
+| `src/game/payoff_matrix.py` | `PayoffMatrix`: combination → weight resolution, score attribution; lazy O(1) reverse cache. |
+| `src/game/` (also) | `game_config.py`, `game_history.py`, `phases.py` — config model, per-round history, and the per-round phase pipeline. |
+| `src/prompting/prompt_creator.py` | Template fill: handles optional intro / opponent / round-length blocks and the choose/communicate phase blocks. |
+| `src/prompting/template_translator.py` | Placeholder-preserving LLM translation pipeline. |
+| `src/agents/agent.py` | `Agent`: thin wrapper around an LLM connector with strategy + score history. |
+| `src/agents/` (also) | `baseline_strategies.py` (TFT, GrimTrigger, …), `belief_parser.py`. |
+| `src/game_theory/` | `equilibrium.py` (Nash equilibria) and `utility.py` (CRRA / Fehr-Schmidt transforms). |
+| `src/communication/` | `trust.py` (monitoring), `interaction.py` (topology), `fake_message_generator.py` (covert channel). |
+| `src/factory/fairgame_factory.py` | `FairGameFactory`: load config, expand permutations, build `FairGame`s, run them. |
+| `src/factory/` (also) | `permutation_expander.py`, `tournament_builder.py`, `experiment.py` (manifest runner). |
 | `src/io_managers/io_manager.py` | Routes config + template loads through `FileManager` and `ConfigValidator`. |
 | `src/io_managers/configuration_validator.py` | Pydantic v2 schema + cross-field validation. |
 | `src/io_managers/payoff_matrix_transformer.py` | Tolerates the legacy `[strategy, weight]` payoff format and rewrites it. |
 | `src/io_managers/file_manager.py` | JSON / `.txt` / `.rtf` reading; CSV writing. |
-| `src/llm_connectors/` | Unified LiteLLM connector, retry/rate-limit machinery, and the `ChatModelFactory`. |
+| `src/llm_connectors/` | Unified LiteLLM connector, retry/rate-limit machinery, the `ChatModelFactory`, and the offline `DemoConnector`. |
 | `src/results_processing/` | Flatten run output into result rows (`row_schema.py` is the column contract). |
-| `src/template_translation/` | Placeholder-preserving translation pipeline. |
 | `src/utils/logger.py` | Centralized logging configuration. |
 | `src/utils/utils.py` | Slug / path helpers. |
 

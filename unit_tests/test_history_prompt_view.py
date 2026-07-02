@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import unittest
 
-from src.game_history import GameHistory
+from src.game.game_history import GameHistory
 
 
 class TestPromptViewExcludesPrompts(unittest.TestCase):

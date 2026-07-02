@@ -6,9 +6,9 @@ import os
 from collections.abc import Callable
 from typing import Any
 
-from src.fairgame_factory import FairGameFactory
+from src.factory.fairgame_factory import FairGameFactory
+from src.prompting.template_translator import TemplateTranslator
 from src.results_processing.results_processor import ResultsProcessor
-from src.template_translation.template_translator import TemplateTranslator
 
 
 class FairGameEngine:

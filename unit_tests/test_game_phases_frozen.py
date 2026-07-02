@@ -10,10 +10,10 @@ from __future__ import annotations
 import random
 import unittest
 
-from src.agent import LLMAgent
-from src.fairgame import FairGame
-from src.game_config import GameConfig
-from src.phases import BeliefPhase, BeliefSecondOrderPhase, ChoosePhase
+from src.agents.agent import LLMAgent
+from src.game.fairgame import FairGame
+from src.game.game_config import GameConfig
+from src.game.phases import BeliefPhase, BeliefSecondOrderPhase, ChoosePhase
 
 _MATRIX = {"strategies": {"en": {}}, "weights": {}, "combinations": {}, "matrix": {}}
 

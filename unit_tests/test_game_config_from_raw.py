@@ -11,8 +11,8 @@ from __future__ import annotations
 import random
 import unittest
 
-from src.game_config import GameConfig
-from src.utility import IdentityTransform
+from src.game.game_config import GameConfig
+from src.game_theory.utility import IdentityTransform
 
 
 def _minimal_raw() -> dict:

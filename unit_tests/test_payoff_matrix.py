@@ -1,10 +1,10 @@
-"""Unit tests for :class:`src.payoff_matrix.PayoffMatrix`."""
+"""Unit tests for :class:`src.game.payoff_matrix.PayoffMatrix`."""
 
 from __future__ import annotations
 
 import unittest
 
-from src.payoff_matrix import PayoffMatrix
+from src.game.payoff_matrix import PayoffMatrix
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -210,7 +210,7 @@ class TestAttributeScoresOrder(unittest.TestCase):
         # Agent order: a=strategy1, b=strategy2 → a:5, b:0. A loop that
         # iterated in reverse, popped from the end, or zipped backwards
         # would give the swapped pair (0, 5).
-        from src.payoff_matrix import PayoffMatrix
+        from src.game.payoff_matrix import PayoffMatrix
 
         pm = PayoffMatrix(_pd_matrix(), "en")
         a, b = _StubAgent(), _StubAgent()

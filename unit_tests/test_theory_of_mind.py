@@ -15,10 +15,10 @@ from pathlib import Path
 
 import pytest
 
-from src.fairgame_factory import FairGameFactory
+from src.factory.fairgame_factory import FairGameFactory
+from src.game.payoff_matrix import PayoffMatrix
 from src.io_managers.io_manager import IoManager
-from src.payoff_matrix import PayoffMatrix
-from src.prompt_creator import PromptCreator
+from src.prompting.prompt_creator import PromptCreator
 from src.results_processing.results_processor import ResultsProcessor
 from src.utils.utils import get_resources_dir
 from unit_tests.support import RESOURCES_SKIP_REASON, resources_available

@@ -12,11 +12,11 @@ from __future__ import annotations
 
 import unittest
 
-from src.fairgame import FairGame
-from src.game_config import GameConfig
-from src.payoff_matrix import PayoffMatrix
-from src.prompt_creator import PromptCreator
-from src.utility import CRRATransform
+from src.game.fairgame import FairGame
+from src.game.game_config import GameConfig
+from src.game.payoff_matrix import PayoffMatrix
+from src.game_theory.utility import CRRATransform
+from src.prompting.prompt_creator import PromptCreator
 
 PM_DATA = {
     "weights": {"weight1": 6, "weight2": 10, "weight3": 0, "weight4": 2},

@@ -3,7 +3,7 @@ import unittest
 
 from langdetect import detect
 
-from src.fairgame_factory import FairGameFactory
+from src.factory.fairgame_factory import FairGameFactory
 from src.io_managers.io_manager import IoManager
 from src.results_processing.results_processor import ResultsProcessor
 

@@ -100,7 +100,7 @@ class BaselineAgent(Agent):
 
     The round runner spots a ``BaselineAgent`` and routes through
     ``agent.baseline_strategy.choose(agent, game, round_number)`` instead
-    of building a prompt — see :class:`src.game_round.GameRound`.
+    of building a prompt — see :class:`src.game.game_round.GameRound`.
 
     Construction: ``BaselineAgent(name, strategy, personality, prob)`` —
     the strategy object is the second positional; ``llm_service`` is

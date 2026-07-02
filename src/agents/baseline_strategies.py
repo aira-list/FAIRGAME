@@ -32,7 +32,7 @@ import random
 from collections.abc import Mapping
 from typing import Any
 
-from src.payoff_matrix import label_to_key_map
+from src.game.payoff_matrix import label_to_key_map
 
 
 def cooperate_key(game) -> str:

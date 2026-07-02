@@ -9,7 +9,7 @@ running FAIRGAME API ("api"), then writes the results CSV::
 
 The config argument is a path under ``<resources>/config/`` (without the
 ``.json`` suffix); the template defaults to the config's directory name. For
-batch experiment sweeps use :mod:`src.experiment` instead — this entry point
+batch experiment sweeps use :mod:`src.factory.experiment` instead — this entry point
 is deliberately a one-config runner.
 """
 
@@ -86,7 +86,7 @@ class GamesRunner:
         """
         Execute the game locally using FairGameFactory.
         """
-        from src.fairgame_factory import FairGameFactory
+        from src.factory.fairgame_factory import FairGameFactory
 
         game_factory = FairGameFactory()
         return game_factory.create_and_run_games(self.config)

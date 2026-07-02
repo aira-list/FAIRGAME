@@ -1,4 +1,4 @@
-"""Tests for the new :class:`src.game_config.GameConfig` dataclass.
+"""Tests for the new :class:`src.game.game_config.GameConfig` dataclass.
 
 The dataclass bundles all the per-game parameters previously sprawled
 across :class:`FairGame.__init__` and runs validation in one place.
@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import unittest
 
-from src.game_config import GameConfig
-from src.utility import FehrSchmidtTransform, IdentityTransform
+from src.game.game_config import GameConfig
+from src.game_theory.utility import FehrSchmidtTransform, IdentityTransform
 
 
 def _matrix_data() -> dict:
@@ -112,7 +112,7 @@ class TestFairGameAcceptsConfig(unittest.TestCase):
         return {"a1": _StubAgent("a1"), "a2": _StubAgent("a2")}
 
     def test_from_config_constructs_fairgame(self) -> None:
-        from src.fairgame import FairGame
+        from src.game.fairgame import FairGame
 
         cfg = _minimal_config(name="from-cfg")
         game = FairGame.from_config(cfg, agents=self._stub_agents())
@@ -121,7 +121,7 @@ class TestFairGameAcceptsConfig(unittest.TestCase):
         self.assertEqual(game.language, "en")
 
     def test_from_config_propagates_optional_fields(self) -> None:
-        from src.fairgame import FairGame
+        from src.game.fairgame import FairGame
 
         cfg = _minimal_config(
             discount_factor=0.9,

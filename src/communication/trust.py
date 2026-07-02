@@ -4,8 +4,8 @@ FAIRGAME-Trust adds a voluntary, costly *monitoring* decision before the
 strategy choice each round. An agent first decides whether to ``LOOK`` (pay a
 monitoring cost to observe the opponent's history) or ``NO_LOOK`` (act on
 trust with no information). This module holds the per-game configuration for
-that mechanism; the round runner (:mod:`src.game_round`) and phase list
-(:mod:`src.phases`) consume it, mirroring how ``FakeCommunicationConfig``
+that mechanism; the round runner (:mod:`src.game.game_round`) and phase list
+(:mod:`src.game.phases`) consume it, mirroring how ``FakeCommunicationConfig``
 drives the communication phase.
 
 v1 supports a single ``historyScope`` value, ``"full"``: when an agent pays to

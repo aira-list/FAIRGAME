@@ -9,7 +9,7 @@ rather than whichever happens to come first in dict order.
 import unittest
 from types import SimpleNamespace
 
-from src.game_round import GameRound
+from src.game.game_round import GameRound
 
 
 def _round(strategies: dict[str, str]) -> GameRound:

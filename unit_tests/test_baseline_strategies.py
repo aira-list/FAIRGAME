@@ -1,4 +1,4 @@
-"""Tests for :mod:`src.baseline_strategies`."""
+"""Tests for :mod:`src.agents.baseline_strategies`."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import random
 import unittest
 from collections import Counter
 
-from src.baseline_strategies import (
+from src.agents.baseline_strategies import (
     BASELINE_PREFIX,
     AlwaysCooperate,
     AlwaysDefect,

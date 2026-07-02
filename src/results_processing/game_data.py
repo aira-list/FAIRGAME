@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any
 
-from src.payoff_matrix import label_to_key_map
+from src.game.payoff_matrix import label_to_key_map
 from src.results_processing.agent_info import AgentInfo
 from src.results_processing.belief_metrics import aggregate_metrics, per_round_metrics
 from src.results_processing.game_metrics import equilibrium_metrics, welfare_summary

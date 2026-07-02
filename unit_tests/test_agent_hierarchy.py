@@ -5,8 +5,8 @@ from __future__ import annotations
 import unittest
 from unittest import mock
 
-from src.agent import Agent, BaselineAgent, LLMAgent
-from src.baseline_strategies import AlwaysCooperate
+from src.agents.agent import Agent, BaselineAgent, LLMAgent
+from src.agents.baseline_strategies import AlwaysCooperate
 
 # ---------------------------------------------------------------------------
 # Hierarchy
@@ -36,7 +36,7 @@ class TestHierarchy(unittest.TestCase):
 class TestLLMAgent(unittest.TestCase):
     def test_calls_execute_prompt_with_llm_service_and_prompt(self) -> None:
         agent = LLMAgent("agent1", "OpenAIGPT4o", "neutral", 0.0)
-        with mock.patch("src.agent.execute_prompt", return_value="ok") as mock_exec:
+        with mock.patch("src.agents.agent.execute_prompt", return_value="ok") as mock_exec:
             response = agent.execute_round("hello")
         self.assertEqual(response, "ok")
         mock_exec.assert_called_once_with("OpenAIGPT4o", "hello")

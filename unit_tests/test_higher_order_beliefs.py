@@ -27,15 +27,15 @@ from __future__ import annotations
 import json
 import unittest
 
-from src.fake_message_generator import FakeCommunicationConfig
-from src.phases import (
+from src.communication.fake_message_generator import FakeCommunicationConfig
+from src.communication.trust import TrustConfig
+from src.game.phases import (
     BeliefPhase,
     BeliefSecondOrderPhase,
     ChoosePhase,
     phases_for_game,
 )
-from src.prompt_creator import PHASE_BLOCKS
-from src.trust import TrustConfig
+from src.prompting.prompt_creator import PHASE_BLOCKS
 from unit_tests.support import canonical_pd_matrix
 
 
@@ -147,8 +147,8 @@ class TestGameRoundExecutesSecondOrderPhase(unittest.TestCase):
         # Build the smallest GameRound-shaped object that exercises the
         # second-order entry point. We mock the agent's ``execute_round``
         # to return a JSON distribution and assert it lands in history.
-        from src.game_round import GameRound
-        from src.payoff_matrix import PayoffMatrix
+        from src.game.game_round import GameRound
+        from src.game.payoff_matrix import PayoffMatrix
 
         matrix = PayoffMatrix(
             canonical_pd_matrix(labels={"strategy1": "Coop", "strategy2": "Defect"}),
@@ -217,8 +217,8 @@ class TestGameRoundExecutesSecondOrderPhase(unittest.TestCase):
         # retry storms (no instructions to predict anything) or pollute
         # history with garbage. Pin the skip so a future refactor that
         # drops the guard gets caught.
-        from src.game_round import GameRound
-        from src.payoff_matrix import PayoffMatrix
+        from src.game.game_round import GameRound
+        from src.game.payoff_matrix import PayoffMatrix
 
         matrix = PayoffMatrix(
             canonical_pd_matrix(labels={"strategy1": "Coop", "strategy2": "Defect"}),

@@ -6,11 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from src.fairgame_factory import FairGameFactory
+from src.communication.trust import TrustConfig
+from src.factory.fairgame_factory import FairGameFactory
+from src.game.phases import ChoosePhase, TrustPhase, phases_for_game
 from src.io_managers.io_manager import IoManager
-from src.phases import ChoosePhase, TrustPhase, phases_for_game
 from src.results_processing.results_processor import ResultsProcessor
-from src.trust import TrustConfig
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -33,7 +33,7 @@ class _StubGame:
     always present (disabled by default), never None/missing."""
 
     def __init__(self, trust_enabled):
-        from src.fake_message_generator import FakeCommunicationConfig
+        from src.communication.fake_message_generator import FakeCommunicationConfig
 
         self.agents_communicate = False
         self.fake_communication_config = FakeCommunicationConfig(enabled=False)
@@ -113,9 +113,9 @@ def test_disabled_trust_has_no_trust_columns():
 
 
 def test_visible_history_gating():
-    from src.game_history import GameHistory
-    from src.game_round import GameRound
-    from src.trust import TrustConfig
+    from src.communication.trust import TrustConfig
+    from src.game.game_history import GameHistory
+    from src.game.game_round import GameRound
 
     class _Game:
         current_round = 2

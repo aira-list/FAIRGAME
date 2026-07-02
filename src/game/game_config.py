@@ -28,9 +28,9 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field, fields
 from typing import Any
 
-from src.fake_message_generator import FakeCommunicationConfig
-from src.trust import TrustConfig
-from src.utility import IdentityTransform, UtilityTransform
+from src.communication.fake_message_generator import FakeCommunicationConfig
+from src.communication.trust import TrustConfig
+from src.game_theory.utility import IdentityTransform, UtilityTransform
 
 
 class DescKey:
@@ -104,7 +104,7 @@ def _cfg(
 
 
 def _build_utility(value: Any) -> UtilityTransform:
-    from src.utility import build_utility_transform  # local: avoid cycle
+    from src.game_theory.utility import build_utility_transform  # local: avoid cycle
 
     return build_utility_transform(value)
 

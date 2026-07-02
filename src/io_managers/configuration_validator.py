@@ -85,7 +85,7 @@ class ConfigModel(BaseModel):
     """Expected shape of the *real* communication channel. ``"dec"``/``"hex"``
     force numeric-sequence extraction from replies (language-independent),
     ``"text"`` passes replies through verbatim, ``None`` = legacy English
-    prompt-text sniffing (see ``src.game_round._extract_numeric_message``)."""
+    prompt-text sniffing (see ``src.game.game_round._extract_numeric_message``)."""
 
     # ---- Theory-of-Mind settings ------------------------------------
     elicitBeliefs: bool = False
@@ -141,7 +141,7 @@ class ConfigModel(BaseModel):
 
     utilityTransform: dict[str, object] | None = None
     """``{"type": "CRRA"|"FehrSchmidt"|"identity", ...}`` — mapping from raw
-    payoffs to agent utilities (see :mod:`src.utility`)."""
+    payoffs to agent utilities (see :mod:`src.game_theory.utility`)."""
 
     mixedStrategies: bool = False
     """If true, the agent is asked for a probability distribution over
@@ -192,7 +192,7 @@ class ConfigModel(BaseModel):
     """``{"enabled": true, "lookCost": 0.25, "historyScope": "full"}`` —
     enables a per-round monitoring decision (LOOK/NO_LOOK). Paying to LOOK
     reveals the opponent's history at the cost of ``lookCost`` points;
-    NO_LOOK acts on trust with no information. See :class:`src.trust.TrustConfig`."""
+    NO_LOOK acts on trust with no information. See :class:`src.communication.trust.TrustConfig`."""
 
     # ---- Agent interaction graph ----------------------------------------
     interaction: dict[str, object] | None = None
@@ -201,7 +201,7 @@ class ConfigModel(BaseModel):
     directed visibility + communication topology. An edge ``A -> B`` means
     B perceives A: ``see`` exposes A's plays to B, ``talk`` also delivers
     A's messages. Absent → the implicit complete graph (every agent
-    perceives every other). See :class:`src.interaction.InteractionGraph`."""
+    perceives every other). See :class:`src.communication.interaction.InteractionGraph`."""
 
     @model_validator(mode="after")
     def _validate_game_theory_extensions(self) -> "ConfigModel":
@@ -221,17 +221,17 @@ class ConfigModel(BaseModel):
         if self.seeds is not None and not all(isinstance(s, int) for s in self.seeds):
             raise ValueError("seeds must be a list of integers.")
         # Trust / interaction blocks: delegate to the domain constructors so
-        # the validation rules exist in exactly one place (src.trust /
-        # src.interaction) — this layer just surfaces their errors at
+        # the validation rules exist in exactly one place (src.communication.trust /
+        # src.communication.interaction) — this layer just surfaces their errors at
         # config-validation time instead of deep in game construction.
-        from src.trust import TrustConfig
+        from src.communication.trust import TrustConfig
 
         if self.trust is not None:
             if not isinstance(self.trust, dict):
                 raise ValueError("trust must be an object.")
             TrustConfig.from_config({"trust": self.trust})
         if self.interaction is not None:
-            from src.interaction import InteractionGraph
+            from src.communication.interaction import InteractionGraph
 
             if not isinstance(self.interaction, dict):
                 raise ValueError("interaction must be an object.")
@@ -398,7 +398,7 @@ class ConfigValidator:
         # canonical. We do this here (post-validation) so we have the
         # transformed matrix to feed nashpy.
         if result.get("equilibria") == "auto":
-            from src.equilibrium import compute_nash_equilibria  # local import
+            from src.game_theory.equilibrium import compute_nash_equilibria  # local import
 
             language = (result.get("languages") or ["en"])[0]
             result["equilibria"] = compute_nash_equilibria(result["payoffMatrix"], language)

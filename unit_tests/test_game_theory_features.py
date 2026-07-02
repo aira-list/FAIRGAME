@@ -14,7 +14,7 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from src.fairgame_factory import FairGameFactory
+from src.factory.fairgame_factory import FairGameFactory
 from src.io_managers.io_manager import IoManager
 from src.results_processing.results_processor import ResultsProcessor
 from src.results_processing.seed_aggregator import aggregate_seeds

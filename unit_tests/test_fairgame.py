@@ -1,4 +1,4 @@
-"""Tests for :class:`src.fairgame.FairGame` orchestration logic."""
+"""Tests for :class:`src.game.fairgame.FairGame` orchestration logic."""
 
 from __future__ import annotations
 
@@ -6,10 +6,10 @@ import random
 import unittest
 from unittest import mock
 
-from src.fairgame import FairGame
-from src.fake_message_generator import FakeCommunicationConfig
-from src.game_config import GameConfig
-from src.utility import FehrSchmidtTransform, IdentityTransform
+from src.communication.fake_message_generator import FakeCommunicationConfig
+from src.game.fairgame import FairGame
+from src.game.game_config import GameConfig
+from src.game_theory.utility import FehrSchmidtTransform, IdentityTransform
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -144,7 +144,7 @@ class TestDescription(unittest.TestCase):
 class TestTermination(unittest.TestCase):
     def test_run_terminates_after_n_rounds(self) -> None:
         game = _make_game(n_rounds=2)
-        with mock.patch("src.fairgame.GameRound") as cls:
+        with mock.patch("src.game.fairgame.GameRound") as cls:
             cls.return_value.run.return_value = ["strategy2", "strategy2"]  # c4
             game.run()
         self.assertEqual(game.current_round, 3)
@@ -152,7 +152,7 @@ class TestTermination(unittest.TestCase):
 
     def test_run_terminates_at_stop_condition(self) -> None:
         game = _make_game(n_rounds=10, stop_conditions=["c4"])
-        with mock.patch("src.fairgame.GameRound") as cls:
+        with mock.patch("src.game.fairgame.GameRound") as cls:
             cls.return_value.run.return_value = ["strategy2", "strategy2"]  # c4
             game.run()
         # Stops after round 1 since combo c4 is a stop condition.
@@ -178,7 +178,7 @@ class TestTermination(unittest.TestCase):
             continuation_probability=0.5,
             rng=rng,
         )
-        with mock.patch("src.fairgame.GameRound") as cls:
+        with mock.patch("src.game.fairgame.GameRound") as cls:
             cls.return_value.run.return_value = ["strategy2", "strategy1"]
             game.run()
         # Only round 1 ran (continuation_probability check fails for round 2).
@@ -193,7 +193,7 @@ class TestTermination(unittest.TestCase):
             continuation_probability=0.01,
             rng=rng,
         )
-        with mock.patch("src.fairgame.GameRound") as cls:
+        with mock.patch("src.game.fairgame.GameRound") as cls:
             cls.return_value.run.return_value = ["strategy1", "strategy2"]
             game.run()
         self.assertEqual(len(game.choices_made), 1)
@@ -209,7 +209,7 @@ class TestScoreModifiers(unittest.TestCase):
         # Round 1: discount 0.9^0 = 1.0 → raw scores preserved.
         # Round 2: discount 0.9^1 = 0.9 → halved by 0.9.
         game = _make_game(n_rounds=2, discount_factor=0.9)
-        with mock.patch("src.fairgame.GameRound") as cls:
+        with mock.patch("src.game.fairgame.GameRound") as cls:
             cls.return_value.run.return_value = ["strategy1", "strategy1"]  # c1 → w1, w1 = 3, 3
             cls.return_value.record_round_history = mock.Mock()
             game.run()
@@ -219,7 +219,7 @@ class TestScoreModifiers(unittest.TestCase):
 
     def test_discount_factor_one_is_no_op(self) -> None:
         game = _make_game(n_rounds=2, discount_factor=1.0)
-        with mock.patch("src.fairgame.GameRound") as cls:
+        with mock.patch("src.game.fairgame.GameRound") as cls:
             cls.return_value.run.return_value = ["strategy1", "strategy1"]
             cls.return_value.record_round_history = mock.Mock()
             game.run()
@@ -243,7 +243,7 @@ class TestScoreModifiers(unittest.TestCase):
     def test_utility_transform_applied_per_round(self) -> None:
         # FehrSchmidt(α=0, β=0) = identity → no change.
         game = _make_game(n_rounds=1, utility_transform=FehrSchmidtTransform(alpha=0.0, beta=0.0))
-        with mock.patch("src.fairgame.GameRound") as cls:
+        with mock.patch("src.game.fairgame.GameRound") as cls:
             cls.return_value.run.return_value = ["strategy1", "strategy2"]  # c2 → 5, 0
             cls.return_value.record_round_history = mock.Mock()
             game.run()
@@ -291,7 +291,7 @@ class TestCompoundDiscountWarning(unittest.TestCase):
     (without forbidding the combination)."""
 
     def test_warning_logged_when_both_set(self) -> None:
-        with self.assertLogs("src.fairgame", level="WARNING") as cm:
+        with self.assertLogs("src.game.fairgame", level="WARNING") as cm:
             _make_game(discount_factor=0.9, continuation_probability=0.95)
         joined = "\n".join(cm.output)
         self.assertIn("discount", joined.lower())
@@ -300,7 +300,7 @@ class TestCompoundDiscountWarning(unittest.TestCase):
     def test_no_warning_when_only_discount_set(self) -> None:
         # Pure discount factor → no warning.
         with mock.patch.object(
-            __import__("src.fairgame", fromlist=["logger"]).logger,
+            __import__("src.game.fairgame", fromlist=["logger"]).logger,
             "warning",
         ) as warn:
             _make_game(discount_factor=0.9)
@@ -308,7 +308,7 @@ class TestCompoundDiscountWarning(unittest.TestCase):
 
     def test_no_warning_when_only_continuation_set(self) -> None:
         with mock.patch.object(
-            __import__("src.fairgame", fromlist=["logger"]).logger,
+            __import__("src.game.fairgame", fromlist=["logger"]).logger,
             "warning",
         ) as warn:
             _make_game(continuation_probability=0.95)
@@ -318,7 +318,7 @@ class TestCompoundDiscountWarning(unittest.TestCase):
         # Discount=1.0 means no discounting — combining with continuation
         # is the canonical stochastic-horizon model and shouldn't warn.
         with mock.patch.object(
-            __import__("src.fairgame", fromlist=["logger"]).logger,
+            __import__("src.game.fairgame", fromlist=["logger"]).logger,
             "warning",
         ) as warn:
             _make_game(discount_factor=1.0, continuation_probability=0.95)

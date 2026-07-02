@@ -110,6 +110,6 @@ def list_languages() -> dict[str, Any]:
 @router.get("/api/baselines")
 def list_baselines() -> dict[str, list[str]]:
     """Available canonical baseline strategy names."""
-    from src.baseline_strategies import available_baselines
+    from src.agents.baseline_strategies import available_baselines
 
     return {"baselines": available_baselines()}

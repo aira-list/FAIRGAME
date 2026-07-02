@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 
-from src.payoff_matrix import label_to_key_map
+from src.game.payoff_matrix import label_to_key_map
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)

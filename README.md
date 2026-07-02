@@ -46,18 +46,20 @@ web/                  # Vanilla SPA (Tailwind + Alpine via CDN)
 main.py               # CLI runner (local or via API)
 Dockerfile            # Production container, runs as non-root with healthcheck
 pyproject.toml        # Packaging + tool config (ruff, mypy, pytest)
-src/                  # Engine source code
-  fairgame.py            # Top-level orchestrator
-  fairgame_factory.py    # Permutation expansion + game construction
-  game_round.py          # Single-round flow with retry/parsing
-  phases.py              # Per-round phases (communication, trust, beliefs, choose)
-  payoff_matrix.py       # Combination -> weight resolution
-  prompt_creator.py      # Template fill (intro/opponent/length/phase blocks)
-  agent.py               # LLM-backed and baseline participants
+src/                  # Engine source code, grouped by concern
+  game/                  # Core game: fairgame, game_round, game_config,
+                         #   game_history, phases, payoff_matrix
+  agents/                # Participants + decision logic: agent,
+                         #   baseline_strategies (TFT, GrimTrigger, …), belief_parser
+  game_theory/           # Equilibrium computation + utility transforms (CRRA, Fehr-Schmidt)
+  communication/         # Message channels: trust/monitoring, interaction graph,
+                         #   fake (covert) message generator
+  prompting/             # Prompt template fill + placeholder-preserving translation
+  factory/               # fairgame_factory (orchestrator) + permutation expander,
+                         #   tournament builder, experiment-manifest runner
   io_managers/           # Config + file IO + Pydantic validation
-  llm_connectors/        # Unified LiteLLM connector + factory
+  llm_connectors/        # Unified LiteLLM connector, factory, offline demo connector
   results_processing/    # Result-row builder (row_schema.py = column contract)
-  template_translation/  # Placeholder-preserving translation pipeline
   utils/                 # Logger + helpers
 starter_library/      # Shipped defaults (game types, templates, configs) seeded on first run
   game_types/         # One JSON per game type

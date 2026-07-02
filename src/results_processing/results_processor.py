@@ -3,7 +3,7 @@ from typing import Any
 
 import pandas as pd
 
-from src.game_config import DescKey
+from src.game.game_config import DescKey
 from src.results_processing.agent_info import AgentInfo
 from src.results_processing.game_data import GameData
 

@@ -5,8 +5,8 @@ from __future__ import annotations
 import random
 import unittest
 
-from src.belief_parser import BeliefParseError, parse_belief
-from src.fake_message_generator import FakeMessageGenerator
+from src.agents.belief_parser import BeliefParseError, parse_belief
+from src.communication.fake_message_generator import FakeMessageGenerator
 from src.io_managers.configuration_validator import ConfigValidator
 from src.results_processing.agent_info import AgentInfo
 
