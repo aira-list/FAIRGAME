@@ -66,7 +66,7 @@ A Helm chart is bundled under `.deploy/helm/`. The most important values:
 | `service.port` | Cluster-internal port (matches `PORT` in the container). |
 | `env` | Override env vars (set `FAIRGAME_LOG_LEVEL`, retry tuning). |
 | `secrets` | API keys mounted as env vars. |
-| `resources` | CPU / memory requests and limits. Recommended: 1 CPU + 1Gi RAM minimum because of `sentence-transformers` startup cost. |
+| `resources` | CPU / memory requests and limits. Recommended: 0.5 CPU + 512Mi RAM minimum (no local ML model is loaded — translation is delegated to a remote LLM). |
 
 Install:
 

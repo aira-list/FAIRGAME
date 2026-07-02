@@ -43,9 +43,17 @@ function fairgame() {
     // FAIRGAME community showcase website. Empty by default (links hidden);
     // populated from /api/settings, set via FAIRGAME_COMMUNITY_URL on deploy.
     communityUrl: '',
+    // Default LLM the translate endpoint uses when the dialog doesn't override
+    // it; populated from /api/settings (FAIRGAME_TRANSLATOR_MODEL on deploy).
+    translatorModel: '',
     llms: [],
     baselines: [],
     languages: [],   // populated from /api/languages
+    // Demo mode: runs use an offline deterministic fake LLM (no API keys, no
+    // charges). On by default; turn off in the sidebar to use real models.
+    // The backend also defaults every run to demo, so this only needs to be
+    // sent when the user turns it OFF.
+    demoMode: true,
 
     // Runs live here (not in app.results.js) because core code uses them
     // too: resultsForConfig/filteredRuns below, loadRuns/openRun, and the
@@ -140,7 +148,11 @@ function fairgame() {
     },
 
     async loadSettings() {
-      try { this.communityUrl = (await this.api('/api/settings')).community_url || ''; }
+      try {
+        const s = await this.api('/api/settings');
+        this.communityUrl = s.community_url || '';
+        this.translatorModel = s.translator_model || '';
+      }
       catch (e) { console.error('loadSettings', e); }
     },
 

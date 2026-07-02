@@ -26,14 +26,16 @@ classifiers = [
 dependencies = [
     "anthropic>=0.34,<1.0",
     "fastapi>=0.110,<1.0",
-    "langcodes>=3.4,<4.0",
+    # ``[data]`` pulls in language_data/marisa-trie so ``langcodes.get(code)
+    # .language_name()`` (used by the translator) can resolve names offline.
+    "langcodes[data]>=3.4,<4.0",
+    "litellm>=1.60,<2.0",
     "mistralai>=1.0,<2.0",
     "openai>=1.40,<2.0",
     "pandas>=2.2,<3.0",
     "pydantic>=2.7,<3.0",
     "python-dotenv>=1.0,<2.0",
     "requests>=2.32,<3.0",
-    "sentence-transformers>=2.7,<5.0",
     "striprtf>=0.0.26,<1.0",
     "tenacity>=8.2,<10.0",
     "scipy>=1.11,<2.0",
@@ -48,6 +50,7 @@ test = [
     "pytest-cov>=5.0,<7.0",
     "nashpy>=0.0.40,<1.0",
     "httpx>=0.27,<1.0",  # required by fastapi.testclient
+    "langdetect>=1.0,<2.0",  # used by test_prisoner_dilemma language checks
 ]
 dev = [
     "ruff>=0.5,<1.0",

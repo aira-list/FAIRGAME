@@ -114,7 +114,7 @@ A legacy compact form is also accepted (each combination listed as
 | `FAIRGAME_LLM_RATE_LIMIT` | `0.0` | Aggregate requests/sec budget shared across workers (`0` disables). |
 | `FAIRGAME_STRATEGY_MAX_ATTEMPTS` | `10` | Times to re-prompt an agent when its response fails to parse. |
 | `FAIRGAME_BELIEF_MAX_ATTEMPTS` | `3` | Retries when an agent's belief JSON cannot be parsed. |
-| `FAIRGAME_TRANSLATOR_MODEL` | `OpenAIGPT4o` | Model used by the translation endpoint. |
+| `FAIRGAME_TRANSLATOR_MODEL` | `OpenAIGPT4o` | Default model for the translation endpoint. Each translate request may override it with a `model` field (any LiteLLM-resolvable name, incl. `litellm:ollama/…`); this is the fallback when none is sent. |
 | `FAIRGAME_RESOURCES_DIR` | sibling `Fairgame_paper_evaluations/resources` | Location of the CLI/paper example configs and templates. The web app does not need it. |
 | `FAIRGAME_COMMUNITY_URL` | unset | Public FAIRGAME community/showcase URL. When set, the SPA shows "community" links; when empty they are hidden. |
 | `FAIRGAME_LIVE_LLM` | unset | Set to `1` in tests to opt-in to live-LLM tests. |

@@ -18,6 +18,8 @@ window.__fgTemplates = {
         archived: [],          // archived templates for the active game
         translateDialog: null,
         translateTargets: [],
+        translateModel: '',        // chosen translator LLM (from /api/llms)
+        translateModelCustom: '',  // free-form litellm:<model> when model === '__custom__'
         translateRunning: false,
         translateError: '',
         translateNotice: '',   // success/skip summary, shown after the dialog closes
@@ -218,8 +220,23 @@ window.__fgTemplates = {
       openTranslateDialog(tpl) {
         this.templatesPage.translateDialog = tpl;
         this.templatesPage.translateTargets = [];
+        // Preselect the server default translator model when it's a known
+        // featured model; otherwise fall back to the first available one.
+        const dflt = this.translatorModel;
+        this.templatesPage.translateModel =
+          (dflt && this.llms.includes(dflt)) ? dflt : (this.llms[0] || '');
+        this.templatesPage.translateModelCustom = '';
         this.templatesPage.translateError = '';
         this.templatesPage.translateNotice = '';
+      },
+
+      // Resolve the model string to send: either a featured name, or the
+      // free-form ``litellm:<model>`` the user typed under "Custom…".
+      resolvedTranslateModel() {
+        const p = this.templatesPage;
+        return p.translateModel === '__custom__'
+          ? p.translateModelCustom.trim()
+          : p.translateModel;
       },
 
       async runTranslate() {
@@ -232,6 +249,7 @@ window.__fgTemplates = {
             method: 'POST',
             body: JSON.stringify({
               target_languages: this.templatesPage.translateTargets,
+              model: this.resolvedTranslateModel() || null,
             }),
           });
           let msg = `Created ${result.created.length} translations.`;

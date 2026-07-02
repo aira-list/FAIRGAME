@@ -4,10 +4,17 @@ import unittest
 from difflib import unified_diff
 from pathlib import Path
 
+import pytest
+
 from src.fairgame import FairGame, GameRound, PayoffMatrix
 from src.fairgame_factory import FairGameFactory
 from src.game_config import GameConfig
 from src.io_managers.io_manager import IoManager
+from unit_tests.support import RESOURCES_SKIP_REASON, resources_available
+
+# The expected-prompt fixtures resolve game templates from the sibling
+# resources folder (not shipped with this repo) — skip when it's absent.
+pytestmark = pytest.mark.skipif(not resources_available(), reason=RESOURCES_SKIP_REASON)
 
 # Constants used throughout the test suite
 LLM = "Claude35Sonnet"

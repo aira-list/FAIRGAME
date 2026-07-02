@@ -7,7 +7,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
+
+from unit_tests.support import RESOURCES_SKIP_REASON, resources_available
+
+# setUpClass seeds templates read from the sibling resources folder (not shipped
+# here); skip the whole module cleanly when it's absent.
+pytestmark = pytest.mark.skipif(not resources_available(), reason=RESOURCES_SKIP_REASON)
 
 
 def _make_pd_matrix(w1: int = 3) -> dict:

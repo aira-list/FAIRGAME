@@ -15,13 +15,24 @@ __all__ = [
     "AbstractConnector",
     "ChatModelFactory",
     "MODEL_PROVIDER_MAP",
+    "demo_mode",
+    "demo_mode_active",
     "execute_prompt",
     "register_model",
 ]
 
+_FACTORY_EXPORTS = {
+    "ChatModelFactory",
+    "MODEL_PROVIDER_MAP",
+    "demo_mode",
+    "demo_mode_active",
+    "execute_prompt",
+    "register_model",
+}
+
 
 def __getattr__(name):  # noqa: D401 - module dunder
-    if name in {"ChatModelFactory", "MODEL_PROVIDER_MAP", "execute_prompt", "register_model"}:
+    if name in _FACTORY_EXPORTS:
         from src.llm_connectors import llm_factory_connector as factory  # noqa: WPS433
 
         return getattr(factory, name)
@@ -32,6 +43,8 @@ if TYPE_CHECKING:  # pragma: no cover
     from src.llm_connectors.llm_factory_connector import (  # noqa: F401
         MODEL_PROVIDER_MAP,
         ChatModelFactory,
+        demo_mode,
+        demo_mode_active,
         execute_prompt,
         register_model,
     )

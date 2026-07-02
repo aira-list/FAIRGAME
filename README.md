@@ -19,7 +19,8 @@ Institute of Science and Technology — part of the
 * **Permutation engine** — automatic expansion across personality and prior
   combinations, with symmetric dedup when every agent shares an LLM.
 * **Multilingual** — prompts can ship in any language, and an LLM-driven
-  translator preserves placeholders while validating semantic similarity.
+  translator preserves placeholders, and you pick which LLM (any LiteLLM
+  provider, or a local Ollama model) does the translating.
 * **Theory-of-Mind toolkit** — belief elicitation phase, ToM-order ablation,
   private agent types, Brier-score metrics. See
   [`docs/THEORY_OF_MIND.md`](docs/THEORY_OF_MIND.md).
@@ -95,13 +96,14 @@ The web app exposes the same engine as a REST API, so you can drive it
 programmatically too:
 
 ```bash
-# Run a shipped configuration by id (the offline baseline needs no API keys):
-curl -X POST http://localhost:4263/api/configurations/seed_cfg_pd_baseline_tournament/run
+# Run a shipped configuration by id. Runs default to demo mode (offline fake
+# LLM), so this needs no API keys; append ?demo=false to use real models:
+curl -X POST http://localhost:4263/api/configurations/seed_cfg_pd_llm/run
 
-# ...or run an inline config:
+# ...or run an inline config ("demo": true by default; set false for live):
 curl -X POST http://localhost:4263/api/runs \
      -H 'Content-Type: application/json' \
-     -d '{"config": { /* game config */ }}'
+     -d '{"config": { /* game config */ }, "demo": true}'
 ```
 
 | Endpoint | Method | Purpose |
@@ -124,8 +126,12 @@ pytest --cov=src --cov-report=term-missing
 ```
 
 The suite uses a deterministic fake LLM connector registered by
-`unit_tests/conftest.py`. Set `FAIRGAME_LIVE_LLM=1` to opt back into the
-provider-dependent tests (translation, end-to-end via real APIs).
+`unit_tests/conftest.py`, so a fresh clone runs green with no keys. A few
+suites read example configs/templates from the sibling
+`Fairgame_paper_evaluations/resources/` folder; when it's absent they **skip**
+(not fail) — point `FAIRGAME_RESOURCES_DIR` at that repo to run them. Set
+`FAIRGAME_LIVE_LLM=1` to opt back into the provider-dependent tests
+(translation, end-to-end via real APIs).
 
 ## Docker
 

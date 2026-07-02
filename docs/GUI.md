@@ -19,15 +19,20 @@ backend (`web_api/`) or the frontend (`web/index.html`).
 
 ## Demo mode
 
-The sidebar has a **Demo mode** toggle that defaults to **on**. While
-it's on, every LLM call is answered by a fast, deterministic
-in-process fake — no API keys are needed and no provider charges
-accrue. Switch the toggle off when you're ready to use real models;
-you'll see a green "Live mode" banner and provider APIs will be billed
-on every agent action.
+The sidebar has a **Demo / Live** toggle that defaults to **Demo**. In
+Demo, every LLM call is answered by a fast, deterministic in-process
+fake (`src.llm_connectors.demo_connector.DemoConnector`) — no API keys
+are needed and no provider charges accrue. Flip it to **Live** to use
+real provider models; the indicator turns amber ("real models —
+billed") and provider APIs are billed on every agent action.
 
-The toggle is sent on each `POST /api/runs` request, so each run
-freshly installs or restores the connector registry.
+Each run request carries a `demo` flag (`POST /api/runs`,
+`/api/configurations/{id}/run?demo=…`, `/api/configurations/run-batch`).
+For that request the engine routes every model to the demo connector;
+outside a demo request the live LiteLLM connector is used. The flag
+**defaults to `true` server-side**, so the API is explorable without
+keys even when a client doesn't send it. Note: template translation
+always uses a real model (the demo connector can't translate).
 
 ## Pages
 

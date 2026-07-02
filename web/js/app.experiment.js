@@ -42,6 +42,7 @@ window.__fgExperiment = {
             body: JSON.stringify({
               configuration_ids: [this.experiment.selectedConfig],
               iterations: Math.max(1, this.experiment.nIterations || 1),
+              demo: this.demoMode,
             }),
           });
           if (!res.ok || !res.body) {

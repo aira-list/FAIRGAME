@@ -27,8 +27,17 @@ def settings() -> dict[str, str]:
     ``community_url`` points the "FAIRGAME community" links at the operator's
     public showcase site; it is empty by default (links are hidden) and set
     via the ``FAIRGAME_COMMUNITY_URL`` environment variable on deploy.
+
+    ``translator_model`` is the default LLM the translate endpoint uses when
+    the caller doesn't pick one; the SPA preselects it in the translate dialog
+    (set via ``FAIRGAME_TRANSLATOR_MODEL``).
     """
-    return {"community_url": os.getenv("FAIRGAME_COMMUNITY_URL", "")}
+    from web_api.engine import get_engine
+
+    return {
+        "community_url": os.getenv("FAIRGAME_COMMUNITY_URL", ""),
+        "translator_model": get_engine().default_translator_model,
+    }
 
 
 @router.get("/api/llms")

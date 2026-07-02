@@ -271,9 +271,7 @@ def translate_template_into_languages(
             skipped.append(f"{target} (already exists for this variation)")
             continue
         try:
-            translated = get_engine().template_translator.translate(
-                source["body"], target, cosine_threshold=body.cosine_threshold
-            )
+            translated = get_engine().translator_for(body.model).translate(source["body"], target)
         except Exception as exc:  # noqa: BLE001
             logger.warning("Translation to %s failed: %s", target, exc)
             errors.append({"language": target, "error": str(exc)})

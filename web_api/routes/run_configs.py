@@ -14,6 +14,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
+from src.llm_connectors import demo_mode
 from src.utils.logger import get_logger
 from web_api.configurations_lib import is_group
 from web_api.engine import get_engine
@@ -35,6 +36,7 @@ router = APIRouter()
 def run_one_configuration(
     config_id: str,
     variant: str | None = None,
+    demo: bool = True,
 ) -> dict[str, Any]:
     items = load_store("configurations")
     item = next((i for i in items if i["id"] == config_id), None)
@@ -42,7 +44,8 @@ def run_one_configuration(
         raise HTTPException(status_code=404, detail=f"Configuration {config_id!r} not found.")
     resolved = resolve_one_variant(item, variant)
     try:
-        rows = get_engine().create_and_run_games(resolved.config)
+        with demo_mode(demo):
+            rows = get_engine().create_and_run_games(resolved.config)
     except (ValueError, TypeError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     run_id = new_id()
@@ -85,7 +88,8 @@ def run_configurations_batch(body: RunConfigurationsBody) -> dict[str, Any]:
         for variant in variants:
             for it in range(iterations):
                 try:
-                    row = run_variant_iteration(cid, item, variant, it, iterations)
+                    with demo_mode(body.demo):
+                        row = run_variant_iteration(cid, item, variant, it, iterations)
                 except Exception as exc:  # noqa: BLE001
                     # Record this iteration's failure and keep going — one bad
                     # iteration (e.g. a transient LLM/network error) must not
@@ -198,9 +202,10 @@ def run_configurations_batch_stream(body: RunConfigurationsBody) -> StreamingRes
                         )
 
                     try:
-                        row = run_variant_iteration(
-                            cid, item, variant, it, iterations, progress_cb=cb
-                        )
+                        with demo_mode(body.demo):
+                            row = run_variant_iteration(
+                                cid, item, variant, it, iterations, progress_cb=cb
+                            )
                     except _Cancelled:
                         return
                     except Exception as exc:  # noqa: BLE001

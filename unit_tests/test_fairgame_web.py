@@ -22,6 +22,8 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
+from unit_tests.support import RESOURCES_SKIP_REASON, resources_available
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -307,6 +309,7 @@ DEMO_CONFIGS = [
 ]
 
 
+@unittest.skipUnless(resources_available(), RESOURCES_SKIP_REASON)
 class TestSeedConfigurationsRunEndToEnd(unittest.TestCase):
     """End-to-end smoke for every demo Configuration.
 

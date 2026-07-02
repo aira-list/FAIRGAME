@@ -51,8 +51,21 @@ affinity: {}
 
 application:
   health: /api/health
+  # Rendered verbatim into the container's `env:` list. LLM calls go through
+  # LiteLLM, which reads provider-standard API-key env vars — mount them from a
+  # Secret you create (see docs/DEPLOYMENT.md), don't hard-code keys here.
   env: |
     - name: ENVIRONMENT
       value: "production"
-    - name: LLM_FACTORY_URL
-      value: "http://llmfactory:5001"
+    - name: ANTHROPIC_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: fairgame-llm-keys
+          key: anthropic
+          optional: true
+    - name: OPENAI_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: fairgame-llm-keys
+          key: openai
+          optional: true

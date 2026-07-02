@@ -7,6 +7,9 @@ model is used, not when the module is imported.
 
 from __future__ import annotations
 
+import contextlib
+from contextvars import ContextVar
+
 from dotenv import load_dotenv
 
 from src.llm_connectors.abstract_connector import AbstractConnector
@@ -16,6 +19,32 @@ from src.utils.utils import float_env, int_env
 load_dotenv()
 
 logger = get_logger(__name__)
+
+# Demo mode: when active, every model resolves to the offline DemoConnector so
+# scenarios run with no API keys and no provider charges. A ContextVar (not a
+# global) keeps it request-scoped and safe under FastAPI's threadpool — the
+# value set inside a request propagates through that request's synchronous call
+# chain only.
+_DEMO_MODE: ContextVar[bool] = ContextVar("fairgame_demo_mode", default=False)
+
+
+@contextlib.contextmanager
+def demo_mode(enabled: bool = True):
+    """Within this context, route every LLM call to the offline DemoConnector.
+
+    ``enabled=False`` is a no-op passthrough, so callers can write
+    ``with demo_mode(flag):`` unconditionally.
+    """
+    token = _DEMO_MODE.set(bool(enabled))
+    try:
+        yield
+    finally:
+        _DEMO_MODE.reset(token)
+
+
+def demo_mode_active() -> bool:
+    """True if the current context is running in demo mode."""
+    return _DEMO_MODE.get()
 
 
 def _load_litellm() -> type[AbstractConnector]:
@@ -198,6 +227,17 @@ class ChatModelFactory:
                 f"For any other model, prefix a LiteLLM model string with "
                 f"'{LITELLM_PREFIX}' (e.g. '{LITELLM_PREFIX}gemini/gemini-1.5-pro')."
             )
+
+        # Demo mode overrides the connector class with the offline fake, but
+        # only when no explicit per-name override is registered (test fakes
+        # installed via register_model still win, so the suite is unaffected).
+        # The model name is still validated above, so typos fail fast even in
+        # demo mode.
+        if demo_mode_active() and model_name not in _CONNECTOR_OVERRIDES:
+            from src.llm_connectors.demo_connector import DemoConnector
+
+            connector_cls = DemoConnector
+
         connector = connector_cls(provider_model)
 
         # Thread generation params onto the connector. The old code passed

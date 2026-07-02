@@ -12,14 +12,21 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import pytest
+
 from src.equilibrium import _two_player_payoff_arrays, compute_nash_equilibria
 from src.io_managers.io_manager import IoManager
 from src.utils.utils import get_resources_dir
+from unit_tests.support import RESOURCES_SKIP_REASON, resources_available
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 def _load(rel: str) -> dict:
+    # These fixtures live in the sibling paper-evaluations resources folder,
+    # which isn't shipped here; skip the (only the) tests that need them.
+    if not resources_available():
+        pytest.skip(RESOURCES_SKIP_REASON)
     return json.loads((get_resources_dir() / "config" / rel).read_text())
 
 

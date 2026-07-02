@@ -13,12 +13,19 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
+import pytest
+
 from src.fairgame_factory import FairGameFactory
 from src.io_managers.io_manager import IoManager
 from src.payoff_matrix import PayoffMatrix
 from src.prompt_creator import PromptCreator
 from src.results_processing.results_processor import ResultsProcessor
 from src.utils.utils import get_resources_dir
+from unit_tests.support import RESOURCES_SKIP_REASON, resources_available
+
+# The ToM end-to-end tests load templates/configs from the sibling resources
+# folder (not shipped with this repo) — skip cleanly when it's absent.
+pytestmark = pytest.mark.skipif(not resources_available(), reason=RESOURCES_SKIP_REASON)
 
 BASE_DIR = Path(__file__).resolve().parent
 RESOURCES_PATH = get_resources_dir()

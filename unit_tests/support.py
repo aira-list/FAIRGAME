@@ -13,7 +13,27 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
+from src.utils.utils import get_resources_dir
 from web_api import storage
+
+
+def resources_available() -> bool:
+    """True if the paper-evaluation ``resources/`` folder is present.
+
+    Some suites read example configs/templates from the sibling
+    ``Fairgame_paper_evaluations/resources`` folder (overridable via
+    ``FAIRGAME_RESOURCES_DIR``). That material is intentionally *not* part of
+    this repo, so those suites skip on a fresh clone instead of failing. The
+    web app and its shipped starter library never need it.
+    """
+    return (get_resources_dir() / "game_templates").is_dir()
+
+
+# Reason string shared by every resource-gated skip so they read consistently.
+RESOURCES_SKIP_REASON = (
+    "paper-evaluation resources absent; set FAIRGAME_RESOURCES_DIR or check out "
+    "the sibling Fairgame_paper_evaluations repo to run these tests"
+)
 
 
 @contextmanager

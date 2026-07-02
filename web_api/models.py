@@ -14,6 +14,10 @@ class RunBody(BaseModel):
     """An inline configuration to run."""
 
     config: dict[str, Any] | None = None
+    # Demo mode answers every LLM call with an offline deterministic fake, so
+    # runs need no API keys. On by default so the app is explorable out of the
+    # box; send ``"demo": false`` to use real provider models (and keys).
+    demo: bool = True
 
 
 class HealthResponse(BaseModel):
@@ -43,7 +47,9 @@ class TemplateBody(BaseModel):
 
 class TemplateTranslateBody(BaseModel):
     target_languages: list[str]
-    cosine_threshold: float = Field(default=0.6, ge=0.0, le=1.0)
+    # LiteLLM-resolvable model that performs the translation. When omitted the
+    # server's default translator model (FAIRGAME_TRANSLATOR_MODEL) is used.
+    model: str | None = None
 
 
 class VariationEntry(BaseModel):
@@ -97,3 +103,5 @@ class RunConfigurationsBody(BaseModel):
 
     configuration_ids: list[str]
     iterations: int = Field(default=1, ge=1, le=MAX_RUN_ITERATIONS)
+    # See RunBody.demo — on by default so batches run without API keys.
+    demo: bool = True

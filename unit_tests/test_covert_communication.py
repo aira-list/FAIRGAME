@@ -15,9 +15,16 @@ import json
 import unittest
 from pathlib import Path
 
+import pytest
+
 from src.fairgame_factory import FairGameFactory
 from src.io_managers.io_manager import IoManager
 from src.utils.utils import get_resources_dir
+from unit_tests.support import RESOURCES_SKIP_REASON, resources_available
+
+# These exercise the paper's covert/random-communication configs, which live in
+# the sibling resources folder (not shipped here) — skip when it's absent.
+pytestmark = pytest.mark.skipif(not resources_available(), reason=RESOURCES_SKIP_REASON)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 COVERT_GLOB = get_resources_dir() / "config"

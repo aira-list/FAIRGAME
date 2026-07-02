@@ -134,11 +134,13 @@ when the condition is met.
 ### 2.4 The AI Translate button
 
 For any template, the 🌍 Translate button lets you pick target languages
-from a 30-language grid. The configured `TemplateTranslator` (model from
-`FAIRGAME_TRANSLATOR_MODEL`, default `OpenAIGPT4o`) renders each one
-into a new template under the same game type and variation, with
-`source_template_id` linking back. Live LLM credentials are required
-(demo mode cannot translate).
+from a 30-language grid **and choose which LLM performs the translation**
+(any LiteLLM provider from the dropdown, or a custom `litellm:<model>`
+such as a local `ollama/…`). The dialog defaults to the server's
+`FAIRGAME_TRANSLATOR_MODEL` (default `OpenAIGPT4o`). Each translation
+becomes a new template under the same game type and variation, with
+`source_template_id` linking back. Live LLM credentials for the chosen
+provider are required (demo mode cannot translate).
 
 ---
 

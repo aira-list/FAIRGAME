@@ -221,13 +221,25 @@
                 </label>
               </template>
             </div>
-            <p class="fg-help mb-3">⚠ This calls the configured translator LLM (set by <code>FAIRGAME_TRANSLATOR_MODEL</code>). Live LLM credentials are required; the demo connector cannot translate.</p>
+            <p class="text-sm font-medium mb-1">Translator model:</p>
+            <select x-model="templatesPage.translateModel"
+                    class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm mb-2">
+              <template x-for="m in llms" :key="m">
+                <option :value="m" x-text="m"></option>
+              </template>
+              <option value="__custom__">Custom (litellm:&lt;model&gt;)…</option>
+            </select>
+            <input x-show="templatesPage.translateModel === '__custom__'"
+                   x-model="templatesPage.translateModelCustom"
+                   type="text" placeholder="litellm:ollama/llama3"
+                   class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm mb-2"/>
+            <p class="fg-help mb-3">🌐 Translation runs on the model you pick above (any provider via LiteLLM, or a local <code>litellm:ollama/…</code> model). Live LLM credentials for that provider are required; the demo connector cannot translate.</p>
             <div x-show="templatesPage.translateError" class="mb-3 p-2 bg-rose-50 border border-rose-200 rounded text-sm text-rose-800" x-text="templatesPage.translateError"></div>
             <div class="flex gap-2 justify-end">
               <button class="px-4 py-2 rounded-md border border-slate-300 text-sm"
                       @click="templatesPage.translateDialog = null">Cancel</button>
               <button class="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
-                      :disabled="templatesPage.translateTargets.length === 0 || templatesPage.translateRunning"
+                      :disabled="templatesPage.translateTargets.length === 0 || !resolvedTranslateModel() || templatesPage.translateRunning"
                       @click="runTranslate()">
                 <span x-show="!templatesPage.translateRunning">Translate</span>
                 <span x-show="templatesPage.translateRunning">Translating…</span>

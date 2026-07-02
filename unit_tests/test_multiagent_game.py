@@ -3,6 +3,7 @@ from pathlib import Path
 
 from src.fairgame_factory import FairGameFactory
 from src.io_managers.io_manager import IoManager
+from unit_tests.support import RESOURCES_SKIP_REASON, resources_available
 
 
 class PayoffCalculator:
@@ -196,6 +197,7 @@ class TestMultiAgentConfigFile(unittest.TestCase):
             "matrix", config["payoffMatrix"], msg="The 'payoffMatrix' must contain a 'matrix' key."
         )
 
+    @unittest.skipUnless(resources_available(), RESOURCES_SKIP_REASON)
     def test_create_one_game(self):
         """
         Ensure that when the configuration file specifies only one game,
@@ -205,6 +207,7 @@ class TestMultiAgentConfigFile(unittest.TestCase):
         games = self.game_factory.create_games(config)
         self.assertEqual(len(games), 1, msg="Expected exactly one game to be created.")
 
+    @unittest.skipUnless(resources_available(), RESOURCES_SKIP_REASON)
     def test_create_multiple_games(self):
         """
         Verify that a configuration supporting multiple permutations leads to
@@ -227,6 +230,7 @@ class TestMultiAgentConfigFile(unittest.TestCase):
             msg="Expected 20 games from the multiple-game configuration.",
         )
 
+    @unittest.skipUnless(resources_available(), RESOURCES_SKIP_REASON)
     def test_run_single_game(self):
         """
         Execute a single game and verify that the computed payoffs from the

@@ -58,6 +58,26 @@
         </div>
       </div>
 
+      <!-- Demo / Live LLM toggle — demo needs no API keys and no charges. -->
+      <div class="px-2 mb-6">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">LLM</span>
+          <span class="text-[10px]"
+                :class="demoMode ? 'text-emerald-400' : 'text-amber-400'"
+                x-text="demoMode ? 'offline fake — no keys' : 'real models — billed'"></span>
+        </div>
+        <div class="inline-flex w-full rounded-lg bg-black/25 p-1 text-sm font-semibold shadow-inner">
+          <button type="button" class="flex-1 px-3 py-1.5 rounded-md transition"
+                  :class="demoMode ? 'bg-white text-slate-900 shadow' : 'text-slate-300 hover:text-white'"
+                  @click="demoMode = true"
+                  title="Answer every LLM call with a fast, deterministic offline fake — no API keys required">Demo</button>
+          <button type="button" class="flex-1 px-3 py-1.5 rounded-md transition"
+                  :class="!demoMode ? 'bg-white text-slate-900 shadow' : 'text-slate-300 hover:text-white'"
+                  @click="demoMode = false"
+                  title="Use real provider models — requires API keys and incurs charges">Live</button>
+        </div>
+      </div>
+
       <div class="nav-section-label">Workspace</div>
       <nav class="flex flex-col gap-1">
         <template x-for="page in pages" :key="page.id">

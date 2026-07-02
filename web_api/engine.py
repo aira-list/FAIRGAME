@@ -23,10 +23,26 @@ class FairGameEngine:
         self._translator_model = os.getenv("FAIRGAME_TRANSLATOR_MODEL", "OpenAIGPT4o")
 
     @property
+    def default_translator_model(self) -> str:
+        """Model used for translation when the caller doesn't pick one."""
+        return self._translator_model
+
+    @property
     def template_translator(self) -> TemplateTranslator:
         if self._translator is None:
             self._translator = TemplateTranslator(self._translator_model)
         return self._translator
+
+    def translator_for(self, model: str | None) -> TemplateTranslator:
+        """Return a translator using ``model`` (any LiteLLM-resolvable name),
+        or the configured default translator when ``model`` is falsy.
+
+        An explicitly injected translator (tests) always wins so the engine
+        stays overridable.
+        """
+        if self._translator is not None:
+            return self._translator
+        return TemplateTranslator(model or self._translator_model)
 
     def create_and_run_games(
         self,
