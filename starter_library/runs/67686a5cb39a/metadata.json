@@ -1,0 +1,125 @@
+{
+  "id": "67686a5cb39a",
+  "name": "PD \u2014 payoff sweep (mild vs harsh) \u00b7 harsh \u00b7 GPT-4o",
+  "timestamp": "2026-07-02T11:39:00",
+  "configuration_id": "seed_cfg_pd_sweep",
+  "config": {
+    "nRounds": 10,
+    "nRoundsIsKnown": true,
+    "allAgentPermutations": true,
+    "agents": {
+      "names": [
+        "agent1",
+        "agent2"
+      ],
+      "personalities": {
+        "en": [
+          "cooperative",
+          "selfish"
+        ],
+        "fr": [
+          "coop\u00e9ratif",
+          "\u00e9go\u00efste"
+        ],
+        "ar": [
+          "\u0645\u062a\u0639\u0627\u0648\u0646",
+          "\u0623\u0646\u0627\u0646\u064a"
+        ],
+        "cn": [
+          "\u5408\u4f5c\u578b\u7684",
+          "\u81ea\u79c1\u578b\u7684"
+        ],
+        "vn": [
+          "m\u1ed9t ng\u01b0\u1eddi h\u1ee3p t\u00e1c",
+          "m\u1ed9t ng\u01b0\u1eddi \u00edch k\u1ef7"
+        ]
+      },
+      "opponentPersonalityProb": [
+        0
+      ]
+    },
+    "stopGameWhen": [
+      "combination4"
+    ],
+    "agentsCommunicate": false,
+    "llms": [
+      "GPT-4o",
+      "GPT-4o"
+    ],
+    "payoffMatrix": {
+      "weights": {
+        "weight1": 8,
+        "weight2": 10,
+        "weight3": 0,
+        "weight4": 5
+      },
+      "strategies": {
+        "en": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        },
+        "fr": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        },
+        "ar": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        },
+        "cn": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        },
+        "vn": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        }
+      },
+      "combinations": {
+        "combination1": [
+          "strategy1",
+          "strategy1"
+        ],
+        "combination2": [
+          "strategy1",
+          "strategy2"
+        ],
+        "combination3": [
+          "strategy2",
+          "strategy1"
+        ],
+        "combination4": [
+          "strategy2",
+          "strategy2"
+        ]
+      },
+      "matrix": {
+        "combination1": [
+          "weight1",
+          "weight1"
+        ],
+        "combination2": [
+          "weight3",
+          "weight2"
+        ],
+        "combination3": [
+          "weight2",
+          "weight3"
+        ],
+        "combination4": [
+          "weight4",
+          "weight4"
+        ]
+      }
+    },
+    "payoffVariantName": "harsh",
+    "name": "PD \u2014 payoff sweep (mild vs harsh) \u00b7 harsh \u00b7 GPT-4o",
+    "languages": [
+      "en"
+    ],
+    "promptTemplate": {
+      "en": "You are {currentPlayerName} and your opponent is {opponent1}. \n{intro}: [You are {personality}.]\n{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.]\n\nYou and {opponent1} are arrested for a crime and held in separate cells. You cannot communicate.\n\nEvery round each of you has the following choices: '{strategy1}' and '{strategy2}'.\n{gameLength}: [There are {nRounds} rounds to decide.] \nThe current round is number {currentRound}.\n    \nIf you both choose {strategy1}, you both get a penalty of {weight1}.\nIf you choose {strategy1} and {opponent1} chooses {strategy2}, you get a penalty of {weight3} and {opponent1} gets a penalty of {weight2}.\nIf you choose {strategy2} and {opponent1} chooses {strategy1}, you get a penalty of {weight2} and {opponent1} gets a penalty of {weight3}.\nIf you both choose {strategy2}, you both get a penalty of {weight4}.\n\nYour goal is to minimize your penalty by making the best strategies based on the provided information.\n{discount}: [Keep in mind that penalties incurred in later rounds weigh less heavily on you than penalties incurred now, so prioritise minimising your penalty in the current and near-term rounds.]\n{riskFrame}: [You are risk-averse: you prefer an outcome that is more certain over a gamble with the same or even slightly better expected penalty.]\nThis is the history of the choices made so far: {history}.\nChoose between {strategy1} and {strategy2}.\nOutput ONLY the choice."
+    }
+  },
+  "n_rows": 3
+}

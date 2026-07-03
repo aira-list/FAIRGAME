@@ -105,24 +105,6 @@ def test_detects_communication_from_flag_or_messages():
     assert derive_context(CFG, [row(agent1_messages="[]")]).has_communication is False
 
 
-def test_detects_interaction_from_config():
-    assert derive_context(CFG, [row()]).has_interaction is False
-    cfg = {
-        **CFG,
-        "interaction": {
-            "directed": True,
-            "edges": [{"from": "agent1", "to": "agent2", "level": "talk"}],
-        },
-    }
-    assert derive_context(cfg, [row()]).has_interaction is True
-
-
-def test_detects_tournament_from_config():
-    assert derive_context(CFG, [row()]).is_tournament is False
-    cfg = {**CFG, "tournament": {"enabled": True, "mode": "round_robin"}}
-    assert derive_context(cfg, [row()]).is_tournament is True
-
-
 def test_counts_seeds():
     assert derive_context(CFG, [row()]).n_seeds == 1
     ctx = derive_context(CFG, [row(seed=1), row(seed=2), row(seed=2)])
@@ -147,7 +129,7 @@ def _sections(spec):
 
 
 def _pd_row(**kw):
-    return row(
+    base = dict(
         agent1_strategies="['OptionA']",
         agent1_scores="[6.0]",
         agent2_strategies="['OptionB']",
@@ -156,8 +138,9 @@ def _pd_row(**kw):
         welfare_mean_min=2.0,
         welfare_mean_gini=0.25,
         welfare_efficiency=0.8,
-        **kw,
     )
+    base.update(kw)  # callers may override the defaults
+    return row(**base)
 
 
 def test_empty_run_yields_no_sections():
@@ -165,8 +148,20 @@ def test_empty_run_yields_no_sections():
 
 
 def test_overview_always_present():
-    ids = _ids(build_dashboard(CFG, [_pd_row()]))
+    # Two rows with different joint plays so the outcome mix has ≥2 bars
+    # (single-category bar charts are dropped as trivial).
+    rows = [
+        _pd_row(),
+        _pd_row(game_id="g1", agent1_strategies="['OptionB']", agent2_strategies="['OptionB']"),
+    ]
+    ids = _ids(build_dashboard(CFG, rows))
     assert {"outcome_mix", "score_by_agent", "welfare"} <= ids
+
+
+def test_single_category_outcome_mix_is_dropped():
+    # Every game played the same joint outcome -> one bar -> not a plot.
+    ids = _ids(build_dashboard(CFG, [_pd_row()]))
+    assert "outcome_mix" not in ids
 
 
 def test_single_round_plain_run_has_no_irrelevant_charts():
@@ -177,7 +172,6 @@ def test_single_round_plain_run_has_no_irrelevant_charts():
         "look_rate",
         "equilibrium_rate",
         "by_language",
-        "interaction_graph",
         "by_payoff_variant",
         "seed_variability",
         "behavior_radar",
@@ -186,13 +180,94 @@ def test_single_round_plain_run_has_no_irrelevant_charts():
 
 
 def test_repeated_run_adds_dynamics():
-    spec = build_dashboard(CFG, [_pd_row(played_rounds=10)])
+    spec = build_dashboard(
+        CFG,
+        [
+            _pd_row(
+                played_rounds=3,
+                agent1_scores="[1.0, 2.0, 3.0]",
+                agent2_scores="[2.0, 0.0, 5.0]",
+                welfare_per_round="[{'sum': 3.0}, {'sum': 2.0}, {'sum': 8.0}]",
+            )
+        ],
+    )
     assert "Dynamics" in _sections(spec)
     assert {"cooperation_trend", "score_over_rounds", "welfare_over_rounds"} <= _ids(spec)
 
 
+def test_language_section_shows_flat_comparisons():
+    # Equal values across languages = "no language bias" — the Language
+    # charts are exempt from the flatness gate because that IS the finding.
+    cfg = {
+        **CFG,
+        "payoffMatrix": {
+            "strategies": {
+                "en": {"strategy1": "OptionA", "strategy2": "OptionB"},
+                "it": {"strategy1": "OpzioneA", "strategy2": "OpzioneB"},
+            }
+        },
+    }
+    rows = [
+        _pd_row(language="en", agent1_strategies="['OptionB']", agent2_strategies="['OptionB']"),
+        _pd_row(
+            game_id="g1",
+            language="it",
+            agent1_strategies="['OpzioneB']",
+            agent2_strategies="['OpzioneB']",
+        ),
+    ]
+    spec = build_dashboard(cfg, rows)
+    ids = _ids(spec)
+    assert {"coop_by_language", "by_language", "outcomes_by_language"} <= ids
+    coop = _chart_by_id(spec, "coop_by_language")
+    assert coop["datasets"][0]["data"] == [0.0, 0.0]  # flat but shown
+    outcomes = _chart_by_id(spec, "outcomes_by_language")
+    # Localized labels unified: one canonical outcome series across languages.
+    assert [d["label"] for d in outcomes["datasets"]] == ["Both OptionB — mutual defection"]
+    assert outcomes["datasets"][0]["data"] == [1, 1]
+
+
+def test_top_messages_unifies_strategy_label_messages():
+    cfg = {
+        **CFG,
+        "payoffMatrix": {
+            "strategies": {
+                "en": {"strategy1": "OptionA", "strategy2": "OptionB"},
+                "it": {"strategy1": "OpzioneA", "strategy2": "OpzioneB"},
+            }
+        },
+    }
+    rows = [
+        _pd_row(
+            language="en",
+            agents_communicate=True,
+            agent1_messages="['OptionB','OptionB']",
+            agent2_messages="['OptionA','OptionA']",
+        ),
+        _pd_row(
+            game_id="g1",
+            language="it",
+            agents_communicate=True,
+            agent1_messages="['OpzioneB']",
+            agent2_messages="['OpzioneA']",
+        ),
+    ]
+    c = _chart_by_id(build_dashboard(cfg, rows), "top_messages")
+    assert set(c["labels"]) == {"OptionA", "OptionB"}  # Opzione* folded in
+    totals = {
+        lbl: sum(ds["data"][i] for ds in c["datasets"]) for i, lbl in enumerate(c["labels"])
+    }
+    assert totals == {"OptionB": 3, "OptionA": 3}
+
+
 def test_multilingual_adds_language_chart_single_language_does_not():
-    multi = build_dashboard(CFG, [_pd_row(language="en"), _pd_row(language="fr", game_id="g1")])
+    multi = build_dashboard(
+        CFG,
+        [
+            _pd_row(language="en"),
+            _pd_row(language="fr", game_id="g1", agent1_scores="[3.0]"),
+        ],
+    )
     assert "by_language" in _ids(multi)
     single = build_dashboard(CFG, [_pd_row(language="en")])
     assert "by_language" not in _ids(single)
@@ -201,7 +276,16 @@ def test_multilingual_adds_language_chart_single_language_does_not():
 def test_beliefs_run_adds_belief_charts():
     ids = _ids(
         build_dashboard(
-            CFG, [_pd_row(agent1_belief_mean_brier=0.3, agent2_belief_mean_brier=0.4, tom_order=1)]
+            CFG,
+            [
+                _pd_row(
+                    agent1_belief_mean_brier=0.3,
+                    agent2_belief_mean_brier=0.4,
+                    agent1_belief_agreement_rate=0.7,
+                    agent2_belief_agreement_rate=0.5,
+                    tom_order=1,
+                )
+            ],
         )
     )
     assert {"belief_brier", "belief_agreement"} <= ids
@@ -244,50 +328,64 @@ def test_trust_run_adds_trust_charts():
     assert {"look_rate", "monitoring_cost"} <= ids
 
 
-def test_equilibrium_run_adds_equilibrium_chart():
+def test_equilibrium_single_bar_is_dropped_but_trend_shows():
+    # The equilibrium *rate* is a single number — never worth a one-bar
+    # chart. The per-round trend appears for repeated runs instead.
     ids = _ids(build_dashboard(CFG, [_pd_row(equilibrium_rate=1.0)]))
-    assert "equilibrium_rate" in ids
-
-
-def test_communication_run_adds_message_chart():
+    assert "equilibrium_rate" not in ids
     ids = _ids(
         build_dashboard(
-            CFG, [_pd_row(agents_communicate=True, agent1_messages="['let us cooperate']")]
+            CFG,
+            [
+                _pd_row(
+                    played_rounds=3,
+                    equilibrium_rate=1.0,
+                    equilibrium_per_round="[1.0, 0.0, 1.0]",
+                )
+            ],
         )
     )
-    assert "message_volume" in ids
+    assert "equilibrium_over_rounds" in ids
+    assert "equilibrium_rate" not in ids
 
 
-def test_interaction_config_adds_topology_graph():
-    cfg = {
-        **CFG,
-        "interaction": {
-            "directed": True,
-            "edges": [
-                {"from": "agent1", "to": "agent2", "level": "talk"},
-                {"from": "agent2", "to": "agent1", "level": "see"},
+def test_communication_run_adds_top_messages_only_when_content_repeats():
+    # message_volume was removed (protocol-fixed, never informative).
+    repeated = _ids(
+        build_dashboard(
+            CFG,
+            [
+                _pd_row(
+                    agents_communicate=True,
+                    agent1_messages="['let us cooperate', 'let us cooperate']",
+                    agent2_messages="['ok']",
+                )
             ],
-        },
-    }
-    spec = build_dashboard(cfg, [_pd_row(agents_communicate=True)])
-    assert "interaction_graph" in _ids(spec)
-    graph = next(c for s in spec["sections"] for c in s["charts"] if c["id"] == "interaction_graph")
-    assert graph["kind"] == "graph"
-    assert {"nodes", "edges"} <= set(graph)
-
-
-def test_tournament_config_adds_standings():
-    cfg = {**CFG, "tournament": {"enabled": True, "mode": "round_robin"}}
-    assert "standings" in _ids(build_dashboard(cfg, [_pd_row()]))
+        )
+    )
+    assert "message_volume" not in repeated
+    assert "top_messages" in repeated
+    # All-unique free text is an arbitrary sample, not a ranking — no chart.
+    unique = _ids(
+        build_dashboard(CFG, [_pd_row(agents_communicate=True, agent1_messages="['hello']")])
+    )
+    assert "top_messages" not in unique
 
 
 def test_payoff_variants_add_variant_chart():
-    rows = [_pd_row(payoff_variant_name="mild"), _pd_row(payoff_variant_name="harsh", game_id="g1")]
+    rows = [
+        _pd_row(payoff_variant_name="mild"),
+        _pd_row(payoff_variant_name="harsh", game_id="g1", agent1_scores="[1.0]"),
+    ]
     assert "by_payoff_variant" in _ids(build_dashboard(CFG, rows))
 
 
 def test_multi_seed_adds_variability_chart():
-    rows = [_pd_row(seed=1), _pd_row(seed=2, game_id="g1"), _pd_row(seed=3, game_id="g2")]
+    rows = [
+        _pd_row(seed=1),
+        _pd_row(seed=2, game_id="g1", agent1_scores="[1.0]"),
+        _pd_row(seed=3, game_id="g2", agent1_scores="[9.0]"),
+    ]
     assert "seed_variability" in _ids(build_dashboard(CFG, rows))
 
 
@@ -325,7 +423,87 @@ def test_outcome_mix_counts_joint_plays_across_rounds():
     ]
     c = _chart_by_id(build_dashboard(CFG, rows), "outcome_mix")
     data = dict(zip(c["labels"], c["datasets"][0]["data"], strict=True))
-    assert data == {"OptionA + OptionB": 2, "OptionA + OptionA": 1}
+    assert data == {
+        "OptionA + OptionB — mixed": 2,
+        "Both OptionA — mutual cooperation": 1,
+    }
+
+
+def test_outcome_mix_aggregates_localized_labels():
+    # FR rows play the same mapped strategies as EN rows — one bar, not two.
+    cfg = {
+        **CFG,
+        "payoffMatrix": {
+            "strategies": {
+                "en": {"strategy1": "OptionA", "strategy2": "OptionB"},
+                "fr": {"strategy1": "Coopérer", "strategy2": "Trahir"},
+            }
+        },
+    }
+    rows = [
+        row(language="en", agent1_strategies="['OptionA']", agent2_strategies="['OptionB']"),
+        row(
+            game_id="g1",
+            language="fr",
+            agent1_strategies="['Coopérer']",
+            agent2_strategies="['Trahir']",
+        ),
+        row(
+            game_id="g2",
+            language="fr",
+            agent1_strategies="['Coopérer']",
+            agent2_strategies="['Coopérer']",
+        ),
+    ]
+    c = _chart_by_id(build_dashboard(cfg, rows), "outcome_mix")
+    data = dict(zip(c["labels"], c["datasets"][0]["data"], strict=True))
+    # EN and FR rows with the same mapped moves fold into one category.
+    assert data == {
+        "OptionA + OptionB — mixed": 2,
+        "Both OptionA — mutual cooperation": 1,
+    }
+
+
+def test_personality_chart_aggregates_localized_personalities():
+    cfg = {
+        **CFG,
+        "agents": {
+            "names": ["agent1", "agent2"],
+            "personalities": {
+                "en": ["cooperative", "selfish"],
+                "fr": ["coopératif", "égoïste"],
+            },
+        },
+    }
+    rows = [
+        row(
+            language="en",
+            agent1_personality="cooperative",
+            agent2_personality="selfish",
+            agent1_scores="[3]",
+            agent2_scores="[5]",
+        ),
+        row(
+            game_id="g1",
+            language="fr",
+            agent1_personality="coopératif",
+            agent2_personality="égoïste",
+            agent1_scores="[3]",
+            agent2_scores="[5]",
+        ),
+        row(
+            game_id="g2",
+            language="en",
+            agent1_personality="selfish",
+            agent2_personality="selfish",
+            agent1_scores="[1]",
+            agent2_scores="[1]",
+        ),
+    ]
+    spec = build_dashboard(cfg, rows)
+    c = _chart_by_id(spec, "by_personality")
+    # EN and FR "cooperative + selfish" fold into one canonical group.
+    assert c["labels"] == ["cooperative + selfish", "selfish + selfish"]
 
 
 def test_score_by_agent_is_mean_total_per_agent():
@@ -346,7 +524,7 @@ def test_score_by_agent_is_mean_total_per_agent():
     assert c["datasets"][0]["data"] == [3.0, 2.0]
 
 
-def test_welfare_summarises_efficiency_fairness_inequality():
+def test_welfare_shows_only_recorded_ratio_metrics():
     rows = [
         row(
             welfare_efficiency=0.8,
@@ -358,9 +536,15 @@ def test_welfare_summarises_efficiency_fairness_inequality():
     ]
     c = _chart_by_id(build_dashboard(CFG, rows), "welfare")
     d = dict(zip(c["labels"], c["datasets"][0]["data"], strict=True))
-    assert d["Efficiency"] == 0.8
-    assert d["Fairness (min score)"] == 2.0
-    assert d["Inequality (Gini)"] == 0.25
+    # Ratio scales only — the raw min score no longer shares their axis.
+    assert d == {"Efficiency": 0.8, "Inequality (Gini)": 0.25}
+
+
+def test_welfare_never_fabricates_missing_metrics():
+    # welfare_efficiency absent -> only Gini would remain -> single bar ->
+    # the whole chart is dropped instead of painting a fake zero.
+    rows = [row(welfare_mean_gini=0.25, agent1_scores="[6.0]", agent2_scores="[2.0]")]
+    assert "welfare" not in _ids(build_dashboard(CFG, rows))
 
 
 def test_belief_brier_is_mean_per_agent():
@@ -404,19 +588,23 @@ def test_look_rate_per_agent():
     assert c["datasets"][0]["data"] == [0.5, 0.0]
 
 
-def test_message_volume_counts_messages_per_agent():
+def test_top_messages_counts_and_skips_covert_channels():
     rows = [
         row(
             agent1_name="agent1",
             agent2_name="agent2",
             agents_communicate=True,
-            agent1_messages="['a','b']",
-            agent2_messages="['c']",
+            agent1_messages="['a','a','b']",
+            agent2_messages="['a']",
         )
     ]
-    c = _chart_by_id(build_dashboard(CFG, rows), "message_volume")
-    assert c["labels"] == ["agent1", "agent2"]
-    assert c["datasets"][0]["data"] == [2, 1]
+    c = _chart_by_id(build_dashboard(CFG, rows), "top_messages")
+    series = {d["label"]: d["data"] for d in c["datasets"]}
+    assert c["labels"][0] == "a"
+    assert series["agent1"][0] == 2 and series["agent2"][0] == 1
+    # Covert (fakeCommunication) runs exchange decoy noise — no chart.
+    covert_cfg = {**CFG, "fakeCommunication": True}
+    assert "top_messages" not in _ids(build_dashboard(covert_cfg, rows))
 
 
 def test_cooperation_trend_is_signed_strategy_per_round_per_agent():
@@ -500,7 +688,7 @@ def test_top_messages_ranks_messages_per_agent():
 # ---- remaining chart data --------------------------------------------------
 
 
-def test_score_over_rounds_is_cumulative_per_agent():
+def test_score_over_rounds_is_per_round_mean_per_agent():
     rows = [
         row(
             played_rounds=3,
@@ -513,7 +701,7 @@ def test_score_over_rounds_is_cumulative_per_agent():
     c = _chart_by_id(build_dashboard(CFG, rows), "score_over_rounds")
     assert c["labels"] == ["R1", "R2", "R3"]
     series = {d["label"]: d["data"] for d in c["datasets"]}
-    assert series["agent1"] == [1.0, 3.0, 6.0]
+    assert series["agent1"] == [1.0, 2.0, 3.0]
     assert series["agent2"] == [0.0, 0.0, 5.0]
 
 
@@ -540,10 +728,15 @@ def test_belief_agreement_is_mean_per_agent():
     assert c["datasets"][0]["data"] == [1.0, 0.0]
 
 
-def test_equilibrium_rate_is_mean():
-    rows = [_pd_row(equilibrium_rate=1.0), _pd_row(game_id="g1", equilibrium_rate=0.0)]
-    c = _chart_by_id(build_dashboard(CFG, rows), "equilibrium_rate")
-    assert c["datasets"][0]["data"] == [0.5]
+def test_equilibrium_trend_is_mean_per_round():
+    rows = [
+        _pd_row(played_rounds=2, equilibrium_rate=0.5, equilibrium_per_round="[1.0, 0.0]"),
+        _pd_row(
+            game_id="g1", played_rounds=2, equilibrium_rate=1.0, equilibrium_per_round="[1.0, 1.0]"
+        ),
+    ]
+    c = _chart_by_id(build_dashboard(CFG, rows), "equilibrium_over_rounds")
+    assert c["datasets"][0]["data"] == [1.0, 0.5]
 
 
 def test_monitoring_cost_is_mean_per_agent():

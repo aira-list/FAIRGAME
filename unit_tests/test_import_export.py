@@ -108,7 +108,7 @@ class TestConfigurationExportImport(unittest.TestCase):
 
     def _make_config_with_run(self, name: str) -> tuple[str, str]:
         cid = self.client.post("/api/configurations", json=_leaf_config(name)).json()["id"]
-        res = self.client.post(f"/api/configurations/{cid}/run", params={"demo_mode": "true"})
+        res = self.client.post(f"/api/configurations/{cid}/run")
         self.assertEqual(res.status_code, 200, res.text)
         return cid, res.json()["id"]
 

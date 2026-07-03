@@ -24,6 +24,7 @@ from web_api.storage import (
     edit_store,
     load_store,
     new_id,
+    newest_first,
     now_iso,
     record_deletion,
 )
@@ -38,7 +39,7 @@ router = APIRouter()
 
 @router.get("/api/game-types")
 def list_game_types() -> dict[str, Any]:
-    return {"game_types": load_store("game_types")}
+    return {"game_types": newest_first(load_store("game_types"))}
 
 
 @router.post("/api/game-types")
@@ -79,7 +80,7 @@ def delete_game_type(game_type_id: str) -> dict[str, Any]:
 def list_templates(
     game_type_id: str | None = None, include_archived: bool = False
 ) -> dict[str, Any]:
-    items = load_store("templates")
+    items = newest_first(load_store("templates"))
     if game_type_id:
         items = [t for t in items if t["game_type_id"] == game_type_id]
     if not include_archived:
@@ -271,7 +272,11 @@ def translate_template_into_languages(
             skipped.append(f"{target} (already exists for this variation)")
             continue
         try:
-            translated = get_engine().translator_for(body.model).translate(source["body"], target)
+            translated = (
+                get_engine()
+                .translator_for(body.model)
+                .translate(source["body"], target, source_lang_code=source["language"])
+            )
         except Exception as exc:  # noqa: BLE001
             logger.warning("Translation to %s failed: %s", target, exc)
             errors.append({"language": target, "error": str(exc)})
@@ -311,7 +316,9 @@ def translate_template_into_languages(
 
 @router.get("/api/configurations")
 def list_configurations() -> dict[str, Any]:
-    return {"configurations": load_store("configurations")}
+    # Newest user items first, shipped seeds after (in curated order) — an
+    # ordering derived from created_at at read time, not from row order.
+    return {"configurations": newest_first(load_store("configurations"))}
 
 
 def _serialize_body(body: ConfigurationBody, *, item_id: str) -> dict[str, Any]:

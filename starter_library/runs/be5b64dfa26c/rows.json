@@ -1,0 +1,1182 @@
+[
+  {
+    "game_id": "game_0",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 1,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "GPT-4o",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionB"
+    ],
+    "agent1_scores": [
+      2.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      9.800000000000009e-05
+    ],
+    "agent1_belief_mean_brier": 9.800000000000009e-05,
+    "agent1_belief_mean_p_outcome": 0.993,
+    "agent1_belief_agreement_rate": 1.0,
+    "agent1_regret_per_round": [
+      0.0
+    ],
+    "agent1_regret_mean": 0.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "GPT-4o",
+    "agent2_personality": "cooperative",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionB"
+    ],
+    "agent2_scores": [
+      2.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      0.18000000000000002
+    ],
+    "agent2_belief_mean_brier": 0.18000000000000002,
+    "agent2_belief_mean_p_outcome": 0.7,
+    "agent2_belief_agreement_rate": 1.0,
+    "agent2_regret_per_round": [
+      0.0
+    ],
+    "agent2_regret_mean": 0.0,
+    "welfare_mean_sum": 4.0,
+    "welfare_mean_min": 2.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_1",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 1,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "GPT-4o",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionB"
+    ],
+    "agent1_scores": [
+      2.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      0.18000000000000002
+    ],
+    "agent1_belief_mean_brier": 0.18000000000000002,
+    "agent1_belief_mean_p_outcome": 0.7,
+    "agent1_belief_agreement_rate": 1.0,
+    "agent1_regret_per_round": [
+      0.0
+    ],
+    "agent1_regret_mean": 0.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "GPT-4o",
+    "agent2_personality": "cooperative",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionB"
+    ],
+    "agent2_scores": [
+      2.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      1.972098
+    ],
+    "agent2_belief_mean_brier": 1.972098,
+    "agent2_belief_mean_p_outcome": 0.007,
+    "agent2_belief_agreement_rate": 0.0,
+    "agent2_regret_per_round": [
+      0.0
+    ],
+    "agent2_regret_mean": 0.0,
+    "welfare_mean_sum": 4.0,
+    "welfare_mean_min": 2.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_2",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 1,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "GPT-4o",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionB"
+    ],
+    "agent1_scores": [
+      2.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.93,
+        "strategy2": 0.07
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      1.7298
+    ],
+    "agent1_belief_mean_brier": 1.7298,
+    "agent1_belief_mean_p_outcome": 0.07,
+    "agent1_belief_agreement_rate": 0.0,
+    "agent1_regret_per_round": [
+      0.0
+    ],
+    "agent1_regret_mean": 0.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "GPT-4o",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionB"
+    ],
+    "agent2_scores": [
+      2.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      0.18000000000000002
+    ],
+    "agent2_belief_mean_brier": 0.18000000000000002,
+    "agent2_belief_mean_p_outcome": 0.7,
+    "agent2_belief_agreement_rate": 1.0,
+    "agent2_regret_per_round": [
+      0.0
+    ],
+    "agent2_regret_mean": 0.0,
+    "welfare_mean_sum": 4.0,
+    "welfare_mean_min": 2.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_3",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 1,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "GPT-4o",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionB"
+    ],
+    "agent1_scores": [
+      2.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      1.972098
+    ],
+    "agent1_belief_mean_brier": 1.972098,
+    "agent1_belief_mean_p_outcome": 0.007,
+    "agent1_belief_agreement_rate": 0.0,
+    "agent1_regret_per_round": [
+      0.0
+    ],
+    "agent1_regret_mean": 0.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "GPT-4o",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionB"
+    ],
+    "agent2_scores": [
+      2.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      0.18000000000000002
+    ],
+    "agent2_belief_mean_brier": 0.18000000000000002,
+    "agent2_belief_mean_p_outcome": 0.7,
+    "agent2_belief_agreement_rate": 1.0,
+    "agent2_regret_per_round": [
+      0.0
+    ],
+    "agent2_regret_mean": 0.0,
+    "welfare_mean_sum": 4.0,
+    "welfare_mean_min": 2.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_4",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 1,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "GPT-4o",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionB"
+    ],
+    "agent1_scores": [
+      2.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      9.800000000000009e-05
+    ],
+    "agent1_belief_mean_brier": 9.800000000000009e-05,
+    "agent1_belief_mean_p_outcome": 0.993,
+    "agent1_belief_agreement_rate": 1.0,
+    "agent1_regret_per_round": [
+      0.0
+    ],
+    "agent1_regret_mean": 0.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "GPT-4o",
+    "agent2_personality": "cooperative",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionB"
+    ],
+    "agent2_scores": [
+      2.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      0.18000000000000002
+    ],
+    "agent2_belief_mean_brier": 0.18000000000000002,
+    "agent2_belief_mean_p_outcome": 0.7,
+    "agent2_belief_agreement_rate": 1.0,
+    "agent2_regret_per_round": [
+      0.0
+    ],
+    "agent2_regret_mean": 0.0,
+    "welfare_mean_sum": 4.0,
+    "welfare_mean_min": 2.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_5",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 1,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "GPT-4o",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionB"
+    ],
+    "agent1_scores": [
+      2.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      0.18000000000000002
+    ],
+    "agent1_belief_mean_brier": 0.18000000000000002,
+    "agent1_belief_mean_p_outcome": 0.7,
+    "agent1_belief_agreement_rate": 1.0,
+    "agent1_regret_per_round": [
+      0.0
+    ],
+    "agent1_regret_mean": 0.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "GPT-4o",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionB"
+    ],
+    "agent2_scores": [
+      2.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.7,
+        "strategy2": 0.3
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      0.9799999999999999
+    ],
+    "agent2_belief_mean_brier": 0.9799999999999999,
+    "agent2_belief_mean_p_outcome": 0.3,
+    "agent2_belief_agreement_rate": 0.0,
+    "agent2_regret_per_round": [
+      0.0
+    ],
+    "agent2_regret_mean": 0.0,
+    "welfare_mean_sum": 4.0,
+    "welfare_mean_min": 2.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_6",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 7,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "GPT-4o",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionB",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      10.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      0.0,
+      2.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.7,
+        "strategy2": 0.3
+      },
+      {
+        "strategy1": 0.7,
+        "strategy2": 0.3
+      },
+      {
+        "strategy1": 0.7,
+        "strategy2": 0.3
+      },
+      {
+        "strategy1": 0.7,
+        "strategy2": 0.3
+      },
+      {
+        "strategy1": 0.7,
+        "strategy2": 0.3
+      },
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      9.800000000000009e-05,
+      0.18000000000000002,
+      0.18000000000000002,
+      0.18000000000000002,
+      0.18000000000000002,
+      0.9799999999999999,
+      0.18000000000000002
+    ],
+    "agent1_belief_mean_brier": 0.2685854285714286,
+    "agent1_belief_mean_p_outcome": 0.6847142857142857,
+    "agent1_belief_agreement_rate": 0.8571428571428571,
+    "agent1_regret_per_round": [
+      0.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      2.0,
+      0.0
+    ],
+    "agent1_regret_mean": 2.5714285714285716,
+    "agent2_name": "agent2",
+    "agent2_llm": "GPT-4o",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionB",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      0.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      10.0,
+      2.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.7,
+        "strategy2": 0.3
+      },
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      },
+      {
+        "strategy1": 0.7,
+        "strategy2": 0.3
+      },
+      {
+        "strategy1": 0.7,
+        "strategy2": 0.3
+      },
+      {
+        "strategy1": 0.7,
+        "strategy2": 0.3
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.9,
+        "strategy2": 0.1
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      0.9799999999999999,
+      1.972098,
+      0.18000000000000002,
+      0.18000000000000002,
+      0.18000000000000002,
+      9.800000000000009e-05,
+      1.62
+    ],
+    "agent2_belief_mean_brier": 0.7303137142857142,
+    "agent2_belief_mean_p_outcome": 0.5,
+    "agent2_belief_agreement_rate": 0.5714285714285714,
+    "agent2_regret_per_round": [
+      2.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      0.0,
+      0.0
+    ],
+    "agent2_regret_mean": 2.5714285714285716,
+    "welfare_mean_sum": 10.285714285714286,
+    "welfare_mean_min": 3.7142857142857144,
+    "welfare_mean_gini": 0.14285714285714285,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_7",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 9,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "GPT-4o",
+    "agent1_personality": "selfish",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionB",
+      "OptionA",
+      "OptionA",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionA",
+      "OptionA",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      10.0,
+      0.0,
+      0.0,
+      10.0,
+      10.0,
+      10.0,
+      6.0,
+      6.0,
+      2.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      },
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      },
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      },
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      },
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      },
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      9.800000000000009e-05,
+      0.18000000000000002,
+      9.800000000000009e-05,
+      0.9799999999999999,
+      0.9799999999999999,
+      9.800000000000009e-05,
+      0.9799999999999999,
+      0.9799999999999999,
+      0.18000000000000002
+    ],
+    "agent1_belief_mean_brier": 0.4755882222222222,
+    "agent1_belief_mean_p_outcome": 0.6198888888888888,
+    "agent1_belief_agreement_rate": 0.5555555555555556,
+    "agent1_regret_per_round": [
+      0.0,
+      2.0,
+      2.0,
+      0.0,
+      0.0,
+      0.0,
+      4.0,
+      4.0,
+      0.0
+    ],
+    "agent1_regret_mean": 1.3333333333333333,
+    "agent2_name": "agent2",
+    "agent2_llm": "GPT-4o",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionB",
+      "OptionB",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      0.0,
+      10.0,
+      10.0,
+      0.0,
+      0.0,
+      0.0,
+      6.0,
+      6.0,
+      2.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      },
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      },
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      },
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      },
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      },
+      {
+        "strategy1": 0.7,
+        "strategy2": 0.3
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      0.18000000000000002,
+      1.972098,
+      0.9799999999999999,
+      1.972098,
+      1.972098,
+      0.18000000000000002,
+      0.9799999999999999,
+      0.9799999999999999,
+      0.9799999999999999
+    ],
+    "agent2_belief_mean_brier": 1.1329215555555556,
+    "agent2_belief_mean_p_outcome": 0.2912222222222222,
+    "agent2_belief_agreement_rate": 0.2222222222222222,
+    "agent2_regret_per_round": [
+      2.0,
+      0.0,
+      0.0,
+      2.0,
+      2.0,
+      2.0,
+      4.0,
+      4.0,
+      0.0
+    ],
+    "agent2_regret_mean": 1.7777777777777777,
+    "welfare_mean_sum": 9.777777777777779,
+    "welfare_mean_min": 1.5555555555555556,
+    "welfare_mean_gini": 0.3333333333333333,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_8",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 1,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "GPT-4o",
+    "agent1_personality": "selfish",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionB"
+    ],
+    "agent1_scores": [
+      2.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      0.18000000000000002
+    ],
+    "agent1_belief_mean_brier": 0.18000000000000002,
+    "agent1_belief_mean_p_outcome": 0.7,
+    "agent1_belief_agreement_rate": 1.0,
+    "agent1_regret_per_round": [
+      0.0
+    ],
+    "agent1_regret_mean": 0.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "GPT-4o",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionB"
+    ],
+    "agent2_scores": [
+      2.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      0.18000000000000002
+    ],
+    "agent2_belief_mean_brier": 0.18000000000000002,
+    "agent2_belief_mean_p_outcome": 0.7,
+    "agent2_belief_agreement_rate": 1.0,
+    "agent2_regret_per_round": [
+      0.0
+    ],
+    "agent2_regret_mean": 0.0,
+    "welfare_mean_sum": 4.0,
+    "welfare_mean_min": 2.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_9",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 1,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "GPT-4o",
+    "agent1_personality": "selfish",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionB"
+    ],
+    "agent1_scores": [
+      2.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      9.800000000000009e-05
+    ],
+    "agent1_belief_mean_brier": 9.800000000000009e-05,
+    "agent1_belief_mean_p_outcome": 0.993,
+    "agent1_belief_agreement_rate": 1.0,
+    "agent1_regret_per_round": [
+      0.0
+    ],
+    "agent1_regret_mean": 0.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "GPT-4o",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionB"
+    ],
+    "agent2_scores": [
+      2.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      0.18000000000000002
+    ],
+    "agent2_belief_mean_brier": 0.18000000000000002,
+    "agent2_belief_mean_p_outcome": 0.7,
+    "agent2_belief_agreement_rate": 1.0,
+    "agent2_regret_per_round": [
+      0.0
+    ],
+    "agent2_regret_mean": 0.0,
+    "welfare_mean_sum": 4.0,
+    "welfare_mean_min": 2.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  }
+]

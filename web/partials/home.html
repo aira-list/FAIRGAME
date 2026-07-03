@@ -18,7 +18,7 @@
               Build manually →
             </button>
             <button class="px-5 py-2.5 rounded-xl bg-white/10 text-white font-semibold text-sm hover:bg-white/15 transition border border-white/15"
-                    @click="activePage='results'">
+                    @click="navTo('results')">
               Browse results
             </button>
           </div>
@@ -57,7 +57,7 @@
                 <div class="font-semibold text-sm">Read the results</div>
                 <p class="fg-help">Browse each run's choices, scores, and charts — cooperation rates, equilibria, welfare, beliefs.</p>
                 <button class="mt-1 px-3 py-1.5 rounded-md border border-slate-300 text-xs font-medium hover:bg-white"
-                        @click="activePage='results'; window.scrollTo(0,0)">Open Results →</button>
+                        @click="navTo('results')">Open Results →</button>
               </div>
             </li>
           </ol>
@@ -95,7 +95,7 @@
               <p class="text-sm text-slate-600 leading-relaxed">Run multiple configurations back-to-back, each at multiple seeds and iterations.</p>
             </div>
           </div>
-          <div class="fg-card fg-card-action p-5 flex items-start gap-4" @click="activePage='results'">
+          <div class="fg-card fg-card-action p-5 flex items-start gap-4" @click="navTo('results')">
             <span class="fg-card-icon mt-0.5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6" rx="0.5"/><rect x="12.5" y="7" width="3" height="10" rx="0.5"/><rect x="18" y="13" width="3" height="4" rx="0.5"/></svg></span>
             <div>
               <h3 class="font-bold mb-1">Results</h3>

@@ -17,22 +17,13 @@ The app binds to port `4263` by default ("GAME" on a phone keypad). Open
 <http://localhost:4263>. Auto-reload picks up edits to either the
 backend (`web_api/`) or the frontend (`web/index.html`).
 
-## Demo mode
+## Running without API keys
 
-The sidebar has a **Demo / Live** toggle that defaults to **Demo**. In
-Demo, every LLM call is answered by a fast, deterministic in-process
-fake (`src.llm_connectors.demo_connector.DemoConnector`) — no API keys
-are needed and no provider charges accrue. Flip it to **Live** to use
-real provider models; the indicator turns amber ("real models —
-billed") and provider APIs are billed on every agent action.
-
-Each run request carries a `demo` flag (`POST /api/runs`,
-`/api/configurations/{id}/run?demo=…`, `/api/configurations/run-batch`).
-For that request the engine routes every model to the demo connector;
-outside a demo request the live LiteLLM connector is used. The flag
-**defaults to `true` server-side**, so the API is explorable without
-keys even when a client doesn't send it. Note: template translation
-always uses a real model (the demo connector can't translate).
+A configuration whose agents are *all* baseline strategies (TFT,
+GrimTrigger, AllC, AllD, …) needs no provider keys — the moves are
+computed locally, so it runs offline. Configurations backed by LLM
+agents require the relevant provider key in the environment (see
+[Required environment](../README.md#required-environment)).
 
 ## Pages
 
@@ -57,8 +48,11 @@ the JSON view is the most flexible way to tweak any field.)
 ### 📊 Results
 
 Browse every run on this machine in newest-first order. Each run
-displays its metadata (timestamp, demo/live, n games) plus the
-per-game DataFrame.
+displays its metadata (timestamp, n games) plus the
+per-game DataFrame. A fresh install starts populated: real sample
+results for every seed configuration (GPT-4o and Claude Haiku 4.5,
+produced by `tools/populate_seed_results.py`) ship in
+`starter_library/runs/` and are copied in at startup.
 
 ## REST API
 
@@ -78,9 +72,14 @@ per-game DataFrame.
 ```
 results/web/
   <run_id>/                # 12-char hex id assigned at run time
-    metadata.json          # request config + timestamp + demo flag
-    results.csv            # ResultsProcessor DataFrame
+    metadata.json          # request config + timestamp
+    rows.json              # canonical result rows (native types)
+    results.csv            # derived CSV export
 ```
+
+Shipped sample runs live in `starter_library/runs/` (same layout) and are
+topped up into `results/web/` by run id at app startup — user runs are
+never touched.
 
 ## Limits and roadmap
 

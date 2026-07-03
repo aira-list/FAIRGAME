@@ -188,6 +188,32 @@ class GameData:
 
     # ---- Belief metrics -------------------------------------------------
 
+    def _strategy_label_to_role(self) -> dict[str, str]:
+        """Display label -> canonical strategy key ("OptionB" -> "strategy2").
+
+        Beliefs are stored with canonical keys (the parser normalises them),
+        while recorded strategies carry display labels — belief metrics must
+        compare both sides in ONE namespace or every forecast scores as
+        maximally wrong.
+
+        Scoped to THIS game's language when possible: a flattened all-language
+        map would let a label that plays different roles in two languages
+        shadow the right entry. Falls back to merging every language (or a
+        flat ``{strategy1: label}`` shape) when the game's language is absent
+        from the summary.
+        """
+        strategies = (self.payoff_matrix_summary or {}).get("strategies") or {}
+        if not any(isinstance(v, dict) for v in strategies.values()):
+            return label_to_key_map({k: v for k, v in strategies.items() if v is not None})
+        lang = self.language or self.language_for_matrix
+        if lang in strategies and isinstance(strategies[lang], dict):
+            return label_to_key_map(strategies[lang])
+        out: dict[str, str] = {}
+        for lang_map in strategies.values():
+            if isinstance(lang_map, dict):
+                out.update(label_to_key_map(lang_map))
+        return out
+
     def _belief_metrics_for(
         self,
         agent_name: str,
@@ -203,6 +229,18 @@ class GameData:
         if not opponents:
             return {}
 
+        to_role = self._strategy_label_to_role()
+
+        def norm_belief(belief):
+            """Re-key a belief into the canonical namespace (idempotent)."""
+            if not belief:
+                return belief
+            out: dict[str, float] = {}
+            for k, v in belief.items():
+                key = to_role.get(str(k), str(k))
+                out[key] = out.get(key, 0.0) + v
+            return out
+
         per_round_aggregated: list[dict[str, float] | None] = []
         n_rounds = len(beliefs)
         for round_idx in range(n_rounds):
@@ -211,7 +249,9 @@ class GameData:
                 opp_strategies = self.agents_round_data.get(opp, {}).get("strategies", [])
                 if round_idx >= len(opp_strategies):
                     continue
-                metrics = per_round_metrics([beliefs[round_idx]], [opp_strategies[round_idx]])[0]
+                outcome = opp_strategies[round_idx]
+                outcome_key = None if outcome is None else to_role.get(str(outcome), str(outcome))
+                metrics = per_round_metrics([norm_belief(beliefs[round_idx])], [outcome_key])[0]
                 if metrics is not None:
                     round_metrics.append(metrics)
             if round_metrics:

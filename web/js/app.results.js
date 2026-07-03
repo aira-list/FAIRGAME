@@ -23,40 +23,6 @@ window.__fgResults = {
         });
       },
 
-      // Directed interaction topology as inline SVG (nodes on a circle,
-      // arrows coloured by level: blue = sees plays, green = also hears messages).
-      _dashGraphSvg(chart) {
-        const nodes = chart.nodes || [], edges = chart.edges || [];
-        const size = 300, cx = size / 2, cy = size / 2 - 6, R = size * 0.30, r = 26;
-        const pos = {};
-        nodes.forEach((nd, i) => {
-          const a = -Math.PI / 2 + i * 2 * Math.PI / Math.max(nodes.length, 1);
-          pos[nd.id] = [cx + R * Math.cos(a), cy + R * Math.sin(a)];
-        });
-        let s = `<svg width="100%" viewBox="0 0 ${size} ${size}" class="select-none max-w-full">`;
-        s += '<defs>'
-          + '<marker id="dg-see" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0284c7"/></marker>'
-          + '<marker id="dg-talk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>'
-          + '</defs>';
-        for (const e of edges) {
-          const a = pos[e.from], b = pos[e.to];
-          if (!a || !b) continue;
-          const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1;
-          const ux = dx / L, uy = dy / L, ox = -uy * 7, oy = ux * 7;  // offset so opposite edges don't overlap
-          const x1 = a[0] + ux * r + ox, y1 = a[1] + uy * r + oy;
-          const x2 = b[0] - ux * r + ox, y2 = b[1] - uy * r + oy;
-          const talk = e.level === 'talk';
-          s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${talk ? '#059669' : '#0284c7'}" stroke-width="2" marker-end="url(#${talk ? 'dg-talk' : 'dg-see'})"/>`;
-        }
-        for (const nd of nodes) {
-          const [x, y] = pos[nd.id];
-          s += `<circle cx="${x}" cy="${y}" r="${r}" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>`
-            + `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-size="11" fill="#1e3a8a">${escapeHtml(nd.id)}</text>`;
-        }
-        s += `<text x="${cx}" y="${size - 6}" text-anchor="middle" font-size="10" fill="#64748b">blue → sees plays · green → also hears messages</text>`;
-        return s + '</svg>';
-      },
-
       async _renderDashboard() {
         const root = document.getElementById('dash-root');
         if (!root) return;
@@ -94,7 +60,7 @@ window.__fgResults = {
             return;
           }
           this._renderSpecInto(root, spec, 'cmp',
-            'No comparable results (need runs with recorded models).');
+            'Nothing to compare: the selected runs form a single group (same model, game, and language). Pick runs that differ on one of those.');
         }));
       },
 
@@ -132,7 +98,6 @@ window.__fgResults = {
 
           for (const chart of section.charts) {
             const cell = document.createElement('div');
-            if (chart.kind === 'graph') cell.className = 'md:col-span-2';
             const title = document.createElement('h4');
             title.className = 'text-xs font-medium mb-1 text-slate-600';
             title.textContent = chart.title;
@@ -148,10 +113,6 @@ window.__fgResults = {
             cell.appendChild(box);
             grid.appendChild(cell);
 
-            if (chart.kind === 'graph') {
-              box.innerHTML = this._dashGraphSvg(chart);
-              continue;
-            }
             box.style.height = chart.kind === 'radar' ? '340px' : '280px';
             if (chart.kind === 'radar') cell.className = 'md:col-span-2';
             const canvas = document.createElement('canvas');
@@ -214,8 +175,8 @@ window.__fgResults = {
           maintainAspectRatio: false,
           scales: scaleOpts,
           plugins: {
-            // A legend only helps when there are multiple series to tell apart;
-            // for a single-series (one-colour) chart it's just noise.
+            // A legend only when there are multiple series to tell apart —
+            // single-series charts are explained by their title + description.
             legend: {
               display: data.datasets.length > 1,
               position: 'bottom',

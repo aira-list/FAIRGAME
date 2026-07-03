@@ -34,8 +34,7 @@ Institute of Science and Technology — part of the
   Dockerfile, Helm chart.
 * **Web app + REST API** — FastAPI backend at `/api/*` plus a vanilla
   Tailwind+Alpine SPA at `/`. Design experiments without writing JSON,
-  run them on real or simulated agents, and download results. Demo
-  mode lets you preview every feature without a single API key. See
+  run them on real or baseline (non-LLM) agents, and download results. See
   [`docs/GUI.md`](docs/GUI.md).
 
 ## Repository layout
@@ -58,13 +57,15 @@ src/                  # Engine source code, grouped by concern
   factory/               # fairgame_factory (orchestrator) + permutation expander,
                          #   tournament builder, experiment-manifest runner
   io_managers/           # Config + file IO + Pydantic validation
-  llm_connectors/        # Unified LiteLLM connector, factory, offline demo connector
+  llm_connectors/        # Unified LiteLLM connector + factory/registry
   results_processing/    # Result-row builder (row_schema.py = column contract)
   utils/                 # Logger + helpers
-starter_library/      # Shipped defaults (game types, templates, configs) seeded on first run
+starter_library/      # Shipped defaults (game types, templates, configs, runs) seeded on first run
   game_types/         # One JSON per game type
   templates/          # One Markdown-frontmatter file per prompt template
   configurations/     # One JSON per ready-to-run configuration
+  runs/               # Real sample results (GPT-4o + Claude Haiku 4.5 across every
+                      #   seed configuration) so the Results page starts populated
 unit_tests/           # Test suite; no LLM credentials required by default
 docs/                 # ARCHITECTURE / CONFIGURATION / DEPLOYMENT / GAME_THEORY
 ```
@@ -83,7 +84,8 @@ cp .env.example .env
 # 1) Web app — FastAPI backend + vanilla SPA (recommended for everyone):
 uvicorn web_api.main:app --reload --port 4263
 # Then open http://localhost:4263  (4263 = "GAME" on a phone keypad).
-# Demo mode is on by default — no API keys needed to explore.
+# Configs whose agents are all baseline strategies (TFT, GrimTrigger, …) run
+# with no API keys; LLM-backed configs need the relevant provider key.
 
 # 2) The CLI (one config per invocation; see python main.py --help):
 python main.py local prisoner_dilemma/prisoner_dilemma_round_known_conventional
@@ -98,14 +100,14 @@ The web app exposes the same engine as a REST API, so you can drive it
 programmatically too:
 
 ```bash
-# Run a shipped configuration by id. Runs default to demo mode (offline fake
-# LLM), so this needs no API keys; append ?demo=false to use real models:
-curl -X POST http://localhost:4263/api/configurations/seed_cfg_pd_llm/run
+# Run a shipped configuration by id. LLM-backed configs need the relevant
+# provider key; baseline-only configs (e.g. the round-robin tournament) don't:
+curl -X POST http://localhost:4263/api/configurations/seed_cfg_pd_baseline_tournament/run
 
-# ...or run an inline config ("demo": true by default; set false for live):
+# ...or run an inline config:
 curl -X POST http://localhost:4263/api/runs \
      -H 'Content-Type: application/json' \
-     -d '{"config": { /* game config */ }, "demo": true}'
+     -d '{"config": { /* game config */ }}'
 ```
 
 | Endpoint | Method | Purpose |

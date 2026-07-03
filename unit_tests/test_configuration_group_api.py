@@ -271,7 +271,7 @@ class TestConfigurationGroupsAPI(unittest.TestCase):
         ).json()
         res = self.client.post(
             f"/api/configurations/{created['id']}/run",
-            params={"demo_mode": "true", "variant": "harsh"},
+            params={"variant": "harsh"},
         )
         self.assertEqual(res.status_code, 200, res.text)
         body = res.json()
@@ -290,7 +290,6 @@ class TestConfigurationGroupsAPI(unittest.TestCase):
         ).json()
         res = self.client.post(
             f"/api/configurations/{created['id']}/run",
-            params={"demo_mode": "true"},
         )
         self.assertEqual(res.status_code, 400, res.text)
 
@@ -309,7 +308,7 @@ class TestConfigurationGroupsAPI(unittest.TestCase):
         ).json()
         res = self.client.post(
             f"/api/configurations/{created['id']}/run",
-            params={"demo_mode": "true", "variant": "harsh"},
+            params={"variant": "harsh"},
         )
         self.assertEqual(res.status_code, 200, res.text)
         rows = res.json()["rows"]
@@ -329,7 +328,7 @@ class TestConfigurationGroupsAPI(unittest.TestCase):
         ).json()
         res = self.client.post(
             f"/api/configurations/{created['id']}/run",
-            params={"demo_mode": "true", "variant": "ghost"},
+            params={"variant": "ghost"},
         )
         self.assertEqual(res.status_code, 400, res.text)
 
@@ -351,7 +350,6 @@ class TestConfigurationGroupsAPI(unittest.TestCase):
             "/api/configurations/run-batch",
             json={
                 "configuration_ids": [created["id"]],
-                "demo_mode": True,
                 "iterations": 1,
             },
         )

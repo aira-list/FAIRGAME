@@ -1,0 +1,2457 @@
+[
+  {
+    "game_id": "game_0",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 10,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA"
+    ],
+    "agent1_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      1.972098,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05
+    ],
+    "agent1_belief_mean_brier": 0.197298,
+    "agent1_belief_mean_p_outcome": 0.8943999999999999,
+    "agent1_belief_agreement_rate": 0.9,
+    "agent1_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ],
+    "agent1_regret_mean": 4.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "cooperative",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA"
+    ],
+    "agent2_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05
+    ],
+    "agent2_belief_mean_brier": 9.800000000000008e-05,
+    "agent2_belief_mean_p_outcome": 0.993,
+    "agent2_belief_agreement_rate": 1.0,
+    "agent2_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ],
+    "agent2_regret_mean": 4.0,
+    "welfare_mean_sum": 12.0,
+    "welfare_mean_min": 6.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_1",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 3,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionB",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      0.0,
+      10.0,
+      2.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null,
+      null,
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      1.972098,
+      1.972098,
+      1.972098
+    ],
+    "agent1_belief_mean_brier": 1.972098,
+    "agent1_belief_mean_p_outcome": 0.007,
+    "agent1_belief_agreement_rate": 0.0,
+    "agent1_regret_per_round": [
+      2.0,
+      0.0,
+      0.0
+    ],
+    "agent1_regret_mean": 0.6666666666666666,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "cooperative",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionB",
+      "OptionA",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      10.0,
+      0.0,
+      2.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.3,
+        "strategy2": 0.7
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null,
+      null,
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      9.800000000000009e-05,
+      1.972098,
+      0.18000000000000002
+    ],
+    "agent2_belief_mean_brier": 0.7173986666666666,
+    "agent2_belief_mean_p_outcome": 0.5666666666666667,
+    "agent2_belief_agreement_rate": 0.6666666666666666,
+    "agent2_regret_per_round": [
+      0.0,
+      2.0,
+      0.0
+    ],
+    "agent2_regret_mean": 0.6666666666666666,
+    "welfare_mean_sum": 8.0,
+    "welfare_mean_min": 0.6666666666666666,
+    "welfare_mean_gini": 0.3333333333333333,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_2",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 10,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionB",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      10.0,
+      0.0,
+      6.0,
+      0.0,
+      6.0,
+      0.0,
+      6.0,
+      6.0,
+      0.0,
+      2.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      },
+      {
+        "strategy1": 0.5,
+        "strategy2": 0.5
+      },
+      {
+        "strategy1": 0.5,
+        "strategy2": 0.5
+      },
+      {
+        "strategy1": 0.5,
+        "strategy2": 0.5
+      },
+      {
+        "strategy1": 0.5,
+        "strategy2": 0.5
+      },
+      {
+        "strategy1": 0.5,
+        "strategy2": 0.5
+      },
+      {
+        "strategy1": 0.5,
+        "strategy2": 0.5
+      },
+      {
+        "strategy1": 0.5,
+        "strategy2": 0.5
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      9.800000000000009e-05,
+      1.972098,
+      1.972098,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5
+    ],
+    "agent1_belief_mean_brier": 0.7444294,
+    "agent1_belief_mean_p_outcome": 0.4507,
+    "agent1_belief_agreement_rate": 0.4,
+    "agent1_regret_per_round": [
+      0.0,
+      2.0,
+      4.0,
+      2.0,
+      4.0,
+      2.0,
+      4.0,
+      4.0,
+      2.0,
+      0.0
+    ],
+    "agent1_regret_mean": 2.4,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionB",
+      "OptionA",
+      "OptionB",
+      "OptionA",
+      "OptionB",
+      "OptionA",
+      "OptionA",
+      "OptionB",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      0.0,
+      10.0,
+      6.0,
+      10.0,
+      6.0,
+      10.0,
+      6.0,
+      6.0,
+      10.0,
+      2.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      },
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      },
+      {
+        "strategy1": 0.5,
+        "strategy2": 0.5
+      },
+      {
+        "strategy1": 0.5,
+        "strategy2": 0.5
+      },
+      {
+        "strategy1": 0.5,
+        "strategy2": 0.5
+      },
+      {
+        "strategy1": 0.5,
+        "strategy2": 0.5
+      },
+      {
+        "strategy1": 0.5,
+        "strategy2": 0.5
+      },
+      {
+        "strategy1": 0.5,
+        "strategy2": 0.5
+      },
+      {
+        "strategy1": 0.5,
+        "strategy2": 0.5
+      },
+      {
+        "strategy1": 0.5,
+        "strategy2": 0.5
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      9.800000000000009e-05,
+      1.972098,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5
+    ],
+    "agent2_belief_mean_brier": 0.5972196000000001,
+    "agent2_belief_mean_p_outcome": 0.5,
+    "agent2_belief_agreement_rate": 0.8,
+    "agent2_regret_per_round": [
+      2.0,
+      0.0,
+      4.0,
+      0.0,
+      4.0,
+      0.0,
+      4.0,
+      4.0,
+      0.0,
+      0.0
+    ],
+    "agent2_regret_mean": 1.8,
+    "welfare_mean_sum": 10.2,
+    "welfare_mean_min": 2.6,
+    "welfare_mean_gini": 0.25,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_3",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 2,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionB",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      10.0,
+      2.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null,
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      9.800000000000009e-05,
+      1.972098
+    ],
+    "agent1_belief_mean_brier": 0.9860979999999999,
+    "agent1_belief_mean_p_outcome": 0.5,
+    "agent1_belief_agreement_rate": 0.5,
+    "agent1_regret_per_round": [
+      0.0,
+      0.0
+    ],
+    "agent1_regret_mean": 0.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      0.0,
+      2.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      },
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null,
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      9.800000000000009e-05,
+      9.800000000000009e-05
+    ],
+    "agent2_belief_mean_brier": 9.800000000000009e-05,
+    "agent2_belief_mean_p_outcome": 0.993,
+    "agent2_belief_agreement_rate": 1.0,
+    "agent2_regret_per_round": [
+      2.0,
+      0.0
+    ],
+    "agent2_regret_mean": 1.0,
+    "welfare_mean_sum": 7.0,
+    "welfare_mean_min": 1.0,
+    "welfare_mean_gini": 0.25,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_4",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 10,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA"
+    ],
+    "agent1_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      1.972098,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05
+    ],
+    "agent1_belief_mean_brier": 0.197298,
+    "agent1_belief_mean_p_outcome": 0.8943999999999999,
+    "agent1_belief_agreement_rate": 0.9,
+    "agent1_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ],
+    "agent1_regret_mean": 4.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "cooperative",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA"
+    ],
+    "agent2_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05
+    ],
+    "agent2_belief_mean_brier": 9.800000000000008e-05,
+    "agent2_belief_mean_p_outcome": 0.993,
+    "agent2_belief_agreement_rate": 1.0,
+    "agent2_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ],
+    "agent2_regret_mean": 4.0,
+    "welfare_mean_sum": 12.0,
+    "welfare_mean_min": 6.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_5",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 10,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionB",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      10.0,
+      0.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      0.0,
+      10.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      9.800000000000009e-05,
+      1.972098,
+      1.972098,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      1.972098,
+      9.800000000000009e-05
+    ],
+    "agent1_belief_mean_brier": 0.591698,
+    "agent1_belief_mean_p_outcome": 0.6971999999999999,
+    "agent1_belief_agreement_rate": 0.7,
+    "agent1_regret_per_round": [
+      0.0,
+      2.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      2.0,
+      0.0
+    ],
+    "agent1_regret_mean": 2.8,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionB",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionB",
+      "OptionA"
+    ],
+    "agent2_scores": [
+      0.0,
+      10.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      10.0,
+      0.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      },
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      9.800000000000009e-05,
+      1.972098,
+      9.800000000000009e-05,
+      1.972098,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      1.972098
+    ],
+    "agent2_belief_mean_brier": 0.591698,
+    "agent2_belief_mean_p_outcome": 0.6971999999999999,
+    "agent2_belief_agreement_rate": 0.7,
+    "agent2_regret_per_round": [
+      2.0,
+      0.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      0.0,
+      2.0
+    ],
+    "agent2_regret_mean": 2.8,
+    "welfare_mean_sum": 11.2,
+    "welfare_mean_min": 3.6,
+    "welfare_mean_gini": 0.2,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      }
+    ]
+  },
+  {
+    "game_id": "game_6",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 9,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      0.0,
+      2.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      1.972098,
+      9.800000000000009e-05
+    ],
+    "agent1_belief_mean_brier": 0.21920911111111108,
+    "agent1_belief_mean_p_outcome": 0.8834444444444444,
+    "agent1_belief_agreement_rate": 0.8888888888888888,
+    "agent1_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      2.0,
+      0.0
+    ],
+    "agent1_regret_mean": 3.3333333333333335,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionB",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      10.0,
+      2.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      1.972098,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      1.972098
+    ],
+    "agent2_belief_mean_brier": 0.4383202222222222,
+    "agent2_belief_mean_p_outcome": 0.7738888888888888,
+    "agent2_belief_agreement_rate": 0.7777777777777778,
+    "agent2_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      0.0,
+      0.0
+    ],
+    "agent2_regret_mean": 3.111111111111111,
+    "welfare_mean_sum": 10.88888888888889,
+    "welfare_mean_min": 4.888888888888889,
+    "welfare_mean_gini": 0.05555555555555555,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_7",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 1,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "selfish",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionB"
+    ],
+    "agent1_scores": [
+      2.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      1.972098
+    ],
+    "agent1_belief_mean_brier": 1.972098,
+    "agent1_belief_mean_p_outcome": 0.007,
+    "agent1_belief_agreement_rate": 0.0,
+    "agent1_regret_per_round": [
+      0.0
+    ],
+    "agent1_regret_mean": 0.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionB"
+    ],
+    "agent2_scores": [
+      2.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      1.972098
+    ],
+    "agent2_belief_mean_brier": 1.972098,
+    "agent2_belief_mean_p_outcome": 0.007,
+    "agent2_belief_agreement_rate": 0.0,
+    "agent2_regret_per_round": [
+      0.0
+    ],
+    "agent2_regret_mean": 0.0,
+    "welfare_mean_sum": 4.0,
+    "welfare_mean_min": 2.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_8",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 10,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "selfish",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA"
+    ],
+    "agent1_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      },
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      1.972098,
+      9.800000000000009e-05,
+      9.800000000000009e-05
+    ],
+    "agent1_belief_mean_brier": 0.197298,
+    "agent1_belief_mean_p_outcome": 0.8943999999999999,
+    "agent1_belief_agreement_rate": 0.9,
+    "agent1_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      2.0,
+      2.0,
+      2.0
+    ],
+    "agent1_regret_mean": 3.4,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionB",
+      "OptionB",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      10.0,
+      10.0,
+      10.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.95,
+        "strategy2": 0.05
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      0.0050000000000000044
+    ],
+    "agent2_belief_mean_brier": 0.0005882000000000005,
+    "agent2_belief_mean_p_outcome": 0.9887,
+    "agent2_belief_agreement_rate": 1.0,
+    "agent2_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "agent2_regret_mean": 2.8,
+    "welfare_mean_sum": 11.4,
+    "welfare_mean_min": 4.2,
+    "welfare_mean_gini": 0.15,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      }
+    ]
+  },
+  {
+    "game_id": "game_9",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 10,
+    "agents_communicate": false,
+    "elicit_beliefs": true,
+    "tom_order": 2,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "selfish",
+    "agent1_knows_opponent_with_prob": 0.7,
+    "agent1_strategies": [
+      "OptionB",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA"
+    ],
+    "agent1_scores": [
+      10.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      0.0
+    ],
+    "agent1_messages": [],
+    "agent1_beliefs": [
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.85,
+        "strategy2": 0.15
+      },
+      {
+        "strategy1": 0.99,
+        "strategy2": 0.01
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      }
+    ],
+    "agent1_beliefs_2nd_order": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "agent1_belief_brier_per_round": [
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      0.045000000000000005,
+      0.0002000000000000002,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      1.972098
+    ],
+    "agent1_belief_mean_brier": 0.2017984,
+    "agent1_belief_mean_p_outcome": 0.8798,
+    "agent1_belief_agreement_rate": 0.9,
+    "agent1_regret_per_round": [
+      0.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      2.0
+    ],
+    "agent1_regret_mean": 3.4,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.7,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      0.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      10.0
+    ],
+    "agent2_messages": [],
+    "agent2_beliefs": [
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.007,
+        "strategy2": 0.993
+      },
+      {
+        "strategy1": 0.5,
+        "strategy2": 0.5
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      },
+      {
+        "strategy1": 0.993,
+        "strategy2": 0.007
+      }
+    ],
+    "agent2_beliefs_2nd_order": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "agent2_belief_brier_per_round": [
+      1.972098,
+      1.972098,
+      0.5,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05,
+      9.800000000000009e-05
+    ],
+    "agent2_belief_mean_brier": 0.4444882,
+    "agent2_belief_mean_p_outcome": 0.7464999999999999,
+    "agent2_belief_agreement_rate": 0.8,
+    "agent2_regret_per_round": [
+      2.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      0.0
+    ],
+    "agent2_regret_mean": 3.4,
+    "welfare_mean_sum": 11.6,
+    "welfare_mean_min": 4.8,
+    "welfare_mean_gini": 0.1,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      }
+    ]
+  }
+]

@@ -15,8 +15,6 @@ __all__ = [
     "AbstractConnector",
     "ChatModelFactory",
     "MODEL_PROVIDER_MAP",
-    "demo_mode",
-    "demo_mode_active",
     "execute_prompt",
     "register_model",
 ]
@@ -24,8 +22,6 @@ __all__ = [
 _FACTORY_EXPORTS = {
     "ChatModelFactory",
     "MODEL_PROVIDER_MAP",
-    "demo_mode",
-    "demo_mode_active",
     "execute_prompt",
     "register_model",
 }
@@ -43,8 +39,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from src.llm_connectors.llm_factory_connector import (  # noqa: F401
         MODEL_PROVIDER_MAP,
         ChatModelFactory,
-        demo_mode,
-        demo_mode_active,
         execute_prompt,
         register_model,
     )

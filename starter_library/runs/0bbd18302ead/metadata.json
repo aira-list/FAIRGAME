@@ -1,0 +1,111 @@
+{
+  "id": "0bbd18302ead",
+  "name": "PD \u2014 theory of mind + beliefs \u00b7 Claude Haiku 4.5",
+  "timestamp": "2026-07-02T11:52:00",
+  "configuration_id": "seed_cfg_pd_tom",
+  "config": {
+    "nRounds": 10,
+    "nRoundsIsKnown": true,
+    "allAgentPermutations": true,
+    "agents": {
+      "names": [
+        "agent1",
+        "agent2"
+      ],
+      "personalities": {
+        "en": [
+          "cooperative",
+          "selfish"
+        ]
+      },
+      "opponentPersonalityProb": [
+        0.7,
+        0.7
+      ]
+    },
+    "payoffMatrix": {
+      "weights": {
+        "weight1": 6,
+        "weight2": 10,
+        "weight3": 0,
+        "weight4": 2
+      },
+      "strategies": {
+        "en": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        },
+        "fr": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        },
+        "ar": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        },
+        "cn": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        },
+        "vn": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        }
+      },
+      "combinations": {
+        "combination1": [
+          "strategy1",
+          "strategy1"
+        ],
+        "combination2": [
+          "strategy1",
+          "strategy2"
+        ],
+        "combination3": [
+          "strategy2",
+          "strategy1"
+        ],
+        "combination4": [
+          "strategy2",
+          "strategy2"
+        ]
+      },
+      "matrix": {
+        "combination1": [
+          "weight1",
+          "weight1"
+        ],
+        "combination2": [
+          "weight3",
+          "weight2"
+        ],
+        "combination3": [
+          "weight2",
+          "weight3"
+        ],
+        "combination4": [
+          "weight4",
+          "weight4"
+        ]
+      }
+    },
+    "stopGameWhen": [
+      "combination4"
+    ],
+    "agentsCommunicate": false,
+    "llms": [
+      "Claude Haiku 4.5",
+      "Claude Haiku 4.5"
+    ],
+    "elicitBeliefs": true,
+    "tomOrder": 2,
+    "name": "PD \u2014 theory of mind + beliefs \u00b7 Claude Haiku 4.5",
+    "languages": [
+      "en"
+    ],
+    "promptTemplate": {
+      "en": "You are {currentPlayerName} and your opponent is {opponent1}.\n{intro}: [You are {personality}.]\n{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.]\n{secondOrder}: [Remember that {opponent1} is also reasoning about what you will do, and may model your beliefs.]\n{ownType}: [Your private type is \"{ownType}\". Your opponent does not know this.]\n\nYou and {opponent1} are arrested for a crime and held in separate cells. You cannot communicate.\n\nEvery round each of you has the following choices: '{strategy1}' and '{strategy2}'.\n{gameLength}: [There are {nRounds} rounds to decide.]\nThe current round is number {currentRound}.\n\nIf you both choose {strategy1}, you both get a penalty of {weight1}.\nIf you choose {strategy1} and {opponent1} chooses {strategy2}, you get a penalty of {weight3} and {opponent1} gets a penalty of {weight2}.\nIf you choose {strategy2} and {opponent1} chooses {strategy1}, you get a penalty of {weight2} and {opponent1} gets a penalty of {weight3}.\nIf you both choose {strategy2}, you both get a penalty of {weight4}.\n\nYour goal is to minimize your penalty.\nHistory so far: {history}.\n\n{believe}: [Before choosing, predict what {opponent1} will do this round. Reply ONLY with a JSON object mapping each strategy label to a probability that sums to 1, e.g. {{\"{strategy1}\": 0.6, \"{strategy2}\": 0.4}}. Output ONLY the JSON.]\n{choose}: [Choose between {strategy1} and {strategy2}. Output ONLY the choice.]\n"
+    }
+  },
+  "n_rows": 10
+}

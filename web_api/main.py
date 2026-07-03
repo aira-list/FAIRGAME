@@ -7,15 +7,15 @@ Run with::
 
 from __future__ import annotations
 
-import os
 import re
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, HTMLResponse, Response
 
 from src.utils.logger import configure_logging
 from web_api.routes import register
-from web_api.run_history import seed_synthetic_runs
+from web_api.run_history import seed_starter_runs
 from web_api.storage import WEB_DIR, resolve_within
 
 configure_logging()
@@ -40,8 +40,17 @@ def _render_index() -> str:
     return _INCLUDE_RE.sub(_replace, shell)
 
 
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    # Ship-with-repo sample runs: topped up at SERVER STARTUP (never at
+    # import) so tests and tooling that merely import this module don't
+    # write to RUNS_DIR. Opt out with FAIRGAME_SKIP_STARTER_RUNS=1.
+    seed_starter_runs()
+    yield
+
+
 def create_app() -> FastAPI:
-    app = FastAPI(title="FAIRGAME", version="0.2.0")
+    app = FastAPI(title="FAIRGAME", version="0.2.0", lifespan=_lifespan)
     register(app)
 
     if WEB_DIR.is_dir():
@@ -74,16 +83,5 @@ def create_app() -> FastAPI:
 
     return app
 
-
-def _truthy(name: str) -> bool:
-    return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
-
-
-# Seed demo runs so the Results page has visualisable data on a fresh checkout.
-# Opt-in only (FAIRGAME_SEED_DEMO_RUNS=1): writing to RUNS_DIR is a filesystem
-# side effect that must never fire merely from importing this module (e.g.
-# during test collection). Idempotent: skipped if any run already exists.
-if _truthy("FAIRGAME_SEED_DEMO_RUNS"):
-    seed_synthetic_runs()
 
 app = create_app()

@@ -1,0 +1,308 @@
+[
+  {
+    "game_id": "game_0",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 6,
+    "agents_communicate": false,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionB",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      10.0,
+      2.0
+    ],
+    "agent1_messages": [
+      "23e, 1dc, 119, 3c7, 034, 290, 0ac, 1e8, 317, 13e",
+      "07b, 241, 06e, 3a0, 384, 399, 09b, 16d, 047, 15f",
+      "0ce, 04b, 09f, 2d5, 16c, 38f, 0f4, 166, 339, 1eb",
+      "021, 308, 398, 06b, 00f, 354, 33a, 1bc, 185, 3b7",
+      "113, 2fa, 021, 2de, 2dd, 1a7, 30c, 265, 36c, 1c0",
+      "2f5, 2fa, 221, 065, 133, 2b4, 1d1, 35e, 37d, 141"
+    ],
+    "agent1_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      0.0,
+      0.0
+    ],
+    "agent1_regret_mean": 2.6666666666666665,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "cooperative",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      0.0,
+      2.0
+    ],
+    "agent2_messages": [
+      "3d8, 18e, 22d, 02c, 1a9, 063, 0f6, 0e6, 0af, 270",
+      "27a, 272, 297, 013, 130, 165, 271, 1a3, 02b, 03b",
+      "0c6, 245, 23e, 09c, 0e9, 14f, 046, 181, 21a, 244",
+      "1b0, 364, 0bb, 097, 01a, 136, 2f5, 2cc, 312, 318",
+      "3c5, 3a8, 1b5, 1d0, 30a, 0b0, 0fd, 1bc, 117, 067",
+      "2ee, 1de, 04d, 025, 0b1, 1a0, 183, 082, 2cb, 105"
+    ],
+    "agent2_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      2.0,
+      0.0
+    ],
+    "agent2_regret_mean": 3.0,
+    "welfare_mean_sum": 10.333333333333334,
+    "welfare_mean_min": 4.333333333333333,
+    "welfare_mean_gini": 0.08333333333333333,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_1",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 4,
+    "agents_communicate": false,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      6.0,
+      6.0,
+      0.0,
+      2.0
+    ],
+    "agent1_messages": [
+      "26b, 168, 26a, 02a, 2d0, 165, 051, 034, 149, 069",
+      "072, 0d1, 363, 18c, 3c0, 3b2, 053, 2ab, 216, 0ed",
+      "19e, 3d8, 2ad, 214, 1a5, 055, 289, 21f, 323, 036",
+      "1f4, 343, 179, 1ff, 108, 399, 033, 373, 21a, 0ce"
+    ],
+    "agent1_regret_per_round": [
+      4.0,
+      4.0,
+      2.0,
+      0.0
+    ],
+    "agent1_regret_mean": 2.5,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionB",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      6.0,
+      6.0,
+      10.0,
+      2.0
+    ],
+    "agent2_messages": [
+      "04e, 2c8, 035, 0db, 03d, 3e3, 256, 354, 184, 291",
+      "241, 04a, 09c, 063, 0e9, 333, 1e3, 3e7, 234, 357",
+      "0f6, 2b1, 2d0, 39b, 3b9, 220, 2bf, 092, 075, 03f",
+      "144, 3bc, 0a7, 3a4, 266, 2db, 3be, 2c1, 1dd, 3c0"
+    ],
+    "agent2_regret_per_round": [
+      4.0,
+      4.0,
+      0.0,
+      0.0
+    ],
+    "agent2_regret_mean": 2.0,
+    "welfare_mean_sum": 9.5,
+    "welfare_mean_min": 3.5,
+    "welfare_mean_gini": 0.125,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_2",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 2,
+    "agents_communicate": false,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "selfish",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      6.0,
+      2.0
+    ],
+    "agent1_messages": [
+      "041, 201, 36b, 2da, 178, 3da, 08e, 204, 224, 39d",
+      "0e0, 302, 144, 285, 2c2, 2c8, 07b, 395, 1c0, 0bc"
+    ],
+    "agent1_regret_per_round": [
+      4.0,
+      0.0
+    ],
+    "agent1_regret_mean": 2.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      6.0,
+      2.0
+    ],
+    "agent2_messages": [
+      "3b0, 29d, 1e9, 0e9, 35c, 29a, 33a, 13e, 0ec, 3b8",
+      "29b, 00a, 1ce, 1f8, 3c4, 213, 2a2, 391, 028, 097"
+    ],
+    "agent2_regret_per_round": [
+      4.0,
+      0.0
+    ],
+    "agent2_regret_mean": 2.0,
+    "welfare_mean_sum": 8.0,
+    "welfare_mean_min": 4.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  }
+]

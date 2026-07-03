@@ -48,7 +48,7 @@ Two parallel paths drive the engine:
 | `src/io_managers/configuration_validator.py` | Pydantic v2 schema + cross-field validation. |
 | `src/io_managers/payoff_matrix_transformer.py` | Tolerates the legacy `[strategy, weight]` payoff format and rewrites it. |
 | `src/io_managers/file_manager.py` | JSON / `.txt` / `.rtf` reading; CSV writing. |
-| `src/llm_connectors/` | Unified LiteLLM connector, retry/rate-limit machinery, the `ChatModelFactory`, and the offline `DemoConnector`. |
+| `src/llm_connectors/` | Unified LiteLLM connector, retry/rate-limit machinery, and the `ChatModelFactory`. |
 | `src/results_processing/` | Flatten run output into result rows (`row_schema.py` is the column contract). |
 | `src/utils/logger.py` | Centralized logging configuration. |
 | `src/utils/utils.py` | Slug / path helpers. |

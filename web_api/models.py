@@ -4,21 +4,37 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 # Upper bound on batch iterations so the engine fan-out can't be unbounded.
 MAX_RUN_ITERATIONS = 100
 
+_DEMO_RETIRED_MSG = (
+    "The 'demo' field was removed: demo mode no longer exists and every run "
+    "executes real provider models (billed). Remove 'demo' from the request "
+    "to proceed."
+)
 
-class RunBody(BaseModel):
+
+class _RejectsRetiredDemo(BaseModel):
+    """Old clients could send ``demo: true`` expecting a free offline run.
+
+    Silently ignoring the field (Pydantic's default for unknown keys) would
+    bill them for calls they explicitly opted out of — fail loudly instead.
+    """
+
+    @model_validator(mode="before")
+    @classmethod
+    def _reject_demo(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "demo" in data:
+            raise ValueError(_DEMO_RETIRED_MSG)
+        return data
+
+
+class RunBody(_RejectsRetiredDemo):
     """An inline configuration to run."""
 
     config: dict[str, Any] | None = None
-    # Demo mode answers every LLM call with an offline deterministic fake (no
-    # API keys, no charges). Defaults to false: a direct API/CLI client runs
-    # real models unless it explicitly opts in. The web UI sends its Demo/Live
-    # toggle on every run, so it is unaffected by this default.
-    demo: bool = False
 
 
 class HealthResponse(BaseModel):
@@ -94,7 +110,7 @@ class ImportBundle(BaseModel):
     runs: list[dict[str, Any]] = Field(default_factory=list)
 
 
-class RunConfigurationsBody(BaseModel):
+class RunConfigurationsBody(_RejectsRetiredDemo):
     """Batch payload for the Experiment page.
 
     The configuration owns its own seed, seedCount, agents, payoffs and
@@ -106,13 +122,3 @@ class RunConfigurationsBody(BaseModel):
 
     configuration_ids: list[str]
     iterations: int = Field(default=1, ge=1, le=MAX_RUN_ITERATIONS)
-    # See RunBody.demo — defaults to real models; the web UI sends its toggle.
-    demo: bool = False
-
-
-class RunConfigOptions(BaseModel):
-    """Optional body for ``POST /api/configurations/{id}/run`` — carries the
-    ``demo`` flag in the JSON body, matching the other run endpoints (rather
-    than as a query parameter)."""
-
-    demo: bool = False

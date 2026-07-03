@@ -139,8 +139,8 @@ from a 30-language grid **and choose which LLM performs the translation**
 such as a local `ollama/…`). The dialog defaults to the server's
 `FAIRGAME_TRANSLATOR_MODEL` (default `GPT-4o`). Each translation
 becomes a new template under the same game type and variation, with
-`source_template_id` linking back. Live LLM credentials for the chosen
-provider are required (demo mode cannot translate).
+`source_template_id` linking back. LLM credentials for the chosen
+provider are required.
 
 ---
 

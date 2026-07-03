@@ -702,7 +702,10 @@ window.__fgConfigurations = {
           const method = this.configsPage.editing ? 'PUT' : 'POST';
           await this.api(path, { method, body: JSON.stringify(payload) });
           await this.loadConfigurations();
-          if (!this.configsPage.editing) this.resetConfigDraft();
+          if (!this.configsPage.editing) {
+            this.resetConfigDraft();
+            this.configsPage.page = 1;  // new config is prepended — show it
+          }
         } catch (e) { this.configsPage.error = String(e.message || e); }
       },
 
@@ -718,6 +721,9 @@ window.__fgConfigurations = {
         try {
           await this.api(`/api/configurations/${id}/clone`, { method: 'POST' });
           await this.loadConfigurations();
+          // The clone is prepended server-side (newest first); jump to
+          // page 1 so it is immediately visible.
+          this.configsPage.page = 1;
         } catch (e) { alert(e.message || e); }
       },
 
@@ -739,6 +745,7 @@ window.__fgConfigurations = {
           });
           await this.loadConfigurations();
           await this.loadRuns();
+          this.configsPage.page = 1;  // imported config is prepended — show it
           const n = out.imported_runs;
           this.configsPage.importMsg =
             `Imported “${out.configuration.name}” with ${n} result${n === 1 ? '' : 's'}` +

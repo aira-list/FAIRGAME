@@ -17,7 +17,10 @@ from src.llm_connectors.abstract_connector import AbstractConnector
 from web_api.models import TemplateTranslateBody
 
 
-class _EchoTranslator(AbstractConnector):
+class _FakeRouteTranslator(AbstractConnector):
+    """Rewrites the quoted source (placeholders intact) so the route test
+    exercises model selection without tripping the translator's echo guard."""
+
     def __init__(self, provider_model: str = "echo-route") -> None:
         super().__init__()
         self.provider_model = provider_model
@@ -25,7 +28,7 @@ class _EchoTranslator(AbstractConnector):
     def _send_prompt(self, prompt: str) -> str:
         match = re.search(r'"(.*)"', prompt, re.DOTALL)
         text = match.group(1) if match else prompt
-        return f"Translation: {text}"
+        return f"Translation: XLATE {text}"
 
 
 class TestTranslateRequestModel(unittest.TestCase):
@@ -45,7 +48,7 @@ class TestTranslateRouteEndToEnd(unittest.TestCase):
         from unit_tests.support import isolated_storage_dirs
         from web_api.main import app
 
-        register_model("echo-route", _EchoTranslator, "echo-route")
+        register_model("echo-route", _FakeRouteTranslator, "echo-route")
         cls._dirs_cm = isolated_storage_dirs(prefix="fg_translate_")
         cls._dirs = cls._dirs_cm.__enter__()
         cls.client = TestClient(app)
@@ -77,8 +80,8 @@ class TestTranslateRouteEndToEnd(unittest.TestCase):
         )
         self.assertEqual(res.status_code, 200, res.text)
         payload = res.json()
-        # The echo translator preserves the body verbatim, so a French
-        # template gets created (no cosine gate to reject the "translation").
+        # The fake rewrites the body (placeholders intact), so the
+        # target-language template gets created.
         self.assertEqual(len(payload["created"]), 1, payload)
         self.assertEqual(payload["errors"], [])
 

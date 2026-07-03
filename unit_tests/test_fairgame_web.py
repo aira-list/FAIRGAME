@@ -311,11 +311,11 @@ DEMO_CONFIGS = [
 
 @unittest.skipUnless(resources_available(), RESOURCES_SKIP_REASON)
 class TestSeedConfigurationsRunEndToEnd(unittest.TestCase):
-    """End-to-end smoke for every demo Configuration.
+    """End-to-end smoke for every example Configuration.
 
     For each fixture configuration (one per canonical 2x2 game plus the
-    ToM and tournament showcases), POST /api/configurations/{id}/run in
-    demo mode and verify the engine returns a non-empty rows payload
+    ToM and tournament showcases), POST /api/configurations/{id}/run and
+    verify the engine returns a non-empty rows payload
     with the columns the Results page expects to render. This catches
     integration-level breakage: the template can't be resolved, the
     payoff matrix doesn't validate, the engine's permutation expander
@@ -323,8 +323,8 @@ class TestSeedConfigurationsRunEndToEnd(unittest.TestCase):
     contract, etc.
 
     The configs are seeded into an isolated temp library so the test is
-    independent of the shipped starter library. Demo mode keeps the test
-    in-process — no live LLM calls.
+    independent of the shipped starter library. The conftest fake LLM
+    connector keeps the test in-process — no live LLM calls.
     """
 
     EXPECTED_CONFIG_IDS = [c["id"] for c in DEMO_CONFIGS]
@@ -387,13 +387,12 @@ class TestSeedConfigurationsRunEndToEnd(unittest.TestCase):
         for cfg in seeds.SEED_CONFIGURATIONS:
             self.assertIn(cfg.get("game_type_id"), gt_ids, cfg.get("id"))
 
-    def test_each_seed_configuration_runs_in_demo_mode(self) -> None:
-        """Each demo config runs to completion and produces sensible rows."""
+    def test_each_seed_configuration_runs(self) -> None:
+        """Each seed config runs to completion and produces sensible rows."""
         for cid in self.EXPECTED_CONFIG_IDS:
             with self.subTest(configuration=cid):
                 res = self.client.post(
                     f"/api/configurations/{cid}/run",
-                    params={"demo_mode": "true"},
                 )
                 self.assertEqual(res.status_code, 200, res.text)
                 body = res.json()

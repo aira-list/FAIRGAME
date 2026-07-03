@@ -1,15 +1,14 @@
-"""Deterministic, offline LLM connector powering FAIRGAME's demo mode.
+"""Deterministic, offline LLM connector used by the test suite.
 
-Demo mode lets anyone explore the app — run scenarios, see results, exercise
-every phase — without provider API keys and without incurring charges. Every
-LLM call is answered by this in-process fake: it inspects the prompt and
+Every LLM call is answered by this in-process fake: it inspects the prompt and
 returns a plausible, deterministic response (a strategy label, a belief-
-distribution JSON, or a monitoring decision), so games run to completion.
+distribution JSON, or a monitoring decision), so games run to completion without
+provider API keys or network access. ``unit_tests/conftest.py`` registers this
+class (via :func:`src.llm_connectors.register_model`) for the model names that
+test configurations reference.
 
 It is intentionally *not* a language model: it pattern-matches the prompt.
-That is enough to drive the engine end-to-end for demonstration and testing.
-The unit-test suite registers this same class as its offline fake (see
-``unit_tests/conftest.py``), so there is one source of truth for the heuristics.
+That is enough to drive the engine end-to-end for the deterministic suite.
 """
 
 from __future__ import annotations
@@ -19,7 +18,7 @@ import re
 from src.llm_connectors.abstract_connector import AbstractConnector
 
 
-class DemoConnector(AbstractConnector):
+class FakeLLMConnector(AbstractConnector):
     """Answers prompts deterministically, offline — no network, no API key."""
 
     KNOWN_LABELS = (
@@ -41,7 +40,7 @@ class DemoConnector(AbstractConnector):
     # Separators between options: commas and the localized "and"/"or".
     _OPTION_SEP = re.compile(r"\s*,\s*|\s+(?:and|or|et|ou|und|oder|e|o|en|i)\s+", re.IGNORECASE)
 
-    def __init__(self, provider_model: str = "demo") -> None:
+    def __init__(self, provider_model: str = "fake") -> None:
         super().__init__()
         # Kept for parity with real connectors / logging; never used to call out.
         self.provider_model = provider_model
@@ -58,7 +57,7 @@ class DemoConnector(AbstractConnector):
 
     def _send_prompt(self, prompt: str) -> str:
         # Trust monitoring-decision prompt: always LOOK so the cost/gating path
-        # is exercised in demos.
+        # is exercised.
         if "LOOK" in prompt and "NO_LOOK" in prompt:
             return "LOOK"
         # Belief-elicitation prompt: return a valid, slightly asymmetric JSON.

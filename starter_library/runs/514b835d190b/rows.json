@@ -1,0 +1,566 @@
+[
+  {
+    "game_id": "game_0",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 10,
+    "agents_communicate": false,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "GPT-4o",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA"
+    ],
+    "agent1_scores": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ],
+    "agent1_messages": [],
+    "agent1_regret_per_round": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "agent1_regret_mean": 0.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "GPT-4o",
+    "agent2_personality": "cooperative",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA"
+    ],
+    "agent2_scores": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ],
+    "agent2_messages": [],
+    "agent2_regret_per_round": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "agent2_regret_mean": 0.0,
+    "equilibria": [
+      "combination1",
+      "combination4"
+    ],
+    "equilibrium_per_round": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "equilibrium_rate": 1.0,
+    "first_equilibrium_round": 1,
+    "welfare_mean_sum": 8.0,
+    "welfare_mean_min": 4.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": 1.0,
+    "welfare_per_round": [
+      {
+        "sum": 8.0,
+        "mean": 4.0,
+        "min": 4.0,
+        "max": 4.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 8.0,
+        "mean": 4.0,
+        "min": 4.0,
+        "max": 4.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 8.0,
+        "mean": 4.0,
+        "min": 4.0,
+        "max": 4.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 8.0,
+        "mean": 4.0,
+        "min": 4.0,
+        "max": 4.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 8.0,
+        "mean": 4.0,
+        "min": 4.0,
+        "max": 4.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 8.0,
+        "mean": 4.0,
+        "min": 4.0,
+        "max": 4.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 8.0,
+        "mean": 4.0,
+        "min": 4.0,
+        "max": 4.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 8.0,
+        "mean": 4.0,
+        "min": 4.0,
+        "max": 4.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 8.0,
+        "mean": 4.0,
+        "min": 4.0,
+        "max": 4.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 8.0,
+        "mean": 4.0,
+        "min": 4.0,
+        "max": 4.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_1",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 10,
+    "agents_communicate": false,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "GPT-4o",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      0.0,
+      0.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0
+    ],
+    "agent1_messages": [],
+    "agent1_regret_per_round": [
+      2.0,
+      2.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "agent1_regret_mean": 0.4,
+    "agent2_name": "agent2",
+    "agent2_llm": "GPT-4o",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      3.0,
+      3.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0
+    ],
+    "agent2_messages": [],
+    "agent2_regret_per_round": [
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "agent2_regret_mean": 0.2,
+    "equilibria": [
+      "combination1",
+      "combination4"
+    ],
+    "equilibrium_per_round": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "equilibrium_rate": 0.8,
+    "first_equilibrium_round": 3,
+    "welfare_mean_sum": 3.8,
+    "welfare_mean_min": 1.6,
+    "welfare_mean_gini": 0.1,
+    "welfare_efficiency": 0.475,
+    "welfare_per_round": [
+      {
+        "sum": 3.0,
+        "mean": 1.5,
+        "min": 0.0,
+        "max": 3.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 3.0,
+        "mean": 1.5,
+        "min": 0.0,
+        "max": 3.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_2",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 10,
+    "agents_communicate": false,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "GPT-4o",
+    "agent1_personality": "selfish",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0
+    ],
+    "agent1_messages": [],
+    "agent1_regret_per_round": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "agent1_regret_mean": 0.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "GPT-4o",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0
+    ],
+    "agent2_messages": [],
+    "agent2_regret_per_round": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "agent2_regret_mean": 0.0,
+    "equilibria": [
+      "combination1",
+      "combination4"
+    ],
+    "equilibrium_per_round": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "equilibrium_rate": 1.0,
+    "first_equilibrium_round": 1,
+    "welfare_mean_sum": 4.0,
+    "welfare_mean_min": 2.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": 0.5,
+    "welfare_per_round": [
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  }
+]

@@ -35,12 +35,14 @@
   --slate-200: #e2e8f0;
   --slate-100: #f1f5f9;
 
-  /* Surfaces */
-  --canvas:   #f6f7fb;
+  /* Surfaces — the canvas sits a clear step below the white cards and
+     borders are visible, so components separate instead of melting into
+     one light field. */
+  --canvas:   #e9ecf5;
   --surface:  #ffffff;
-  --surface-2:#fbfbfe;
-  --border:   #e8eaf2;
-  --border-strong: #d8dbe8;
+  --surface-2:#f3f5fa;
+  --border:   #d7dcea;
+  --border-strong: #bec5da;
 
   --text:        #16182b;
   --text-muted:  #5b627a;
@@ -75,10 +77,15 @@ body {
   letter-spacing: -0.011em;
   /* subtle atmospheric depth so the canvas isn't a flat fill */
   background-image:
-    radial-gradient(900px 500px at 100% -5%, rgba(99, 102, 241, 0.06), transparent 60%),
-    radial-gradient(700px 420px at -10% 110%, rgba(79, 70, 229, 0.05), transparent 60%);
+    radial-gradient(900px 500px at 100% -5%, rgba(99, 102, 241, 0.09), transparent 60%),
+    radial-gradient(700px 420px at -10% 110%, rgba(79, 70, 229, 0.07), transparent 60%);
   background-attachment: fixed;
 }
+
+/* Default hairline color for every border utility (border, border-b,
+   divide-*) — one lever that separates all the light components at once.
+   Later in the cascade than Tailwind's preflight, so it wins. */
+*, ::before, ::after { border-color: var(--border); }
 
 h1, h2, h3, h4, h5 { font-family: var(--font-display); letter-spacing: -0.02em; }
 code, pre, kbd, samp { font-family: var(--font-mono); }
@@ -155,10 +162,19 @@ code { font-size: 0.86em; }
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-xs);
+  box-shadow: var(--shadow-sm);
   transition: box-shadow .18s ease, border-color .18s ease, transform .18s ease;
 }
 .fg-card:hover { box-shadow: var(--shadow-md); border-color: var(--border-strong); }
+
+/* Contrast boost: the light utility tints used for inner panels (code
+   previews, table headers, nested boxes) sit a full step below the white
+   card so nested components read as distinct surfaces. These load after
+   tailwind.css, so they win at equal specificity. */
+.bg-slate-50  { background-color: var(--surface-2); }
+.bg-slate-100 { background-color: #e7eaf3; }
+.border-slate-200 { border-color: var(--border-strong); }
+.border-slate-300 { border-color: #aeb6cd; }
 
 /* interactive nav cards (home) lift a touch */
 .fg-card-action { cursor: pointer; }

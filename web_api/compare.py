@@ -27,6 +27,7 @@ from src.results_processing.row_schema import AgentCol, agent_col
 from web_api.dashboards import (
     as_float,
     as_list,
+    assemble_sections,
     chart_spec,
     is_missing,
     mean_of,
@@ -224,6 +225,8 @@ def build_comparison(runs: list[dict[str, Any]]) -> dict[str, Any]:
             "compare_cooperation",
             "bar",
             f"Cooperation by {label}",
+            flat_ok=True,
+            description="Share of cooperative (first-option) choices in each group, across all selected runs.",
             labels=groups,
             datasets=[{"label": "cooperation", "data": [stats[g]["cooperation"] for g in groups]}],
         ),
@@ -231,6 +234,8 @@ def build_comparison(runs: list[dict[str, Any]]) -> dict[str, Any]:
             "compare_payoff",
             "bar",
             f"Mean final payoff by {label}",
+            flat_ok=True,
+            description="Average total payoff per game in each group.",
             labels=groups,
             datasets=[{"label": "final payoff", "data": [stats[g]["payoff"] for g in groups]}],
         ),
@@ -245,10 +250,13 @@ def build_comparison(runs: list[dict[str, Any]]) -> dict[str, Any]:
                 "robustness_radar",
                 "radar",
                 f"Robustness profile by {label} (normalised — smaller is more robust)",
+                description=(
+                    "Stability profile: internal variance (I_V), cross-language inconsistency (C_I), "
+                    "payoff-matrix sensitivity (S_P), round-to-round variability (V_R). Nearer the "
+                    "centre = more robust."
+                ),
                 labels=list(ctx.axes),
                 datasets=ds,
-                description="I_V internal variability · C_I cross-language · "
-                "S_P payoff sensitivity · V_R over rounds",
             )
         )
 
@@ -275,6 +283,10 @@ def build_comparison(runs: list[dict[str, Any]]) -> dict[str, Any]:
                         "cooperation_by_game",
                         "bar",
                         "Cooperation by game and model",
+                        description=(
+                            "Cooperation share of each model, split by game — reveals whether a "
+                            "model's behaviour is game-specific."
+                        ),
                         labels=list(ctx.scenarios),
                         datasets=ds,
                     ),
@@ -298,6 +310,10 @@ def build_comparison(runs: list[dict[str, Any]]) -> dict[str, Any]:
                         "payoff_by_language",
                         "bar",
                         f"Final payoff by language and {label}",
+                        description=(
+                            "Average final payoff split by prompt language — differences within a "
+                            "group suggest language bias."
+                        ),
                         labels=list(ctx.languages),
                         datasets=ds,
                     ),
@@ -318,6 +334,10 @@ def build_comparison(runs: list[dict[str, Any]]) -> dict[str, Any]:
                             "strategy_trend",
                             "line",
                             f"Strategy value over rounds by {label} (+1 = Option A, -1 = Option B)",
+                            description=(
+                                "Average played strategy per round for each group: +1 = cooperative "
+                                "option, -1 = the other."
+                            ),
                             labels=[f"R{i + 1}" for i in range(max_len)],
                             datasets=ds,
                         ),
@@ -325,4 +345,4 @@ def build_comparison(runs: list[dict[str, Any]]) -> dict[str, Any]:
                 )
             )
 
-    return {"sections": [{"title": t, "charts": c} for t, c in plan if c]}
+    return {"sections": assemble_sections(plan)}

@@ -1,4 +1,4 @@
-"""Run-history persistence: save / list / load + synthetic-demo seeding.
+"""Run-history persistence: save / list / load + starter-run seeding.
 
 Each run lives under ``RUNS_DIR/<run_id>/`` with:
 
@@ -21,11 +21,11 @@ strings, which the dashboard/compare parsers still tolerate).
 
 from __future__ import annotations
 
-import hashlib
 import json
 import math
-import random
-from datetime import datetime, timedelta
+import os
+import shutil
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -43,13 +43,55 @@ def _runs_dir() -> Path:
     return storage.RUNS_DIR
 
 
+# Shipped sample runs (real engine output, produced by
+# ``tools/populate_seed_results.py``) — copied into RUNS_DIR at startup so a
+# fresh install has results to visualise before running anything.
+STARTER_RUNS_DIR = Path(__file__).resolve().parent.parent / "starter_library" / "runs"
+
+
+def seed_starter_runs() -> None:
+    """Copy shipped sample runs into ``RUNS_DIR`` (top-up by run id).
+
+    Mirrors the library-store seed top-up: a run directory is copied only
+    when its id is absent, so user-generated runs and previously copied
+    starters are never touched. Called from the app's startup hook — never
+    at import time. Set ``FAIRGAME_SKIP_STARTER_RUNS=1`` to opt out (e.g.
+    after deliberately deleting the samples).
+
+    Concurrent-safe for multi-worker servers: each run is copied to a
+    process-unique temp directory and atomically renamed into place; the
+    loser of a race simply discards its copy instead of crashing.
+    """
+    if os.getenv("FAIRGAME_SKIP_STARTER_RUNS", "").strip().lower() in {"1", "true", "yes", "on"}:
+        return
+    if not STARTER_RUNS_DIR.is_dir():
+        return
+    runs_dir = _runs_dir()
+    runs_dir.mkdir(parents=True, exist_ok=True)
+    copied = 0
+    for src in sorted(STARTER_RUNS_DIR.iterdir()):
+        if not (src / "metadata.json").is_file():
+            continue
+        dst = runs_dir / src.name
+        if dst.exists():
+            continue
+        tmp = runs_dir / f".{src.name}.seed-tmp-{os.getpid()}"
+        try:
+            shutil.copytree(src, tmp)
+            tmp.rename(dst)  # atomic; fails if a sibling worker won the race
+            copied += 1
+        except OSError:
+            shutil.rmtree(tmp, ignore_errors=True)
+    if copied:
+        logger.info("Seeded %d starter run(s) into %s", copied, runs_dir)
+
+
 def save_run(
     run_id: str,
     config: dict[str, Any],
     rows: list[dict[str, Any]],
     *,
     configuration_id: str | None = None,
-    demo: bool = False,
 ) -> Path:
     """Write a run's metadata + CSV payload to ``RUNS_DIR/<run_id>/``.
 
@@ -67,9 +109,6 @@ def save_run(
         "configuration_id": configuration_id,
         "config": config,
         "n_rows": len(rows),
-        # Provenance: true when produced by the offline demo fake, so demo runs
-        # are never mistaken for real LLM results in history / compare / export.
-        "demo": demo,
     }
     (run_dir / "metadata.json").write_text(json.dumps(metadata, indent=2))
     return run_dir
@@ -99,8 +138,8 @@ def runs_for_configuration(config_id: str) -> list[dict[str, Any]]:
 def import_run(run_id: str, metadata: dict[str, Any], rows: list[dict[str, Any]]) -> Path:
     """Recreate a run from an exported bundle: write the supplied metadata
     (already re-stamped with a new id / configuration_id) verbatim plus its
-    CSV rows. Unlike :func:`save_run` this preserves the original timestamp,
-    name and demo flag rather than minting fresh ones."""
+    CSV rows. Unlike :func:`save_run` this preserves the original timestamp
+    and name rather than minting fresh ones."""
     run_dir = _runs_dir() / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
     _write_rows(run_dir, rows)
@@ -161,162 +200,3 @@ def load_run(run_id: str) -> dict[str, Any]:
         for row in df.to_dict(orient="records")
     ]
     return {**metadata, "rows": rows}
-
-
-def seed_synthetic_runs() -> None:
-    """Generate a handful of demo runs so the Results page has data on a
-    fresh install.
-
-    Disabled by default — FAIRGAME starts with no runs. The caller
-    (``web_api.main``) gates on ``FAIRGAME_SEED_DEMO_RUNS``; the only guard
-    here is idempotence: skipped when ``RUNS_DIR`` already contains anything.
-    """
-    runs_dir = _runs_dir()
-    if any(runs_dir.iterdir()) if runs_dir.is_dir() else False:
-        return
-
-    scenarios = [
-        (
-            "syn_pd_001",
-            "Prisoner's Dilemma — classic, demo",
-            "Cooperate",
-            "Defect",
-            (3, 5, 0, 1),
-            ["cooperative", "selfish"],
-            [0.30, 0.55],
-            8,
-            5,
-        ),
-        (
-            "syn_sh_001",
-            "Stag Hunt — payoff vs risk",
-            "Stag",
-            "Hare",
-            (4, 1, 0, 2),
-            ["cooperative", "cooperative"],
-            [0.65, 0.70],
-            6,
-            4,
-        ),
-        (
-            "syn_bos_001",
-            "Battle of the Sexes — coordination",
-            "Concert",
-            "Match",
-            (2, 1, 0, 0),
-            ["assertive", "agreeable"],
-            [0.55, 0.40],
-            5,
-            3,
-        ),
-        (
-            "syn_sd_001",
-            "Snowdrift — anti-coordination",
-            "Shovel",
-            "Stay",
-            (3, 1, 4, 0),
-            ["dutiful", "selfish"],
-            [0.62, 0.35],
-            7,
-            4,
-        ),
-        (
-            "syn_h_001",
-            "Harmony Game — dominant cooperation",
-            "Help",
-            "Slack",
-            (5, 2, 4, 1),
-            ["altruistic", "altruistic"],
-            [0.92, 0.88],
-            5,
-            4,
-        ),
-    ]
-    now = datetime.now()
-    for offset, (sid, name, A, B, weights, styles, coop, n_games, n_rounds) in enumerate(scenarios):
-        # Stable across processes: builtin ``hash()`` is salted per-process
-        # (PYTHONHASHSEED), so "deterministic demo" runs would differ across
-        # restarts. A hashlib digest gives the same seed every time.
-        seed = int.from_bytes(hashlib.sha256(sid.encode()).digest()[:4], "big")
-        rng = random.Random(seed)
-        run_dir = runs_dir / sid
-        run_dir.mkdir(parents=True, exist_ok=True)
-        R, S, T, P = weights
-        rows: list[dict[str, Any]] = []
-        for g in range(n_games):
-            strats = [
-                [A if rng.random() < coop[a] else B for _ in range(n_rounds)] for a in range(2)
-            ]
-            s0: list[float] = []
-            s1: list[float] = []
-            for r in range(n_rounds):
-                x, y = strats[0][r], strats[1][r]
-                if x == A and y == A:
-                    a, b = R, R
-                elif x == A and y == B:
-                    a, b = S, T
-                elif x == B and y == A:
-                    a, b = T, S
-                else:
-                    a, b = P, P
-                s0.append(a)
-                s1.append(b)
-            wsum = sum(s0) + sum(s1)
-            wmin = min(sum(s0), sum(s1))
-            wgini = abs(sum(s0) - sum(s1)) / max(wsum, 1) / 2
-            eq = (
-                sum(1 for r in range(n_rounds) if strats[0][r] == B and strats[1][r] == B)
-                / n_rounds
-            )
-            rows.append(
-                {
-                    "game_id": f"game_{g}",
-                    "language": "en",
-                    "n_rounds_is_known": True,
-                    "max_rounds": n_rounds,
-                    "played_rounds": n_rounds,
-                    "agent1_name": "agent1",
-                    "agent1_llm": "OpenAIGPT4o",
-                    "agent1_personality": styles[0],
-                    "agent1_strategies": strats[0],
-                    "agent1_scores": s0,
-                    "agent1_total_score": sum(s0),
-                    "agent1_messages": [],
-                    "agent2_name": "agent2",
-                    "agent2_llm": "OpenAIGPT4o",
-                    "agent2_personality": styles[1],
-                    "agent2_strategies": strats[1],
-                    "agent2_scores": s1,
-                    "agent2_total_score": sum(s1),
-                    "agent2_messages": [],
-                    "welfare_sum": wsum,
-                    "welfare_min": wmin,
-                    "welfare_gini": round(wgini, 4),
-                    "equilibrium_rate": round(eq, 4),
-                }
-            )
-        # Native rows (lists stay lists), same shape a real run produces.
-        _write_rows(run_dir, rows)
-        (run_dir / "metadata.json").write_text(
-            json.dumps(
-                {
-                    "id": sid,
-                    "name": name,
-                    "timestamp": (now - timedelta(hours=offset)).isoformat(timespec="seconds"),
-                    "config": {
-                        "name": name,
-                        "languages": ["en"],
-                        "nRounds": n_rounds,
-                        "agents": {
-                            "names": ["agent1", "agent2"],
-                            "personalities": {"en": styles},
-                            "llmServices": ["OpenAIGPT4o", "OpenAIGPT4o"],
-                        },
-                        "_synthetic": True,
-                    },
-                    "n_rows": len(rows),
-                },
-                indent=2,
-            )
-        )
-    logger.info("Seeded %d synthetic demo runs under %s", len(scenarios), runs_dir)

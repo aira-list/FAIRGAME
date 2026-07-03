@@ -134,7 +134,24 @@ def test_group_stats_by_scenario():
 
 
 def test_always_has_cooperation_and_payoff_comparison():
-    ids = _ids(build_comparison([run([rrow("A")]), run([rrow("B")])]))
+    ids = _ids(
+        build_comparison(
+            [
+                run([rrow("A")]),
+                run(
+                    [
+                        rrow(
+                            "B",
+                            agent1_strategies="['OptionB']",
+                            agent2_strategies="['OptionB']",
+                            agent1_scores="[1.0]",
+                            agent2_scores="[1.0]",
+                        )
+                    ]
+                ),
+            ]
+        )
+    )
     assert {"compare_cooperation", "compare_payoff"} <= ids
 
 
@@ -217,7 +234,14 @@ def test_single_model_multilingual_compares_by_language_directly():
     # Only language varies -> primary is language; compare_payoff IS the
     # language comparison, so no separate (degenerate) payoff_by_language chart.
     spec = build_comparison(
-        [run([rrow("A", language="en"), rrow("A", language="fr", game_id="g1")])]
+        [
+            run(
+                [
+                    rrow("A", language="en"),
+                    rrow("A", language="fr", game_id="g1", agent1_scores="[5.0]"),
+                ]
+            )
+        ]
     )
     assert "payoff_by_language" not in _ids(spec)
     assert _chart(spec, "compare_payoff")["labels"] == ["en", "fr"]
@@ -321,7 +345,10 @@ def test_heterogeneous_selection_does_not_break():
             ],
             name="Stag",
         ),
-        run([rrow("A", payoff_variant_name="harsh")], name="Snowdrift"),
+        run(
+            [rrow("A", payoff_variant_name="harsh", agent1_scores="[9.0]")],
+            name="Snowdrift",
+        ),
     ]
     spec = build_comparison(runs)  # must not raise
     assert "compare_payoff" in _ids(spec)
@@ -331,6 +358,8 @@ def test_empty_comparison_is_empty():
     assert build_comparison([]) == {"sections": []}
 
 
-def test_single_run_still_works():
+def test_single_group_comparison_has_no_trivial_bars():
+    # One group means one bar per chart — a number, not a comparison.
+    # The spec comes back well-formed but chartless.
     spec = build_comparison([run([rrow("A")])])
-    assert "compare_payoff" in _ids(spec)
+    assert spec["sections"] == []

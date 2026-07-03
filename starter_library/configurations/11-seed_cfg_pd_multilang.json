@@ -8,7 +8,7 @@
     "fr"
   ],
   "game_config": {
-    "nRounds": 1,
+    "nRounds": 10,
     "nRoundsIsKnown": true,
     "allAgentPermutations": true,
     "agents": {

@@ -289,6 +289,19 @@ def record_deletion(name: str, item_id: str) -> None:
         )
 
 
+def newest_first(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Display order for library lists: user items newest-first, then the
+    shipped seed entries (no ``created_at``) in their curated store order.
+
+    Ordering is derived from ``created_at`` at read time — never from the
+    store's physical row order, which multiple writers (creates, clones,
+    imports, the seed top-up) would each have to maintain by hand.
+    """
+    stamped = [i for i in items if i.get("created_at")]
+    rest = [i for i in items if not i.get("created_at")]
+    return sorted(stamped, key=lambda i: str(i["created_at"]), reverse=True) + rest
+
+
 def new_id() -> str:
     return uuid.uuid4().hex[:12]
 

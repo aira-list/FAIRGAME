@@ -24,14 +24,14 @@ def create_run(body: RunBody) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail="Provide a 'config'.")
 
     try:
-        rows = get_engine().create_and_run_games(config, demo=body.demo)
+        rows = get_engine().create_and_run_games(config)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except TypeError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     run_id = storage.new_id()
-    save_run(run_id, config, rows, demo=body.demo)
+    save_run(run_id, config, rows)
     return {"id": run_id, "rows": rows}
 
 

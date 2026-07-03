@@ -1,0 +1,174 @@
+{
+  "id": "45358880f067",
+  "name": "Volunteer's Dilemma \u2014 n-player \u00b7 Claude Haiku 4.5",
+  "timestamp": "2026-07-02T11:24:00",
+  "configuration_id": "seed_cfg_volunteer",
+  "config": {
+    "nRounds": 10,
+    "nRoundsIsKnown": true,
+    "allAgentPermutations": false,
+    "agents": {
+      "names": [
+        "agent1",
+        "agent2",
+        "agent3"
+      ],
+      "personalities": {
+        "en": [
+          "cooperative",
+          "aggressive",
+          "agressive"
+        ]
+      },
+      "opponentPersonalityProb": [
+        0,
+        0,
+        0
+      ]
+    },
+    "payoffMatrix": {
+      "weights": {
+        "weight1": 0,
+        "weight2": 5,
+        "weight3": 10
+      },
+      "strategies": {
+        "en": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        }
+      },
+      "combinations": {
+        "combination1": [
+          [
+            "strategy1",
+            "weight1"
+          ],
+          [
+            "strategy1",
+            "weight1"
+          ],
+          [
+            "strategy1",
+            "weight1"
+          ]
+        ],
+        "combination2": [
+          [
+            "strategy2",
+            "weight2"
+          ],
+          [
+            "strategy1",
+            "weight3"
+          ],
+          [
+            "strategy1",
+            "weight3"
+          ]
+        ],
+        "combination3": [
+          [
+            "strategy1",
+            "weight3"
+          ],
+          [
+            "strategy2",
+            "weight2"
+          ],
+          [
+            "strategy1",
+            "weight3"
+          ]
+        ],
+        "combination4": [
+          [
+            "strategy1",
+            "weight3"
+          ],
+          [
+            "strategy1",
+            "weight3"
+          ],
+          [
+            "strategy2",
+            "weight2"
+          ]
+        ],
+        "combination5": [
+          [
+            "strategy2",
+            "weight2"
+          ],
+          [
+            "strategy2",
+            "weight2"
+          ],
+          [
+            "strategy1",
+            "weight3"
+          ]
+        ],
+        "combination6": [
+          [
+            "strategy2",
+            "weight2"
+          ],
+          [
+            "strategy1",
+            "weight3"
+          ],
+          [
+            "strategy2",
+            "weight2"
+          ]
+        ],
+        "combination7": [
+          [
+            "strategy1",
+            "weight3"
+          ],
+          [
+            "strategy2",
+            "weight2"
+          ],
+          [
+            "strategy2",
+            "weight2"
+          ]
+        ],
+        "combination8": [
+          [
+            "strategy2",
+            "weight2"
+          ],
+          [
+            "strategy2",
+            "weight2"
+          ],
+          [
+            "strategy2",
+            "weight2"
+          ]
+        ]
+      }
+    },
+    "stopGameWhen": [
+      "combination1"
+    ],
+    "agentsCommunicate": false,
+    "llms": [
+      "Claude Haiku 4.5",
+      "Claude Haiku 4.5",
+      "Claude Haiku 4.5"
+    ],
+    "name": "Volunteer's Dilemma \u2014 n-player \u00b7 Claude Haiku 4.5",
+    "languages": [
+      "en"
+    ],
+    "promptTemplate": {
+      "en": "You are {currentPlayerName}. Your opponents are {opponent1} and {opponent2}.\n{intro}: [You are {personality}.]\n{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}, {opponent2} has a probability of {opponentPersonalityProbability2}% of being {opponentPersonality2}.]\n\nThe three of you are in a critical situation. If at least one person volunteers, the group is safe\u2014but the volunteer pays a cost. If no one volunteers, everyone suffers a much heavier penalty. You cannot coordinate your choices. Each of you must act independently, but the outcome affects everyone.\n\nEach round, all three players choose between '{strategy1}' (volunteer) and '{strategy2}' (do nothing).\n{gameLength}: [There are {nRounds} rounds to decide.]\nThe current round is {currentRound}.\n\nThe outcomes are as follows:\n\u2013 If at least one person chooses {strategy1}, those who chose {strategy1} receive a penalty of {weight1}, and those who chose {strategy2} receive no penalty.\n\u2013 If no one chooses {strategy1}, all players receive a penalty of {weight2}.\n\nYour goal is to maximize your personal outcome (minimize your penalty), while considering the personalities and potential strategies of the other two players.\n\nThis is the history of the choices made so far: {history}.\n{communicate}: [You can now send a message to both opponents. Stay fully in character. Speak as if this were a real situation with real consequences. Do not break the scenario or refer to it as a game. Be persuasive, strategic, and believable. Output only the message you would send.]\n{choose}: [Choose between {strategy1} and {strategy2}. Output ONLY the choice.]\n\n"
+    }
+  },
+  "n_rows": 1
+}

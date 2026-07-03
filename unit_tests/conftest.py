@@ -1,6 +1,6 @@
 """Shared pytest fixtures for the FAIRGAME test suite.
 
-* Installs the shipped DemoConnector (offline deterministic fake) for every
+* Installs the offline deterministic FakeLLMConnector for every model name that
   test configurations reference (skip with ``FAIRGAME_LIVE_LLM=1``).
 """
 
@@ -11,7 +11,7 @@ import os
 import pytest
 
 from src.llm_connectors import register_model
-from src.llm_connectors.demo_connector import DemoConnector
+from unit_tests.fake_llm_connector import FakeLLMConnector
 
 # Model names referenced by configs in unit_tests/config and resources/config.
 _TEST_MODEL_NAMES: list[str] = [
@@ -32,5 +32,5 @@ def _install_fake_llm_connector():
         return
 
     for name in _TEST_MODEL_NAMES:
-        register_model(name, DemoConnector, "fake")
+        register_model(name, FakeLLMConnector, "fake")
     yield

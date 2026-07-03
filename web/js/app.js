@@ -49,11 +49,6 @@ function fairgame() {
     llms: [],
     baselines: [],
     languages: [],   // populated from /api/languages
-    // Demo mode: runs use an offline deterministic fake LLM (no API keys, no
-    // charges). On by default; turn off in the sidebar to use real models.
-    // The backend also defaults every run to demo, so this only needs to be
-    // sent when the user turns it OFF.
-    demoMode: true,
 
     // Runs live here (not in app.results.js) because core code uses them
     // too: resultsForConfig/filteredRuns below, loadRuns/openRun, and the
@@ -115,6 +110,14 @@ function fairgame() {
       return items.slice(start, start + per);
     },
 
+    // Sidebar navigation. Entering Results always lands on page 1 of the
+    // newest-first run list — never wherever the pager was left last time.
+    navTo(pageId) {
+      this.activePage = pageId;
+      if (pageId === 'results') this.results.page = 1;
+      window.scrollTo(0, 0);
+    },
+
     totalPages() { return this._pageCount(this.filteredRuns(), this.results.perPage); },
     pagedRuns() { return this._pageSlice(this.filteredRuns(), this.results, 'page', this.results.perPage); },
     goToPage(p) {
@@ -138,12 +141,20 @@ function fairgame() {
     },
     viewConfigResults(configId) {
       this.results.configFilter = configId;
+      this.results.page = 1;
       this.activePage = 'results';
       window.scrollTo(0, 0);
     },
 
     async loadRuns() {
-      try { this.runs = (await this.api('/api/runs')).runs; }
+      try {
+        this.runs = (await this.api('/api/runs')).runs;
+        // The list is newest-first; snap back to page 1 so a freshly
+        // completed run is immediately visible (loadRuns fires at boot and
+        // after every new run), instead of leaving the pager stranded
+        // wherever the user last browsed.
+        this.results.page = 1;
+      }
       catch (e) { console.error('loadRuns', e); }
     },
 
@@ -171,6 +182,7 @@ function fairgame() {
         this.compare.open = false;   // single-run and compare are separate modes
         this.activeRun = await this.api(`/api/runs/${runId}`);
         this.results.tablePage = 1;
+        this.results.page = 1;
         this.activePage = 'results';
         // Tear down any chart instances from the previous run before we
         // build new ones, so they don't leak into the next render.

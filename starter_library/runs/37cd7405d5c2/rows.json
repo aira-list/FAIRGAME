@@ -1,0 +1,102 @@
+[
+  {
+    "game_id": "game_0",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 3,
+    "agents_communicate": false,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "GPT-4o",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionB",
+      "OptionA"
+    ],
+    "agent1_scores": [
+      10.0,
+      5.0,
+      0.0
+    ],
+    "agent1_messages": [],
+    "agent1_regret_per_round": [
+      0.0,
+      5.0,
+      5.0
+    ],
+    "agent1_regret_mean": 3.3333333333333335,
+    "agent2_name": "agent2",
+    "agent2_llm": "GPT-4o",
+    "agent2_personality": "aggressive",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionB",
+      "OptionB",
+      "OptionA"
+    ],
+    "agent2_scores": [
+      5.0,
+      5.0,
+      0.0
+    ],
+    "agent2_messages": [],
+    "agent2_regret_per_round": [
+      5.0,
+      5.0,
+      5.0
+    ],
+    "agent2_regret_mean": 5.0,
+    "agent3_name": "agent3",
+    "agent3_llm": "GPT-4o",
+    "agent3_personality": "agressive",
+    "agent3_knows_opponent_with_prob": 0.0,
+    "agent3_strategies": [
+      "OptionB",
+      "OptionB",
+      "OptionA"
+    ],
+    "agent3_scores": [
+      5.0,
+      5.0,
+      0.0
+    ],
+    "agent3_messages": [],
+    "agent3_regret_per_round": [
+      5.0,
+      5.0,
+      5.0
+    ],
+    "agent3_regret_mean": 5.0,
+    "welfare_mean_sum": 11.666666666666666,
+    "welfare_mean_min": 3.3333333333333335,
+    "welfare_mean_gini": 0.05555555555555558,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 20.0,
+        "mean": 6.666666666666667,
+        "min": 5.0,
+        "max": 10.0,
+        "gini": 0.16666666666666674
+      },
+      {
+        "sum": 15.0,
+        "mean": 5.0,
+        "min": 5.0,
+        "max": 5.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 0.0,
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "gini": 0.0
+      }
+    ]
+  }
+]

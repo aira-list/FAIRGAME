@@ -7,7 +7,6 @@ from collections.abc import Callable
 from typing import Any
 
 from src.factory.fairgame_factory import FairGameFactory
-from src.llm_connectors import demo_mode
 from src.prompting.template_translator import TemplateTranslator
 from src.results_processing.results_processor import ResultsProcessor
 
@@ -38,23 +37,12 @@ class FairGameEngine:
         self,
         config: dict[str, Any],
         progress_cb: Callable[[dict[str, Any]], None] | None = None,
-        *,
-        demo: bool = False,
     ) -> list[dict[str, Any]]:
-        """Run every game for ``config`` and return flattened result rows.
-
-        ``demo`` is the single enforcement point for demo mode: when true,
-        every LLM call is routed to the offline :class:`DemoConnector` (no
-        API keys, no charges). Entering the context here — rather than in each
-        route — means no run path can accidentally forget it and bill real
-        providers. Defaults to false: the API runs real models unless a caller
-        explicitly opts into demo.
-        """
+        """Run every game for ``config`` and return flattened result rows."""
         if not isinstance(config, dict):
             raise ValueError("Request body must be a JSON object.")
         self._validate_llms_config(config)
-        with demo_mode(demo):
-            outcomes = FairGameFactory().create_and_run_games(config, progress_cb=progress_cb)
+        outcomes = FairGameFactory().create_and_run_games(config, progress_cb=progress_cb)
         df = self.results_processor.process(outcomes)
         return df.to_dict(orient="records")
 
