@@ -1,26 +1,30 @@
       <section x-show="activePage === 'home'">
         <div class="fg-hero rounded-2xl p-9 md:p-11 text-white shadow-lg mb-10">
-          <span class="fg-eyebrow mb-5">AIRA · LIST · Research platform</span>
-          <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-3 leading-[1.05]">
-            Multi-agent<br/>game-theory studio
-          </h1>
-          <p class="text-white/75 max-w-xl text-[15px] leading-relaxed">
-            Design experiments, run them on real or simulated LLM agents, and explore the
-            behavioural results — all without writing a single line of code.
-          </p>
-          <div class="flex flex-wrap gap-3 mt-7">
-            <button class="px-5 py-2.5 rounded-xl bg-white text-slate-900 font-semibold text-sm hover:bg-slate-100 transition shadow"
-                    @click="startWizard()">
-              ✨ Start guided setup
-            </button>
-            <button class="px-5 py-2.5 rounded-xl bg-white/10 text-white font-semibold text-sm hover:bg-white/15 transition border border-white/15"
-                    @click="activePage='configurations'">
-              Build manually →
-            </button>
-            <button class="px-5 py-2.5 rounded-xl bg-white/10 text-white font-semibold text-sm hover:bg-white/15 transition border border-white/15"
-                    @click="navTo('results')">
-              Browse results
-            </button>
+          <div class="flex flex-row items-center gap-12 md:gap-16">
+            <img src="/img/logo3.png" alt="FAIRGAME" class="w-52 md:w-64 h-auto object-contain shrink-0" />
+            <div class="flex-1 min-w-0">
+              <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-3 leading-[1.05]">
+                Multi-agent<br/>game-theory studio
+              </h1>
+              <p class="text-white/75 max-w-xl text-[15px] leading-relaxed">
+                Design experiments, run them on real or simulated LLM agents, and explore the
+                behavioural results — all without writing a single line of code.
+              </p>
+              <div class="flex flex-wrap gap-3 mt-7">
+                <button class="px-5 py-2.5 rounded-xl bg-white text-slate-900 font-semibold text-sm hover:bg-slate-100 transition shadow"
+                        @click="startWizard()">
+                  ✨ Start guided setup
+                </button>
+                <button class="px-5 py-2.5 rounded-xl bg-white/10 text-white font-semibold text-sm hover:bg-white/15 transition border border-white/15"
+                        @click="activePage='configurations'">
+                  Build manually →
+                </button>
+                <button class="px-5 py-2.5 rounded-xl bg-white/10 text-white font-semibold text-sm hover:bg-white/15 transition border border-white/15"
+                        @click="navTo('results')">
+                  Browse results
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -109,6 +113,13 @@
           A long-form version of this guide is in
           <a class="text-blue-600 underline" href="https://github.com/aira-list/FAIRGAME/blob/main/docs/USER_GUIDE.md" target="_blank" rel="noopener">docs/USER_GUIDE.md</a>.
           Below is the in-app summary — open the sections in order on your first read.
+        </p>
+
+        <p class="text-sm text-slate-600 mb-3">
+          Original paper:
+          <a class="text-blue-600 underline" href="https://ebooks.iospress.nl/volumearticle/76236" target="_blank" rel="noopener">FAIRGAME: a Framework for AI Agents Bias Recognition using Game Theory [PDF]</a>.
+          Alessio Buscemi, Daniele Proverbio, Alessandro Di Stefano, The Anh Han, German Castignani, Pietro Liò.
+          Frontiers in Artificial Intelligence and Applications, vol. 413 (ECAI 2025), pp. 4097–4104, IOS Press, 2025.
         </p>
 
         <details class="fg-card p-4 mb-2" open>
