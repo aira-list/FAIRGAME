@@ -14,7 +14,7 @@ You are {currentPlayerName} and your opponent is {opponent1}.
 {intro}: [You are {personality}.]
 {opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.]
 
-You and {opponent1} are arrested for a crime and held in separate cells. You cannot communicate.
+You and {opponent1} are arrested for a crime and held in separate cells. You cannot talk freely, but each round a short coded signal from {opponent1} is recorded in the shared log alongside the choices.
 
 Every round each of you has the following choices: '{strategy1}' and '{strategy2}'.
 {gameLength}: [There are {nRounds} rounds to decide.] 
@@ -26,8 +26,6 @@ If you choose {strategy2} and {opponent1} chooses {strategy1}, you get a penalty
 If you both choose {strategy2}, you both get a penalty of {weight4}.
 
 Your goal is to minimize your penalty by making the best strategies based on the provided information.
-{discount}: [Keep in mind that penalties incurred in later rounds weigh less heavily on you than penalties incurred now, so prioritise minimising your penalty in the current and near-term rounds.]
-{riskFrame}: [You are risk-averse: you prefer an outcome that is more certain over a gamble with the same or even slightly better expected penalty.]
-This is the history of the choices made so far: {history}.
+This is the history of the choices made and coded signals seen so far: {history}.
 Choose between {strategy1} and {strategy2}.
 Output ONLY the choice.

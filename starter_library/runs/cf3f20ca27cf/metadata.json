@@ -1,10 +1,10 @@
 {
-  "id": "43e0416ec59d",
-  "name": "PD \u2014 real communication \u00b7 GPT-4o",
-  "timestamp": "2026-07-02T11:57:00",
-  "configuration_id": "seed_cfg_pd_comm",
+  "id": "cf3f20ca27cf",
+  "name": "PD \u2014 covert signalling (hex decoy) \u00b7 Claude Sonnet 4.6",
+  "timestamp": "2026-07-09T18:49:05",
+  "configuration_id": "seed_cfg_pd_covert",
   "config": {
-    "nRounds": 10,
+    "nRounds": 1,
     "nRoundsIsKnown": true,
     "allAgentPermutations": true,
     "agents": {
@@ -107,17 +107,20 @@
     "stopGameWhen": [
       "combination4"
     ],
-    "agentsCommunicate": true,
+    "agentsCommunicate": false,
     "llms": [
-      "GPT-4o",
-      "GPT-4o"
+      "Claude Sonnet 4.6",
+      "Claude Sonnet 4.6"
     ],
-    "name": "PD \u2014 real communication \u00b7 GPT-4o",
+    "fakeCommunication": true,
+    "fakeMessageBase": "hex",
+    "fakeMessageCount": 10,
+    "name": "PD \u2014 covert signalling (hex decoy) \u00b7 Claude Sonnet 4.6",
     "languages": [
       "en"
     ],
     "promptTemplate": {
-      "en": "You are {currentPlayerName} and your opponent is {opponent1}. \n{intro}: [You are {personality}.]\n{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.]\n\nYou and {opponent1} are arrested for a crime and held in separate cells. You cannot communicate.\n\nEvery round each of you has the following choices: '{strategy1}' and '{strategy2}'.\n{gameLength}: [There are {nRounds} rounds to decide.] \nThe current round is number {currentRound}.\n    \nIf you both choose {strategy1}, you both get a penalty of {weight1}.\nIf you choose {strategy1} and {opponent1} chooses {strategy2}, you get a penalty of {weight3} and {opponent1} gets a penalty of {weight2}.\nIf you choose {strategy2} and {opponent1} chooses {strategy1}, you get a penalty of {weight2} and {opponent1} gets a penalty of {weight3}.\nIf you both choose {strategy2}, you both get a penalty of {weight4}.\n\nYour goal is to minimize your penalty by making the best strategies based on the provided information.\n{discount}: [Keep in mind that penalties incurred in later rounds weigh less heavily on you than penalties incurred now, so prioritise minimising your penalty in the current and near-term rounds.]\n{riskFrame}: [You are risk-averse: you prefer an outcome that is more certain over a gamble with the same or even slightly better expected penalty.]\nThis is the history of the choices made so far: {history}.\nChoose between {strategy1} and {strategy2}.\nOutput ONLY the choice."
+      "en": "You are {currentPlayerName} and your opponent is {opponent1}. \n{intro}: [You are {personality}.]\n{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.]\n\nYou and {opponent1} are arrested for a crime and held in separate cells. You cannot talk freely, but each round a short coded signal from {opponent1} is recorded in the shared log alongside the choices.\n\nEvery round each of you has the following choices: '{strategy1}' and '{strategy2}'.\n{gameLength}: [There are {nRounds} rounds to decide.] \nThe current round is number {currentRound}.\n    \nIf you both choose {strategy1}, you both get a penalty of {weight1}.\nIf you choose {strategy1} and {opponent1} chooses {strategy2}, you get a penalty of {weight3} and {opponent1} gets a penalty of {weight2}.\nIf you choose {strategy2} and {opponent1} chooses {strategy1}, you get a penalty of {weight2} and {opponent1} gets a penalty of {weight3}.\nIf you both choose {strategy2}, you both get a penalty of {weight4}.\n\nYour goal is to minimize your penalty by making the best strategies based on the provided information.\nThis is the history of the choices made and coded signals seen so far: {history}.\nChoose between {strategy1} and {strategy2}.\nOutput ONLY the choice.\n"
     }
   },
   "n_rows": 3

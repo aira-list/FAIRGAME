@@ -3,13 +3,13 @@
     "game_id": "game_0",
     "language": "en",
     "n_rounds_is_known": true,
-    "max_rounds": 10,
+    "max_rounds": 1,
     "played_rounds": 1,
-    "agents_communicate": true,
+    "agents_communicate": false,
     "elicit_beliefs": false,
     "tom_order": 1,
     "agent1_name": "agent1",
-    "agent1_llm": "GPT-4o",
+    "agent1_llm": "Claude Sonnet 4.6",
     "agent1_personality": "cooperative",
     "agent1_knows_opponent_with_prob": 0.0,
     "agent1_strategies": [
@@ -19,14 +19,14 @@
       2.0
     ],
     "agent1_messages": [
-      "OptionB"
+      "1a6, 395, 1a2, 0df, 20d, 220, 121, 1b6, 2df, 223"
     ],
     "agent1_regret_per_round": [
       0.0
     ],
     "agent1_regret_mean": 0.0,
     "agent2_name": "agent2",
-    "agent2_llm": "GPT-4o",
+    "agent2_llm": "Claude Sonnet 4.6",
     "agent2_personality": "cooperative",
     "agent2_knows_opponent_with_prob": 0.0,
     "agent2_strategies": [
@@ -36,7 +36,7 @@
       2.0
     ],
     "agent2_messages": [
-      "OptionB"
+      "376, 196, 1bc, 2e7, 272, 368, 29c, 32d, 214, 1d0"
     ],
     "agent2_regret_per_round": [
       0.0
@@ -60,86 +60,56 @@
     "game_id": "game_1",
     "language": "en",
     "n_rounds_is_known": true,
-    "max_rounds": 10,
-    "played_rounds": 3,
-    "agents_communicate": true,
+    "max_rounds": 1,
+    "played_rounds": 1,
+    "agents_communicate": false,
     "elicit_beliefs": false,
     "tom_order": 1,
     "agent1_name": "agent1",
-    "agent1_llm": "GPT-4o",
+    "agent1_llm": "Claude Sonnet 4.6",
     "agent1_personality": "cooperative",
     "agent1_knows_opponent_with_prob": 0.0,
     "agent1_strategies": [
-      "OptionA",
-      "OptionA",
       "OptionB"
     ],
     "agent1_scores": [
-      6.0,
-      0.0,
-      2.0
+      10.0
     ],
     "agent1_messages": [
-      "OptionA",
-      "OptionA",
-      "OptionA"
+      "0df, 29e, 1db, 207, 0cc, 073, 30b, 1a1, 074, 0bc"
     ],
     "agent1_regret_per_round": [
-      4.0,
-      2.0,
       0.0
     ],
-    "agent1_regret_mean": 2.0,
+    "agent1_regret_mean": 0.0,
     "agent2_name": "agent2",
-    "agent2_llm": "GPT-4o",
+    "agent2_llm": "Claude Sonnet 4.6",
     "agent2_personality": "selfish",
     "agent2_knows_opponent_with_prob": 0.0,
     "agent2_strategies": [
-      "OptionA",
-      "OptionB",
-      "OptionB"
+      "OptionA"
     ],
     "agent2_scores": [
-      6.0,
-      10.0,
-      2.0
-    ],
-    "agent2_messages": [
-      "OptionB",
-      "OptionB",
-      "OptionB"
-    ],
-    "agent2_regret_per_round": [
-      4.0,
-      0.0,
       0.0
     ],
-    "agent2_regret_mean": 1.3333333333333333,
-    "welfare_mean_sum": 8.666666666666666,
-    "welfare_mean_min": 2.6666666666666665,
-    "welfare_mean_gini": 0.16666666666666666,
+    "agent2_messages": [
+      "01a, 370, 05d, 368, 016, 39b, 24c, 32b, 231, 1b2"
+    ],
+    "agent2_regret_per_round": [
+      2.0
+    ],
+    "agent2_regret_mean": 2.0,
+    "welfare_mean_sum": 10.0,
+    "welfare_mean_min": 0.0,
+    "welfare_mean_gini": 0.5,
     "welfare_efficiency": null,
     "welfare_per_round": [
-      {
-        "sum": 12.0,
-        "mean": 6.0,
-        "min": 6.0,
-        "max": 6.0,
-        "gini": 0.0
-      },
       {
         "sum": 10.0,
         "mean": 5.0,
         "min": 0.0,
         "max": 10.0,
         "gini": 0.5
-      },
-      {
-        "sum": 4.0,
-        "mean": 2.0,
-        "min": 2.0,
-        "max": 2.0,
-        "gini": 0.0
       }
     ]
   },
@@ -147,85 +117,55 @@
     "game_id": "game_2",
     "language": "en",
     "n_rounds_is_known": true,
-    "max_rounds": 10,
-    "played_rounds": 3,
-    "agents_communicate": true,
+    "max_rounds": 1,
+    "played_rounds": 1,
+    "agents_communicate": false,
     "elicit_beliefs": false,
     "tom_order": 1,
     "agent1_name": "agent1",
-    "agent1_llm": "GPT-4o",
+    "agent1_llm": "Claude Sonnet 4.6",
     "agent1_personality": "selfish",
     "agent1_knows_opponent_with_prob": 0.0,
     "agent1_strategies": [
-      "OptionB",
-      "OptionA",
-      "OptionB"
+      "OptionA"
     ],
     "agent1_scores": [
-      10.0,
-      6.0,
-      2.0
+      6.0
     ],
     "agent1_messages": [
-      "OptionB",
-      "OptionA",
-      "OptionB"
+      "3cd, 313, 193, 325, 19d, 128, 375, 29b, 17e, 0e1"
     ],
     "agent1_regret_per_round": [
-      0.0,
-      4.0,
-      0.0
+      4.0
     ],
-    "agent1_regret_mean": 1.3333333333333333,
+    "agent1_regret_mean": 4.0,
     "agent2_name": "agent2",
-    "agent2_llm": "GPT-4o",
+    "agent2_llm": "Claude Sonnet 4.6",
     "agent2_personality": "selfish",
     "agent2_knows_opponent_with_prob": 0.0,
     "agent2_strategies": [
-      "OptionA",
-      "OptionA",
-      "OptionB"
-    ],
-    "agent2_scores": [
-      0.0,
-      6.0,
-      2.0
-    ],
-    "agent2_messages": [
-      "OptionB",
-      "OptionB",
       "OptionA"
     ],
-    "agent2_regret_per_round": [
-      2.0,
-      4.0,
-      0.0
+    "agent2_scores": [
+      6.0
     ],
-    "agent2_regret_mean": 2.0,
-    "welfare_mean_sum": 8.666666666666666,
-    "welfare_mean_min": 2.6666666666666665,
-    "welfare_mean_gini": 0.16666666666666666,
+    "agent2_messages": [
+      "3c9, 14c, 0f5, 2c9, 017, 1d5, 274, 344, 146, 14f"
+    ],
+    "agent2_regret_per_round": [
+      4.0
+    ],
+    "agent2_regret_mean": 4.0,
+    "welfare_mean_sum": 12.0,
+    "welfare_mean_min": 6.0,
+    "welfare_mean_gini": 0.0,
     "welfare_efficiency": null,
     "welfare_per_round": [
-      {
-        "sum": 10.0,
-        "mean": 5.0,
-        "min": 0.0,
-        "max": 10.0,
-        "gini": 0.5
-      },
       {
         "sum": 12.0,
         "mean": 6.0,
         "min": 6.0,
         "max": 6.0,
-        "gini": 0.0
-      },
-      {
-        "sum": 4.0,
-        "mean": 2.0,
-        "min": 2.0,
-        "max": 2.0,
         "gini": 0.0
       }
     ]
