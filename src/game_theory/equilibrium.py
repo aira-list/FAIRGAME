@@ -74,8 +74,14 @@ def _two_player_payoff_arrays(
     return a, b
 
 
-def compute_nash_equilibria(matrix_block: dict[str, Any], language: str = "en") -> list[str]:
+def compute_nash_equilibria(
+    matrix_block: dict[str, Any], language: str = "en", direction: str = "reward"
+) -> list[str]:
     """Return the list of combination keys that are pure-strategy Nash equilibria.
+
+    ``direction`` is the config's ``payoffDirection``: ``"reward"`` treats the
+    weights as utilities to maximise (default), ``"penalty"`` as costs to
+    minimise (the equilibria of the negated game).
 
     Mixed-strategy equilibria are intentionally excluded — they don't
     correspond to a single combination key in the FAIRGAME schema.
@@ -93,6 +99,8 @@ def compute_nash_equilibria(matrix_block: dict[str, Any], language: str = "en") 
         return []
 
     a, b = arrays
+    if direction == "penalty":
+        a, b = -a, -b
     game = nash.Game(a, b)
     equilibria: list[str] = []
     combo_for_pure = {

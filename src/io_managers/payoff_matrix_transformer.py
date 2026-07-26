@@ -34,6 +34,18 @@ class PayoffMatrixTransformer:
 
         # Iterate over each combination to split pairs into strategies & weights.
         for comb_key, pairs in original_matrix["combinations"].items():
+            # Guard the pre-transform shape: each entry must be a
+            # [strategy_key, weight_key] pair. A canonical-form matrix that
+            # merely lost its ``matrix`` block used to land here, get its
+            # strategy strings sliced into characters, and "validate".
+            if not all(
+                isinstance(pair, (list, tuple)) and len(pair) == 2 for pair in pairs
+            ):
+                raise KeyError(
+                    f"payoffMatrix.combinations[{comb_key!r}] is not in the "
+                    "pre-transform [strategy, weight] pair shape; if the matrix "
+                    "is already canonical, it must also include a 'matrix' block."
+                )
             strategies = [pair[0] for pair in pairs]  # Extract strategy
             weights = [pair[1] for pair in pairs]  # Extract weight
 

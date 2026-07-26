@@ -131,6 +131,20 @@ class GameRound:
             if self.fake_generator:
                 message = self.fake_generator.generate(agent, self.round_number)
             else:
+                # Don't elicit a message nobody can receive: with a reduced
+                # interaction graph, prompting a speaker with no outgoing talk
+                # edge burns an LLM call and misleads the agent into thinking
+                # it communicated (the reply would be filtered out of every
+                # other agent's view anyway). Fake/covert messages are planted
+                # stimuli with no cost, so they are not gated.
+                if not self._has_audience(agent):
+                    if self.round_number == 1:
+                        logger.info(
+                            "Agent %s has no outgoing 'talk' edge; skipping its "
+                            "communication prompt (no one would receive the message).",
+                            agent.name,
+                        )
+                    continue
                 message = self._get_real_message(agent)
 
             self.game.history.update_round(
@@ -138,6 +152,17 @@ class GameRound:
                 agent.name,
                 {"message": message},
             )
+
+    def _has_audience(self, agent) -> bool:
+        """Whether at least one other agent would receive ``agent``'s message."""
+        graph = getattr(self.game, "interaction_graph", None)
+        if graph is None or graph.is_fully_connected:
+            return True
+        return any(
+            graph.hears(other.name, agent.name)
+            for other in self.game.agents.values()
+            if other is not agent
+        )
 
     def _get_real_message(self, agent) -> str:
         prompt = self.create_prompt(agent, phase="communicate")
@@ -279,8 +304,14 @@ class GameRound:
         Same retry/parse path as the first-order belief phase otherwise.
         """
         if "{believe2}:" not in (self.game.prompt_template or ""):
-            logger.debug(
-                "Skipping second-order belief phase: template has no {believe2}: [...] block."
+            # Warn once per game (not once per round): the configuration asked
+            # for second-order elicitation and it is silently not happening —
+            # the defining measurement of a ToM-2 run would just be missing.
+            log = logger.warning if self.round_number == 1 else logger.debug
+            log(
+                "Skipping second-order belief phase: elicitBeliefs + tomOrder>=2 "
+                "are set but the template has no {believe2}: [...] block, so no "
+                "second-order beliefs will be recorded for this game."
             )
             return
         for agent in self.game.agents.values():
@@ -369,6 +400,12 @@ class GameRound:
         if types_cfg and getattr(self.game, "types_common_knowledge", False):
             labels = list(types_cfg.get("labels", []))
             probs = types_cfg.get("probs") or [1 / len(labels)] * len(labels)
+            # Sampling normalises weights implicitly (random.choices); the
+            # displayed prior must be normalised too, or agents get told a
+            # "distribution" like "A=2.00, B=1.00" when probs don't sum to 1.
+            total = sum(probs)
+            if total > 0:
+                probs = [p / total for p in probs]
             values["typeDistribution"] = ", ".join(
                 f"{lab}={p:.2f}" for lab, p in zip(labels, probs, strict=False)
             )

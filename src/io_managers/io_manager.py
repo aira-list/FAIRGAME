@@ -56,10 +56,11 @@ class IoManager:
         resolved_stem = stem.resolve()
         if base != resolved_stem and base not in resolved_stem.parents:
             raise ValueError(f"Invalid template name {filename!r}")
+        # Append the suffix instead of ``with_suffix``: a dot in the template
+        # name (``my.game``) would otherwise have its tail replaced and probe
+        # the wrong file entirely.
         for suffix in (".txt", ".rtf"):
-            candidate = stem.with_suffix(suffix)
+            candidate = stem.parent / (stem.name + suffix)
             if candidate.is_file():
                 return self.file_manager.read_template_file(candidate)
-        raise FileNotFoundError(
-            f"Template not found: {stem.with_suffix('.txt')} or {stem.with_suffix('.rtf')}"
-        )
+        raise FileNotFoundError(f"Template not found: {stem}.txt or {stem}.rtf")

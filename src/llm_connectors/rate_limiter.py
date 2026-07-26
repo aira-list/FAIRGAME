@@ -53,6 +53,9 @@ def acquire(rate: float, capacity: float, path: str) -> None:
     """
     if rate <= 0:
         return
+    # The exit condition below needs a full token; a capacity under 1.0 could
+    # never satisfy it and every caller would block forever.
+    capacity = max(1.0, capacity)
     lock_path = path + ".lock"
     while True:
         with open(lock_path, "w") as lf:

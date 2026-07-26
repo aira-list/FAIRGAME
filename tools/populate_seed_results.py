@@ -46,14 +46,30 @@ DEFAULT_MODELS = ["GPT-4o", "Claude Haiku 4.5"]
 
 
 def _is_baseline(model: str) -> bool:
-    return isinstance(model, str) and model.startswith("baseline:")
+    # Case-insensitive like the engine's is_baseline_id: hand-written configs
+    # use "Baseline:", the GUI emits "baseline:".
+    return isinstance(model, str) and model.lower().startswith("baseline:")
 
 
 def _llm_backed(item: dict[str, Any]) -> bool:
-    llms = (item.get("game_config") or {}).get("llms") or []
-    if isinstance(llms, dict):
-        llms = list(llms.values())
-    return any(not _is_baseline(m) for m in llms)
+    """Whether any agent of the stored configuration is a real model.
+
+    Mirrors the engine's model resolution (see
+    ``web_api.library_service.is_baseline_only``): models may live under
+    top-level ``llms`` (list/dict), single ``llm``, or the GUI's
+    ``agents.llmServices``/``agents.llms`` shapes.
+    """
+    gc = item.get("game_config") or {}
+    agents = gc.get("agents") or {}
+    candidates = agents.get("llmServices") or agents.get("llms") or gc.get("llms")
+    if isinstance(candidates, dict):
+        models = list(candidates.values())
+    elif isinstance(candidates, (list, tuple)):
+        models = list(candidates)
+    else:
+        single = gc.get("llm")
+        models = [single] if isinstance(single, str) else []
+    return any(isinstance(m, str) and not _is_baseline(m) for m in models)
 
 
 def _override_models(cfg: dict[str, Any], model: str) -> None:

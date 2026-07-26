@@ -103,6 +103,7 @@ class ResultsProcessor:
             seed=description.get(DescKey.SEED),
             payoff_variant_name=description.get(DescKey.PAYOFF_VARIANT_NAME),
             record_messages=record_messages,
+            payoff_direction=description.get(DescKey.PAYOFF_DIRECTION, "reward"),
         )
 
     def _parse_game_description(

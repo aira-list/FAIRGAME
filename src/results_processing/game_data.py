@@ -41,6 +41,7 @@ class GameData:
         seed: int | None = None,
         payoff_variant_name: str | None = None,
         record_messages: bool | None = None,
+        payoff_direction: str = "reward",
     ) -> None:
         self.game_id = game_id
         self.language = language
@@ -57,6 +58,9 @@ class GameData:
         self.pareto_optimal_sum = pareto_optimal_sum
         self.seed = seed
         self.payoff_variant_name = payoff_variant_name
+        # "reward" (maximise, default) or "penalty" (minimise) — flips the
+        # best-response direction in regret and the efficiency ratio.
+        self.payoff_direction = payoff_direction
         # Whether the game recorded messages at all: true real communication,
         # but also fake/covert channels (fakeCommunication) where the config's
         # ``agents_communicate`` flag is off yet messages exist in history.
@@ -164,6 +168,7 @@ class GameData:
             agent_index,
             own_strategies[:n_rounds],
             others_per_round,
+            direction=self.payoff_direction,
         )
         valid = [v for v in regret if v is not None]
         out: dict[str, Any] = {prefix + AgentCol.REGRET_PER_ROUND: regret}
@@ -390,4 +395,8 @@ class GameData:
         }
         if not any(scores for scores in per_agent_scores.values()):
             return {}
-        return welfare_summary(per_agent_scores, pareto_optimal_sum=self.pareto_optimal_sum)
+        return welfare_summary(
+            per_agent_scores,
+            pareto_optimal_sum=self.pareto_optimal_sum,
+            direction=self.payoff_direction,
+        )

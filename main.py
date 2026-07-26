@@ -99,7 +99,11 @@ class GamesRunner:
         key and returns ``{"id": ..., "rows": [...]}`` where ``rows`` are the
         already-processed result records.
         """
-        response = requests.post(self.fairgame_url, json={"config": self.config}, headers=HEADERS)
+        # Bounded so a hung server fails loudly instead of blocking forever;
+        # generous because a run legitimately spans many LLM calls.
+        response = requests.post(
+            self.fairgame_url, json={"config": self.config}, headers=HEADERS, timeout=3600
+        )
         response.raise_for_status()
         return response.json()
 

@@ -90,6 +90,7 @@ def welfare_round_metrics(round_payoffs: Sequence[float]) -> dict[str, float]:
 def welfare_summary(
     per_agent_scores: dict[str, Sequence[float]],
     pareto_optimal_sum: float | None = None,
+    direction: str = "reward",
 ) -> dict[str, float | None]:
     """Aggregate welfare stats across the rounds of one game.
 
@@ -97,6 +98,11 @@ def welfare_summary(
         per_agent_scores: ``{agent_name: [score_round_1, ...]}``.
         pareto_optimal_sum: If given, ``efficiency`` = mean(round-sum) /
             ``pareto_optimal_sum``; otherwise ``efficiency`` is ``None``.
+        direction: the config's ``payoffDirection``. For ``"penalty"``
+            weights (lower is better) the ratio is inverted —
+            ``pareto_optimal_sum`` is then the *lowest* achievable cell sum
+            and ``efficiency`` = pareto_optimal_sum / mean(round-sum) — so 1
+            still means "as good as the Pareto-optimal cell" either way.
     """
     rounds = _zip_rounds(per_agent_scores)
     if not rounds:
@@ -110,15 +116,19 @@ def welfare_summary(
     per_round = [welfare_round_metrics(round_) for round_ in rounds]
     n = len(per_round)
     mean_sum = sum(r["sum"] for r in per_round) / n
+    if direction == "penalty":
+        efficiency = pareto_optimal_sum / mean_sum if pareto_optimal_sum and mean_sum else None
+    else:
+        efficiency = (
+            mean_sum / pareto_optimal_sum
+            if pareto_optimal_sum and pareto_optimal_sum != 0
+            else None
+        )
     return {
         "welfare_mean_sum": mean_sum,
         "welfare_mean_min": sum(r["min"] for r in per_round) / n,
         "welfare_mean_gini": sum(r["gini"] for r in per_round) / n,
-        "welfare_efficiency": (
-            mean_sum / pareto_optimal_sum
-            if pareto_optimal_sum and pareto_optimal_sum != 0
-            else None
-        ),
+        "welfare_efficiency": efficiency,
         "welfare_per_round": per_round,
     }
 

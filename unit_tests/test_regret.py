@@ -368,10 +368,11 @@ class TestBestResponseCorruptMatrix(unittest.TestCase):
         result = best_response_payoff(m, "en", 1, ["Defect"])
         self.assertIsNone(result)
 
-    def test_default_payoff_is_zero_when_weight_key_missing_from_weights(self) -> None:
-        # If a combination references a weight name that's not declared
-        # in ``weights``, that branch's payoff falls back to 0 — never to
-        # an arbitrary positive number that would inflate best-response.
+    def test_best_response_fails_closed_when_weight_key_missing_from_weights(self) -> None:
+        # If a combination references a weight name that's not declared in
+        # ``weights``, the best response is unresolvable — fail closed with
+        # None (the documented contract) rather than substituting 0, which
+        # silently under- or over-states the alternative's payoff.
         m = {
             "weights": {"w_lo": 0.5},  # no "w_missing"
             "strategies": {"en": {"strategy1": "A", "strategy2": "B"}},
@@ -388,12 +389,7 @@ class TestBestResponseCorruptMatrix(unittest.TestCase):
                 "c_bb": ["w_lo", "w_lo"],
             },
         }
-        # Against opponent A, agent 0's two options are:
-        #   A → weights.get("w_missing", 0) = 0.0
-        #   B → weights["w_lo"]            = 0.5
-        # The max MUST be 0.5, not 1.0 (which would be the case if the
-        # default were silently changed to a non-zero value).
-        self.assertEqual(best_response_payoff(m, "en", 0, ["A"]), 0.5)
+        self.assertIsNone(best_response_payoff(m, "en", 0, ["A"]))
 
 
 if __name__ == "__main__":

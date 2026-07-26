@@ -328,25 +328,33 @@ def test_trust_run_adds_trust_charts():
     assert {"look_rate", "monitoring_cost"} <= ids
 
 
-def test_equilibrium_single_bar_is_dropped_but_trend_shows():
-    # The equilibrium *rate* is a single number — never worth a one-bar
-    # chart. The per-round trend appears for repeated runs instead.
-    ids = _ids(build_dashboard(CFG, [_pd_row(equilibrium_rate=1.0)]))
-    assert "equilibrium_rate" not in ids
+def test_equilibrium_rate_shows_even_for_one_shot_runs():
+    # The rate renders as complementary at/off-equilibrium shares (not a
+    # single-label bar worth_plotting would drop), so a one-shot run with
+    # equilibria configured still gets its Equilibrium section.
+    spec = build_dashboard(CFG, [_pd_row(equilibrium_rate=1.0)])
+    assert "equilibrium_rate" in _ids(spec)
+    c = _chart_by_id(spec, "equilibrium_rate")
+    assert c["labels"] == ["at equilibrium", "off equilibrium"]
+    assert c["datasets"][0]["data"] == [1.0, 0.0]
+
+
+def test_equilibrium_even_split_survives_and_trend_shows_for_repeated_runs():
+    # An exact 50/50 split is a finding, not a flat non-chart; the per-round
+    # trend appears alongside the rate for repeated runs.
     ids = _ids(
         build_dashboard(
             CFG,
             [
                 _pd_row(
-                    played_rounds=3,
-                    equilibrium_rate=1.0,
-                    equilibrium_per_round="[1.0, 0.0, 1.0]",
+                    played_rounds=2,
+                    equilibrium_rate=0.5,
+                    equilibrium_per_round="[1.0, 0.0]",
                 )
             ],
         )
     )
-    assert "equilibrium_over_rounds" in ids
-    assert "equilibrium_rate" not in ids
+    assert {"equilibrium_rate", "equilibrium_over_rounds"} <= ids
 
 
 def test_communication_run_adds_top_messages_only_when_content_repeats():

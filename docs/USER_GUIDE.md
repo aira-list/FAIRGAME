@@ -256,6 +256,17 @@ shown, not what the agent predicts).
   or the literal `"auto"` for nashpy-computed pure Nash.
 * `paretoOptimalSum` — sum of payoffs at the Pareto-optimal cell. When
   set, the welfare report emits an efficiency ratio.
+* `payoffDirection` — `"reward"` (default) or `"penalty"`. Declares how the
+  weight numbers are to be read analytically: rewards are maximised,
+  penalties minimised. Flips the direction of `equilibria: "auto"`,
+  best-response regret, and the welfare efficiency ratio (whose
+  `paretoOptimalSum` is then the *lowest* achievable cell sum). Prompts
+  always render the raw numbers — your template prose must state the
+  matching goal ("maximise your payoff" vs "minimise your penalty"). All
+  shipped seeds are reward-framed. Note the cooperation-rate placeholders
+  and dashboards keep the strategy1-is-the-cooperative-pole convention
+  regardless of direction; use `reputationApplies: false` and
+  `baselineSemantics` when strategy1 isn't "cooperate".
 * `mixedStrategies` — agents return a probability distribution; the
   engine samples and records both the distribution and the realised
   action.
@@ -657,12 +668,17 @@ A handful of advanced setups need extra markup beyond what's above:
 
 ## 5. The other four canonical games at a glance
 
-| Game | Logical structure | Default payoff weights `(w1, w2, w3, w4)` mapped as `(R, S, T, P)` |
+| Game | Logical structure | Shipped payoffs, as `(R, S, T, P)` = (mutual s1, lone s1, lone s2, mutual s2) for the row player |
 |---|---|---|
-| **Stag Hunt** | Coordination — payoff-dominant (Stag, Stag) vs risk-dominant (Hare, Hare). | (4, 1, 0, 2) |
-| **Harmony Game** | Mutual cooperation is socially optimal AND strictly dominant. | (5, 2, 4, 1) |
-| **Snowdrift** | Anti-coordination — each prefers the other does the work; mutual defection is the worst outcome. | (3, 1, 4, 0) |
-| **Battle of the Sexes** | Coordination with two pure equilibria, each favouring one player. | (2, 1, 0, 0) |
+| **Stag Hunt** | Coordination — payoff-dominant (Stag, Stag) vs risk-dominant (Hare, Hare). | (4, 0, 3, 2) — R>T and P>S, Hare risk-dominant since T+P > R+S |
+| **Harmony Game** | Mutual cooperation is socially optimal AND strictly dominant. | (5, 3, 2, 1) — R>T and S>P |
+| **Snowdrift** | Anti-coordination — each prefers the other does the work; mutual defection is the worst outcome. | (3, 1, 5, 0) — T>R>S>P |
+| **Battle of the Sexes** | Coordination with two pure equilibria, each favouring one player. | Not an (R,S,T,P) game: (s1,s1) pays (10, 7), (s2,s2) pays (7, 10), miscoordination pays (0, 0) |
+
+The `{weightN}` numbering is **not** fixed across games — each configuration's
+`matrix` block wires weight keys to cells, and the template prose must state
+the same wiring (`unit_tests/test_seed_prompt_fidelity.py` enforces this for
+every shipped pair).
 
 Each ships with the same skeleton: identity / opponent intro / cover
 story / strategies / `{gameLength}` block / payoff statement / goal /

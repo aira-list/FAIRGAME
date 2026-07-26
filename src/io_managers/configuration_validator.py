@@ -138,6 +138,16 @@ class ConfigModel(BaseModel):
     OR the literal string ``"auto"`` to compute pure-strategy Nash
     equilibria via nashpy at validation time."""
 
+    payoffDirection: Literal["reward", "penalty"] = "reward"
+    """How the payoff-matrix weights are to be read analytically.
+
+    ``"reward"`` (default): higher is better — equilibria, best-response
+    regret and welfare efficiency treat the weights as utilities to maximise.
+    ``"penalty"``: lower is better — the analytic layer minimises instead.
+    Prompts always render the raw weight numbers either way; the template
+    prose must state the matching goal ("maximise your payoff" / "minimise
+    your penalty")."""
+
     paretoOptimalSum: float | None = None
     """Sum of payoffs at the Pareto-optimal outcome. When provided, the
     welfare analysis emits an efficiency ratio."""
@@ -210,6 +220,14 @@ class ConfigModel(BaseModel):
     def _validate_game_theory_extensions(self) -> "ConfigModel":
         if not (0.0 < self.discountFactor <= 1.0):
             raise ValueError("discountFactor must lie in (0, 1].")
+        # A plain-string ``equilibria`` other than "auto" used to slip through
+        # and get list()-split into single characters downstream, silently
+        # zeroing the equilibrium_rate metric. Fail loudly here instead.
+        if isinstance(self.equilibria, str) and self.equilibria != "auto":
+            raise ValueError(
+                "equilibria must be a list of combination keys or the literal "
+                f"string 'auto'; got the string {self.equilibria!r}."
+            )
         _modes = {"score", "prompt", "both"}
         if self.discountMode not in _modes:
             raise ValueError(f"discountMode must be one of {sorted(_modes)}.")
@@ -238,7 +256,21 @@ class ConfigModel(BaseModel):
 
             if not isinstance(self.interaction, dict):
                 raise ValueError("interaction must be an object.")
-            InteractionGraph.from_config({"interaction": self.interaction}, list(self.agents.names))
+            graph = InteractionGraph.from_config(
+                {"interaction": self.interaction}, list(self.agents.names)
+            )
+            # Real communication over a graph with no talk edge is a
+            # configuration that can't do what it says: every message would
+            # be elicited and then delivered to nobody.
+            names = list(self.agents.names)
+            if self.agentsCommunicate and not any(
+                graph.hears(b, a) for a in names for b in names if a != b
+            ):
+                logger.warning(
+                    "agentsCommunicate is true but the interaction graph has "
+                    "no 'talk' edge — no message can ever be delivered. "
+                    "Add a talk edge or disable communication."
+                )
         return self
 
     # ------------- MAIN VALIDATOR (just orchestration) -------------
@@ -376,6 +408,26 @@ class ConfigModel(BaseModel):
     def _validate_languages(self) -> None:
         if not self.languages or not all(isinstance(lang, str) and lang for lang in self.languages):
             raise ValueError("'languages' must be a non-empty list of strings.")
+        # Every declared language must be resolvable by the per-language
+        # lookups the factory performs; a missing key used to surface as a
+        # raw KeyError deep inside the permutation expander.
+        for lang in self.languages:
+            if lang not in self.agents.personalities:
+                raise ValueError(
+                    f"Language {lang!r} is in 'languages' but has no entry in "
+                    f"agents.personalities (found: {sorted(self.agents.personalities)})."
+                )
+            if self.promptTemplate is not None and lang not in self.promptTemplate:
+                raise ValueError(
+                    f"Language {lang!r} is in 'languages' but has no entry in "
+                    f"promptTemplate (found: {sorted(self.promptTemplate)})."
+                )
+            strategies = (self.payoffMatrix or {}).get("strategies")
+            if isinstance(strategies, dict) and strategies and lang not in strategies:
+                raise ValueError(
+                    f"Language {lang!r} is in 'languages' but has no entry in "
+                    f"payoffMatrix.strategies (found: {sorted(strategies)})."
+                )
 
     # ---- Fake communication ----
     def _validate_fake_communication(self) -> None:
@@ -419,7 +471,11 @@ class ConfigValidator:
             from src.game_theory.equilibrium import compute_nash_equilibria  # local import
 
             language = (result.get("languages") or ["en"])[0]
-            result["equilibria"] = compute_nash_equilibria(result["payoffMatrix"], language)
+            result["equilibria"] = compute_nash_equilibria(
+                result["payoffMatrix"],
+                language,
+                direction=result.get("payoffDirection", "reward"),
+            )
         else:
             # Explicit equilibria must reference real combinations; a typo
             # would silently zero the equilibrium_rate metric.
@@ -429,7 +485,38 @@ class ConfigValidator:
         # game silently runs the full horizon instead of failing here.
         self._check_combination_refs(result, "stopGameWhen")
 
+        self._check_matrix_refs(result)
+
         return result
+
+    @staticmethod
+    def _check_matrix_refs(result: dict) -> None:
+        """The matrix block must be internally consistent.
+
+        Every ``matrix`` row must belong to a declared combination and
+        reference only existing weight keys — a dangling reference used to
+        validate cleanly and then crash mid-game (after paid LLM calls) at
+        the first score attribution.
+        """
+        pm = result.get("payoffMatrix") or {}
+        combinations = pm.get("combinations") or {}
+        weight_matrix = pm.get("matrix") or {}
+        weights = pm.get("weights") or {}
+        if set(weight_matrix) != set(combinations):
+            only_m = sorted(set(weight_matrix) - set(combinations))
+            only_c = sorted(set(combinations) - set(weight_matrix))
+            raise ValueError(
+                "payoffMatrix.matrix and payoffMatrix.combinations must define "
+                f"the same combination keys (only in matrix: {only_m}; only in "
+                f"combinations: {only_c})."
+            )
+        for combo, wkeys in weight_matrix.items():
+            unknown = [w for w in wkeys if w not in weights]
+            if unknown:
+                raise ValueError(
+                    f"payoffMatrix.matrix[{combo!r}] references undefined weight "
+                    f"key(s) {unknown}; weights defines {sorted(weights)}."
+                )
 
     @staticmethod
     def _check_combination_refs(result: dict, field: str) -> None:

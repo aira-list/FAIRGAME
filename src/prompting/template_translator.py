@@ -5,6 +5,19 @@ import langcodes
 
 from src.llm_connectors import execute_prompt
 
+# FAIRGAME deliberately uses "cn" (Chinese) and "vn" (Vietnamese) as language
+# codes, but they aren't BCP 47 — langcodes resolves them to "Unknown language
+# [cn]", which would end up verbatim in the translation prompt. Map them to
+# their ISO 639-1 equivalents before resolution; every other code keeps
+# langcodes' behaviour.
+_LANG_CODE_ALIASES = {"cn": "zh", "vn": "vi"}
+
+
+def _language_name(lang_code: str) -> str:
+    """Human-readable language name for ``lang_code``, alias-aware."""
+    resolved = _LANG_CODE_ALIASES.get(lang_code, lang_code)
+    return langcodes.get(resolved).language_name()
+
 
 class TemplateTranslator:
     """
@@ -58,7 +71,7 @@ class TemplateTranslator:
             )
             cleaned_translation = self._extract_translated_text(translation_response)
             if self._is_echo(prompt_template, cleaned_translation):
-                target = langcodes.get(lang_code).language_name()
+                target = _language_name(lang_code)
                 raise ValueError(
                     f"The model returned the source text unchanged instead of "
                     f"translating it into {target}. Try again or pick another model."
@@ -86,12 +99,12 @@ class TemplateTranslator:
         Returns:
             Raw response from the LLM.
         """
-        language_name = langcodes.get(lang_code).language_name()
+        language_name = _language_name(lang_code)
         filled_prompt = self._template.format(
             prompt_template=prompt_template, language=language_name
         )
         if source_lang_code:
-            source_name = langcodes.get(source_lang_code).language_name()
+            source_name = _language_name(source_lang_code)
             filled_prompt += f"\nThe text above is written in {source_name}."
         if retry:
             filled_prompt += (

@@ -56,6 +56,7 @@ class DescKey:
     CONTINUATION_PROBABILITY = "continuation_probability"
     EQUILIBRIA = "equilibria"
     PARETO_OPTIMAL_SUM = "pareto_optimal_sum"
+    PAYOFF_DIRECTION = "payoff_direction"
     MIXED_STRATEGIES = "mixed_strategies"
     REPUTATION_APPLIES = "reputation_applies"
     SEED = "seed"
@@ -177,6 +178,16 @@ class GameConfig:
     pareto_optimal_sum: float | None = _cfg(
         raw="paretoOptimalSum", default=None, desc=DescKey.PARETO_OPTIMAL_SUM
     )
+    # How the weights are read analytically: "reward" = maximise (default),
+    # "penalty" = minimise. Prompts render raw numbers either way; equilibria
+    # ("auto"), best-response regret and welfare efficiency flip direction.
+    payoff_direction: str = _cfg(
+        raw="payoffDirection",
+        coerce=str,
+        default="reward",
+        desc=DescKey.PAYOFF_DIRECTION,
+        desc_always=True,
+    )
     mixed_strategies: bool = _cfg(
         raw="mixedStrategies",
         coerce=bool,
@@ -277,6 +288,10 @@ class GameConfig:
             raise ValueError(
                 "message_format must be 'dec', 'hex' or 'text' when set; "
                 f"got {self.message_format!r}."
+            )
+        if self.payoff_direction not in ("reward", "penalty"):
+            raise ValueError(
+                f"payoff_direction must be 'reward' or 'penalty'; got {self.payoff_direction!r}."
             )
 
     def to_description(self) -> dict[str, Any]:

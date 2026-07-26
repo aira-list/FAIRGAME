@@ -45,11 +45,17 @@ def brier_score(
 
 
 def belief_agreement(belief: Mapping[str, float], outcome_key: str) -> bool:
-    """Return ``True`` when the modal-probability strategy matches reality."""
+    """Return ``True`` when the modal-probability strategy matches reality.
+
+    Ties are never agreement: a 50/50 forecast expresses no modal prediction,
+    and breaking the tie by dict insertion order would credit it half the
+    time purely by key order.
+    """
     if not belief:
         return False
-    top_key = max(belief.items(), key=lambda kv: float(kv[1]))[0]
-    return top_key == outcome_key
+    top = max(float(v) for v in belief.values())
+    modal = [k for k, v in belief.items() if float(v) == top]
+    return len(modal) == 1 and modal[0] == outcome_key
 
 
 def per_round_metrics(

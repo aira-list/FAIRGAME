@@ -54,7 +54,11 @@ def _combination_payoff(
     weight_keys = weight_matrix.get(combo_key)
     if not weight_keys or agent_index >= len(weight_keys):
         return None
-    return float(weights.get(weight_keys[agent_index], 0))
+    # Fail closed on a dangling weight key — substituting 0 would silently
+    # under- or over-state the best response.
+    if weight_keys[agent_index] not in weights:
+        return None
+    return float(weights[weight_keys[agent_index]])
 
 
 def _other_keys(
@@ -74,8 +78,9 @@ def best_response_payoff(
     language: str,
     agent_index: int,
     other_strategies: Sequence[str],
+    direction: str = "reward",
 ) -> float | None:
-    """Maximum payoff agent ``agent_index`` could have earned this round.
+    """Best payoff agent ``agent_index`` could have earned this round.
 
     Args:
         matrix_summary: ``{"strategies": {...}, "combinations": {...}, "matrix": {...}}``
@@ -85,6 +90,8 @@ def best_response_payoff(
         agent_index: 0-based index of the agent whose best response we want.
         other_strategies: The strategy *labels* the other agents played.
             Position ``i`` is the i-th opponent in the canonical agent order.
+        direction: ``"reward"`` = best is the maximum payoff (default);
+            ``"penalty"`` = weights are costs, best is the minimum.
 
     Returns:
         The payoff under the agent's best response. ``None`` when the
@@ -101,12 +108,13 @@ def best_response_payoff(
     # Strict completeness check: if ANY alternative-strategy combination
     # is missing from the matrix, fail closed rather than under-stating
     # the agent's best-response payoff.
+    prefer_low = direction == "penalty"
     best: float | None = None
     for own_key in blocks[0]:
         payoff = _combination_payoff(blocks, agent_index, own_key, other_keys)
         if payoff is None:
             return None
-        if best is None or payoff > best:
+        if best is None or (payoff < best if prefer_low else payoff > best):
             best = payoff
     return best
 
@@ -137,8 +145,13 @@ def regret_per_round(
     agent_index: int,
     own_strategies: Sequence[str],
     others_strategies_per_round: Sequence[Sequence[str]],
+    direction: str = "reward",
 ) -> list[float | None]:
     """Per-round regret for one agent, in raw payoff-matrix units.
+
+    ``direction`` follows the config's ``payoffDirection``: for ``"penalty"``
+    weights the best response is the *lowest* cost and regret is how much
+    more the agent paid than it had to.
 
     Returns ``None`` for any round we couldn't resolve (missing strategy
     label, payoff function not expanded, etc.).
@@ -149,10 +162,11 @@ def regret_per_round(
             out.append(None)
             continue
         others = others_strategies_per_round[r]
-        best = best_response_payoff(matrix_summary, language, agent_index, others)
+        best = best_response_payoff(matrix_summary, language, agent_index, others, direction)
         actual = played_payoff(matrix_summary, language, agent_index, own_label, others)
         if best is None or actual is None:
             out.append(None)
             continue
-        out.append(max(0.0, best - actual))
+        gap = (actual - best) if direction == "penalty" else (best - actual)
+        out.append(max(0.0, gap))
     return out
