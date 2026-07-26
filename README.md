@@ -25,10 +25,15 @@ Institute of Science and Technology — part of the
   private agent types, Brier-score metrics. See
   [`docs/THEORY_OF_MIND.md`](docs/THEORY_OF_MIND.md).
 * **Game-theoretic toolkit** — mixed strategies, discount factor, indefinite
-  horizon, utility transforms (CRRA, Fehr-Schmidt), canonical baselines
-  (TFT, GrimTrigger, …), round-robin tournaments, equilibrium / welfare
-  metrics, multi-seed runs with confidence intervals, and an experiment
-  manifest runner. See [`docs/GAME_THEORY.md`](docs/GAME_THEORY.md).
+  horizon, utility transforms (CRRA, Fehr-Schmidt), reward- or
+  penalty-framed payoffs (`payoffDirection`), canonical baselines
+  (TFT, GrimTrigger, …), round-robin tournaments, equilibrium / welfare /
+  regret metrics, multi-seed runs with confidence intervals, and an
+  experiment manifest runner. See [`docs/GAME_THEORY.md`](docs/GAME_THEORY.md).
+* **Communication research** — real free-text messaging between agents,
+  covert numeric channels (decimal/hex decoys) for signalling studies,
+  costly monitoring (pay to LOOK at the opponent's history), and directed
+  interaction graphs controlling who sees / hears whom.
 * **Production hardened** — Pydantic-validated config, structured logging,
   retry/timeout on LLM calls, FastAPI/uvicorn HTTP layer, hardened
   Dockerfile, Helm chart.
@@ -151,6 +156,9 @@ an `/api/health` endpoint used by the built-in HEALTHCHECK.
 
 ## Documentation
 
+* [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) — the long-form guide: templates,
+  placeholders, every configuration setting, a fully-featured walkthrough,
+  and the shipped games.
 * [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — module map, data flow,
   retry/permutation/logging design.
 * [`docs/GUI.md`](docs/GUI.md) — FastAPI web UI (SPA) walkthrough.
@@ -176,6 +184,31 @@ for the full list. The minimum:
   provider-standard variable names). Unused providers need no key.
 
 Run results are persisted locally under `results/web/<run_id>/`.
+
+## Citing FAIRGAME
+
+If you use FAIRGAME in your research, please cite the
+[original paper](https://ebooks.iospress.nl/volumearticle/76236):
+
+> Alessio Buscemi, Daniele Proverbio, Alessandro Di Stefano, The Anh Han,
+> German Castignani, Pietro Liò. *FAIRGAME: a Framework for AI Agents Bias
+> Recognition using Game Theory.* Frontiers in Artificial Intelligence and
+> Applications, vol. 413 (ECAI 2025), pp. 4097–4104, IOS Press, 2025.
+
+```bibtex
+@inproceedings{buscemi2025fairgame,
+  title     = {{FAIRGAME}: a Framework for {AI} Agents Bias Recognition using Game Theory},
+  author    = {Buscemi, Alessio and Proverbio, Daniele and Di Stefano, Alessandro
+               and Han, The Anh and Castignani, German and Li{\`o}, Pietro},
+  booktitle = {ECAI 2025},
+  series    = {Frontiers in Artificial Intelligence and Applications},
+  volume    = {413},
+  pages     = {4097--4104},
+  publisher = {IOS Press},
+  year      = {2025},
+  url       = {https://ebooks.iospress.nl/volumearticle/76236}
+}
+```
 
 ## Governance & contributing
 
