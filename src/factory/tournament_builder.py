@@ -66,14 +66,21 @@ class TournamentBuilder:
         idx = [names.index(p) for p in pair]
 
         agents_block["names"] = list(pair)
+        # Under ``allAgentPermutations`` personalities and opponent priors are
+        # *pools* of conditions, not per-agent attributes: every pair keeps
+        # the whole pool (positional slicing dropped pool entries for most
+        # pairs, or raised IndexError on pools shorter than the roster).
+        # In 1:1 mode entry i belongs to agent i, so the pair slices its own
+        # two entries; a length-mismatched list is passed through untouched.
+        pooled = bool(config.get("allAgentPermutations"))
         agents_block["personalities"] = {
-            lang: [plist[i] for i in idx]
+            lang: (list(plist) if pooled or len(plist) != len(names) else [plist[i] for i in idx])
             for lang, plist in config["agents"]["personalities"].items()
         }
         if config["agents"].get("opponentPersonalityProb"):
             opp = config["agents"]["opponentPersonalityProb"]
             agents_block["opponentPersonalityProb"] = (
-                [opp[i] for i in idx] if len(opp) == len(names) else opp
+                [opp[i] for i in idx] if not pooled and len(opp) == len(names) else list(opp)
             )
         pair_config["agents"] = agents_block
 

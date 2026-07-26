@@ -22,8 +22,8 @@
         ]
       },
       "opponentPersonalityProb": [
-        0.7,
-        0.7
+        70,
+        70
       ]
     },
     "payoffMatrix": {

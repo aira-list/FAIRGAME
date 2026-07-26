@@ -26,7 +26,7 @@ from src.factory import PermutationExpander, TournamentBuilder
 from src.game.fairgame import FairGame
 from src.io_managers.io_manager import IoManager
 from src.utils.logger import get_logger
-from src.utils.rng import make_rng
+from src.utils.rng import combine_seed, make_rng
 
 logger = get_logger(__name__)
 
@@ -57,17 +57,31 @@ class FairGameFactory:
         game_config_row: dict[str, Any],
         payoff_matrix: dict[str, Any],
         resolved_seed: int | None = None,
+        game_index: int = 0,
     ) -> FairGame:
         prompt_template = self.build_prompt_template(config, game_config_row["Language"])
         agents = self.create_agents(game_config_row)
 
         types_config = self._extract_types_config(config)
         seed = resolved_seed if resolved_seed is not None else config.get("seed")
-        rng = make_rng(seed)
+        # Decorrelate the RNG streams of the games built in one pass: with a
+        # single shared seed, RandomChoice baselines, mixed-strategy sampling,
+        # fake messages and continuation checks were perfectly correlated
+        # across permutation rows, biasing variance over the sweep. Index 0
+        # keeps the seed untouched so single-game runs stay byte-identical
+        # with historical results; the recorded ``seed`` stays the base seed.
+        rng_seed = seed if seed is None or game_index == 0 else combine_seed(seed, game_index)
+        rng = make_rng(rng_seed)
         if types_config is not None:
             self._assign_agent_types(agents, types_config, rng=rng)
 
         from src.game.game_config import GameConfig
+
+        # The nested ``agents.types.commonKnowledge`` spelling must reach the
+        # engine's ``types_common_knowledge`` gate; an explicit top-level
+        # ``typesAreCommonKnowledge`` still wins.
+        if types_config is not None and "typesAreCommonKnowledge" not in config:
+            config = {**config, "typesAreCommonKnowledge": types_config["commonKnowledge"]}
 
         # Input-config shape (keys, defaults, coercions) lives in
         # ``GameConfig.from_raw``; the factory only supplies the per-game
@@ -207,9 +221,13 @@ class FairGameFactory:
 
         self.games = [
             self._create_single_game(
-                config, row, config["payoffMatrix"], resolved_seed=resolved_seed
+                config,
+                row,
+                config["payoffMatrix"],
+                resolved_seed=resolved_seed,
+                game_index=i,
             )
-            for _, row in self.config_all_langs_df.iterrows()
+            for i, (_, row) in enumerate(self.config_all_langs_df.iterrows())
         ]
         return self.games
 
@@ -250,13 +268,14 @@ class FairGameFactory:
             self.config_all_langs_df = pd.concat(
                 [self.config_all_langs_df, pair_df], ignore_index=True
             )
-            for _, row in pair_df.iterrows():
+            for row_idx, (_, row) in enumerate(pair_df.iterrows()):
                 self.games.append(
                     self._create_single_game(
                         pair_config,
                         row,
                         pair_config["payoffMatrix"],
                         resolved_seed=pair_seed,
+                        game_index=row_idx,
                     )
                 )
         return self.games

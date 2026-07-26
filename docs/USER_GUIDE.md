@@ -88,7 +88,7 @@ payoff matrix, and the per-round state. The most useful ones:
 | `{personality}` | The agent's personality (in the active language) | `agents.personalities[lang][i]` |
 | `{opponent1}`, `{opponent2}`, … | Each opponent's name | `agents.names` |
 | `{opponentPersonality1}`, … | Each opponent's personality | as above |
-| `{opponentPersonalityProbability1}`, … | What this agent is told about its opponent: the % probability that the opponent really has the stated personality. E.g. agent1's `opponentPersonalityProb = 0.7` with agent2 personality "cooperative" → agent1's prompt reads "agent2 has a 70% probability of being cooperative". `0` strips the whole `{opponentIntro}` block — agent is told nothing about the opponent. `1` is common knowledge. | `agents.opponentPersonalityProbs[i] * 100` |
+| `{opponentPersonalityProbability1}`, … | The % probability that the *opponent* really has its stated personality, rendered verbatim (no scaling) into "...has a probability of {value}% of being ...". The value is read from the opponent's own entry: `opponentPersonalityProb[i]` describes agent i and is shown to agent i's opponents. E.g. `opponentPersonalityProb = [70, 70]` with agent2 personality "cooperative" → agent1's prompt reads "agent2 has a probability of 70% of being cooperative". Use the percent scale (0–100): `0` hides the opponent's personality entirely (the whole `{opponentIntro}` block is stripped when every opponent is at 0), `100` is common knowledge. Values between 0 and 1 are almost always a scale mixup ("0.7%") and trigger a validation warning. | `agents.opponentPersonalityProb[i]`, verbatim |
 | `{strategy1}`, `{strategy2}`, … | Display labels for strategies | `payoffMatrix.strategies[lang]` |
 | `{weight1}`, `{weight2}`, … | Numeric payoffs | `payoffMatrix.weights` |
 | `{nRounds}` | Total number of rounds | `nRounds` |
@@ -466,8 +466,9 @@ The prior over types in this population is: {typeDistribution}.
   `{opponentPersonalityProbability2}` / `{coopRate2}` / `{reputation2}`,
   etc.
 * `{opponentPersonalityProbability1}` is the probability the opponent
-  *truly* has the stated personality, expressed in **0–100**
-  (the engine multiplies the 0–1 input by 100 for readability).
+  *truly* has the stated personality, expressed in **0–100** and rendered
+  verbatim (configure percentages directly — the engine does **not**
+  rescale a 0–1 input, and warns when it sees one).
 * `{coopRate1}` and `{reputation1}` are filled from history:
   - When `reputationApplies = true` and history exists for the opponent,
     `coopRate1` is the fraction (e.g. `"0.62"`) and `reputation1` is one

@@ -3,6 +3,9 @@ from typing import Literal
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from src.io_managers.payoff_matrix_transformer import PayoffMatrixTransformer
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class TypesConfig(BaseModel):
@@ -277,6 +280,21 @@ class ConfigModel(BaseModel):
         num_agents = len(self.agents.names)
         probs = self.agents.opponentPersonalityProb
 
+        # The prompt renders the value verbatim into "...a probability of
+        # {value}% ...", so 0.7 reads as "0.7%" — almost certainly meant 70.
+        # Accepted (some historical configs rely on it) but flagged loudly.
+        for p in probs or []:
+            if 0 < p < 1:
+                logger.warning(
+                    "opponentPersonalityProb %s is between 0 and 1; the prompt "
+                    "renders it verbatim as '%s%%'. Use the percent scale "
+                    "(e.g. %s) — 0 hides the personality, 100 is common "
+                    "knowledge.",
+                    p,
+                    p,
+                    round(p * 100),
+                )
+
         if self.allAgentPermutations:
             if not probs:
                 raise ValueError(
@@ -402,8 +420,30 @@ class ConfigValidator:
 
             language = (result.get("languages") or ["en"])[0]
             result["equilibria"] = compute_nash_equilibria(result["payoffMatrix"], language)
+        else:
+            # Explicit equilibria must reference real combinations; a typo
+            # would silently zero the equilibrium_rate metric.
+            self._check_combination_refs(result, "equilibria")
+
+        # A stop condition naming a nonexistent combination never fires: the
+        # game silently runs the full horizon instead of failing here.
+        self._check_combination_refs(result, "stopGameWhen")
 
         return result
+
+    @staticmethod
+    def _check_combination_refs(result: dict, field: str) -> None:
+        """Every entry of ``result[field]`` must be a known combination key."""
+        entries = result.get(field) or []
+        if not isinstance(entries, (list, tuple)):
+            return
+        known = set((result.get("payoffMatrix") or {}).get("combinations") or {})
+        unknown = [e for e in entries if e not in known]
+        if unknown:
+            raise ValueError(
+                f"{field} references unknown combination key(s) {unknown}; "
+                f"the payoff matrix defines {sorted(known)}."
+            )
 
     def _attempt_payoff_transform(self, original_data: dict) -> ConfigModel:
         """Try to transform and re-validate the payoffMatrix if the first attempt failed."""

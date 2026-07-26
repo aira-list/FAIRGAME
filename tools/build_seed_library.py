@@ -99,6 +99,33 @@ def main() -> None:
     ]
 
     # ---- Configuration game_config helpers ----------------------------------
+    def _cell(pm, combo):
+        return tuple(float(pm["weights"][wk]) for wk in pm["matrix"][combo])
+
+    def assert_game_class(pm, game, preset_rel):
+        """Fail the build if a resource preset doesn't satisfy its game class.
+
+        The presets live in the sibling paper-evaluations repo; a wrong matrix
+        there must not be republished into the starter library (a Snowdrift
+        preset with S<P once shipped as a mislabeled Prisoner's Dilemma).
+        """
+        r = _cell(pm, "combination1")[0]
+        s, t = _cell(pm, "combination2")
+        p = _cell(pm, "combination4")[0]
+        if game == "snowdrift" and not (t > r > s > p):
+            raise SystemExit(
+                f"{preset_rel}: Snowdrift/Chicken needs T>R>S>P, got "
+                f"T={t} R={r} S={s} P={p} — fix the preset before rebuilding."
+            )
+        if game == "battle":
+            c1, c4 = _cell(pm, "combination1"), _cell(pm, "combination4")
+            if c1[0] == c1[1] or c1 != tuple(reversed(c4)):
+                raise SystemExit(
+                    f"{preset_rel}: Battle of the Sexes needs mirrored asymmetric "
+                    f"coordination cells, got {c1} / {c4} — fix the preset "
+                    "before rebuilding."
+                )
+
     def base_gc(preset_rel, llms, *, agents_names=None, personalities=None, opp=None, **over):
         p = preset(preset_rel)
         gc = copy.deepcopy(p)
@@ -204,7 +231,8 @@ def main() -> None:
             PD,
             TWO,
             personalities={"en": ["cooperative", "selfish"]},
-            opp=[0.7, 0.7],
+            # Percent scale: the prompt renders the value verbatim as "...70%".
+            opp=[70, 70],
             elicitBeliefs=True,
             tomOrder=2,
         ),
@@ -224,7 +252,9 @@ def main() -> None:
             seedCount=3,
             seed=1,
             equilibria="auto",
-            paretoOptimalSum=6,
+            # Max cell sum (mutual cooperation 6+6): the welfare_efficiency
+            # divisor convention used by every other seed.
+            paretoOptimalSum=12,
         ),
     )
 
@@ -245,7 +275,7 @@ def main() -> None:
         "gt_pd",
         "conventional",
         ["en"],
-        base_gc(PD, TWO, utilityTransform={"type": "FehrSchmidt", "alpha": 0.4, "beta": 0.6}),
+        base_gc(PD, TWO, utilityTransform={"type": "FehrSchmidt", "alpha": 0.6, "beta": 0.4}),
     )
 
     # 9. Risk aversion (CRRA, prompt) + discount (prompt)
@@ -277,7 +307,8 @@ def main() -> None:
             TWO,
             allAgentPermutations=True,
             personalities={"en": ["cooperative", "selfish", "neutral"]},
-            opp=[0, 0.5, 1],
+            # Percent scale (0 hides the personality, 100 is common knowledge).
+            opp=[0, 50, 100],
         ),
     )
 
@@ -335,13 +366,15 @@ def main() -> None:
     )
 
     # 15. Snow Drift
+    gc = base_gc("snow_drift/snow_drift_round_known.json", TWO)
+    assert_game_class(gc["payoffMatrix"], "snowdrift", "snow_drift/snow_drift_round_known.json")
     add_cfg(
         "seed_cfg_snowdrift",
         "Snow Drift — anti-coordination",
         "gt_snowdrift",
         "conventional",
         ["en"],
-        base_gc("snow_drift/snow_drift_round_known.json", TWO),
+        gc,
     )
 
     # 16. Harmony
@@ -356,6 +389,9 @@ def main() -> None:
 
     # 17. Battle of the Sexes — multilingual + reputation off
     gc = base_gc("battle_sexes/battle_sexes_round_known_conventional.json", TWO)
+    assert_game_class(
+        gc["payoffMatrix"], "battle", "battle_sexes/battle_sexes_round_known_conventional.json"
+    )
     pm = gc["payoffMatrix"]
     if "fr" not in pm["strategies"]:
         pm["strategies"]["fr"] = dict(pm["strategies"]["en"])

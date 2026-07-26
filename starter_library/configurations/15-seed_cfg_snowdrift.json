@@ -29,8 +29,8 @@
       "weights": {
         "weight1": 3,
         "weight2": 5,
-        "weight3": 0,
-        "weight4": 1
+        "weight3": 1,
+        "weight4": 0
       },
       "strategies": {
         "en": {

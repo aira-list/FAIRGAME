@@ -38,6 +38,84 @@ class TestTournamentSeedNonCollision(unittest.TestCase):
         self.assertNotEqual(s1, s2)
 
 
+class TestPermutationRowRngDecorrelation(unittest.TestCase):
+    """Games built in one permutation pass must not share one RNG stream.
+
+    With an identically-seeded RNG per row, RandomChoice baselines, mixed
+    sampling and continuation checks were perfectly correlated across the
+    sweep's cells, biasing any variance computed over them. Same-seed
+    reruns must stay byte-identical (reproducibility is per seed, not per
+    process).
+    """
+
+    N_ROUNDS = 12
+
+    def _cfg(self) -> dict:
+        return {
+            "name": "rng_demo",
+            "nRounds": self.N_ROUNDS,
+            "nRoundsIsKnown": True,
+            "languages": ["en"],
+            "allAgentPermutations": True,
+            "agents": {
+                "names": ["a", "b"],
+                "personalities": {"en": ["nice", "mean"]},
+                "opponentPersonalityProb": [0],
+            },
+            "llms": ["Baseline:Random", "Baseline:Random"],
+            "promptTemplate": {"en": "(baseline game; never read)"},
+            "payoffMatrix": {
+                "weights": {"w1": 6, "w2": 10, "w3": 0, "w4": 2},
+                "strategies": {"en": {"strategy1": "C", "strategy2": "D"}},
+                "combinations": {
+                    "combination1": ["strategy1", "strategy1"],
+                    "combination2": ["strategy1", "strategy2"],
+                    "combination3": ["strategy2", "strategy1"],
+                    "combination4": ["strategy2", "strategy2"],
+                },
+                "matrix": {
+                    "combination1": ["w1", "w1"],
+                    "combination2": ["w3", "w2"],
+                    "combination3": ["w2", "w3"],
+                    "combination4": ["w4", "w4"],
+                },
+            },
+            "stopGameWhen": [],
+            "agentsCommunicate": False,
+            "seed": 42,
+        }
+
+    @staticmethod
+    def _strategy_streams(output: dict) -> list[tuple]:
+        streams = []
+        for game in output.values():
+            per_agent: dict[str, list] = {}
+            for round_rows in game["history"].values():
+                for row in round_rows:
+                    per_agent.setdefault(row["agent"], []).append(row["strategy"])
+            streams.append(tuple(tuple(v) for v in per_agent.values()))
+        return streams
+
+    def test_rows_in_one_pass_draw_different_streams(self) -> None:
+        from src.factory.fairgame_factory import FairGameFactory
+
+        output = FairGameFactory().create_and_run_games(self._cfg())
+        streams = self._strategy_streams(output)
+        self.assertGreater(len(streams), 1)
+        # With a shared stream every game's 2x12 random draws were identical;
+        # decorrelated streams collide with probability 2^-24 per pair.
+        self.assertGreater(len(set(streams)), 1)
+
+    def test_same_seed_rerun_is_identical(self) -> None:
+        from src.factory.fairgame_factory import FairGameFactory
+
+        first = FairGameFactory().create_and_run_games(self._cfg())
+        second = FairGameFactory().create_and_run_games(self._cfg())
+        self.assertEqual(
+            self._strategy_streams(first), self._strategy_streams(second)
+        )
+
+
 class TestPermutationJointAxis(unittest.TestCase):
     def _cfg(self) -> dict:
         return {

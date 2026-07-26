@@ -138,6 +138,10 @@ class TestAutoEquilibriaShipsCorrectKeys(unittest.TestCase):
         ("stag_hunt/stag_hunt_round_known.json", ["combination1", "combination4"]),
         ("battle_sexes/battle_sexes_round_known.json", ["combination1", "combination4"]),
         ("harmony_game/harmony_game_round_known.json", ["combination1"]),
+        # Chicken: the two asymmetric cells. The preset shipped with S<P (a
+        # PD ordering, unique NE = combination4) until 2026-07; this entry
+        # pins the corrected matrix so the drift can't recur.
+        ("snow_drift/snow_drift_round_known.json", ["combination2", "combination3"]),
     ]
 
     def test_each_scenarios_auto_resolves_to_shipped_list(self) -> None:

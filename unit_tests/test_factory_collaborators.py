@@ -60,6 +60,75 @@ class TestPermutationExpanderHomogeneousLLM(unittest.TestCase):
         self.assertTrue((df["Language"] == "en").all())
 
 
+def _asymmetric_matrix() -> dict:
+    """Battle-of-the-Sexes-shaped matrix: coordination cells favour one player."""
+    return {
+        "weights": {"w_hi": 10, "w_lo": 7, "w_zero": 0},
+        "strategies": {"en": {"strategy1": "Opera", "strategy2": "Football"}},
+        "combinations": {
+            "combination1": ["strategy1", "strategy1"],
+            "combination2": ["strategy1", "strategy2"],
+            "combination3": ["strategy2", "strategy1"],
+            "combination4": ["strategy2", "strategy2"],
+        },
+        "matrix": {
+            "combination1": ["w_hi", "w_lo"],
+            "combination2": ["w_zero", "w_zero"],
+            "combination3": ["w_zero", "w_zero"],
+            "combination4": ["w_lo", "w_hi"],
+        },
+    }
+
+
+class TestPermutationExpanderDuplicatePools(unittest.TestCase):
+    def test_duplicate_pool_values_do_not_duplicate_games(self) -> None:
+        # A 1:1-style config (every agent "neutral", every prior 0) under
+        # allAgentPermutations must produce ONE game, not 10 copies.
+        cfg = _config()
+        cfg["agents"]["personalities"]["en"] = ["neutral", "neutral"]
+        cfg["agents"]["opponentPersonalityProb"] = [0, 0]
+        df = PermutationExpander().expand(cfg, language="en")
+        self.assertEqual(len(df), 1)
+        self.assertEqual(len(df.drop_duplicates()), len(df))
+
+    def test_duplicate_pool_values_deduped_with_mixed_llms(self) -> None:
+        cfg = _config()
+        cfg.pop("llm")
+        cfg["llms"] = {"a": "OpenAIGPT4o", "b": "Claude35Sonnet"}
+        cfg["agents"]["personalities"]["en"] = ["nice", "nice", "mean"]
+        df = PermutationExpander().expand(cfg, language="en")
+        # Unique joint values: {nice, mean} x {0} per agent -> 2^2 ordered rows.
+        self.assertEqual(len(df), 4)
+
+
+class TestPermutationExpanderPositionSensitivity(unittest.TestCase):
+    """Symmetric collapse must only fire when position truly doesn't matter."""
+
+    def test_no_collapse_when_payoff_matrix_is_asymmetric(self) -> None:
+        cfg = _config(payoffMatrix=_asymmetric_matrix())
+        df = PermutationExpander().expand(cfg, language="en")
+        # Same LLM, but the matrix favours positions: both orderings needed.
+        self.assertEqual(len(df), 4)
+        pairs = set(zip(df["Personality1"], df["Personality2"], strict=True))
+        self.assertIn(("nice", "mean"), pairs)
+        self.assertIn(("mean", "nice"), pairs)
+
+    def test_no_collapse_when_agents_communicate(self) -> None:
+        # Messages are written sequentially in agent order, so the second
+        # speaker conditions on the first: position matters.
+        cfg = _config(agentsCommunicate=True)
+        df = PermutationExpander().expand(cfg, language="en")
+        self.assertEqual(len(df), 4)
+
+    def test_collapse_kept_for_symmetric_matrix_without_communication(self) -> None:
+        symmetric = _asymmetric_matrix()
+        symmetric["matrix"]["combination1"] = ["w_hi", "w_hi"]
+        symmetric["matrix"]["combination4"] = ["w_lo", "w_lo"]
+        cfg = _config(payoffMatrix=symmetric)
+        df = PermutationExpander().expand(cfg, language="en")
+        self.assertEqual(len(df), 3)
+
+
 class TestPermutationExpanderMixedLLM(unittest.TestCase):
     def test_full_product_when_llms_differ_per_agent(self) -> None:
         cfg = _config()
@@ -104,13 +173,30 @@ class TestTournamentBuilder(unittest.TestCase):
             builder.pairs(["a", "b"], mode="bogus", symmetric=True)
 
     def test_pair_config_slices_agents_block(self) -> None:
-        cfg = _config()
+        # 1:1 mode: personality i belongs to agent i, so the pair keeps
+        # exactly its own two entries.
+        cfg = _config(allAgentPermutations=False)
         cfg["agents"]["names"] = ["alice", "bob", "carol"]
         cfg["agents"]["personalities"]["en"] = ["nice", "mean", "shy"]
         cfg["agents"]["opponentPersonalityProb"] = [0, 50, 100]
         pair_cfg, _ = TournamentBuilder().build_pair_config(cfg, ("bob", "carol"), pair_idx=0)
         self.assertEqual(pair_cfg["agents"]["names"], ["bob", "carol"])
         self.assertEqual(pair_cfg["agents"]["personalities"]["en"], ["mean", "shy"])
+        self.assertEqual(pair_cfg["agents"]["opponentPersonalityProb"], [50, 100])
+
+    def test_pair_config_keeps_full_pools_under_all_permutations(self) -> None:
+        # Pool mode: personalities/priors are conditions to permute over, not
+        # per-agent attributes — every pair must see the WHOLE pool (slicing
+        # positionally silently dropped "shy" games for the (alice, bob) pair
+        # and crashed when the pool was shorter than the roster).
+        cfg = _config(allAgentPermutations=True)
+        cfg["agents"]["names"] = ["alice", "bob", "carol"]
+        cfg["agents"]["personalities"]["en"] = ["nice", "mean", "shy"]
+        cfg["agents"]["opponentPersonalityProb"] = [0, 50]
+        pair_cfg, _ = TournamentBuilder().build_pair_config(cfg, ("alice", "bob"), pair_idx=0)
+        self.assertEqual(pair_cfg["agents"]["names"], ["alice", "bob"])
+        self.assertEqual(pair_cfg["agents"]["personalities"]["en"], ["nice", "mean", "shy"])
+        self.assertEqual(pair_cfg["agents"]["opponentPersonalityProb"], [0, 50])
 
     def test_pair_config_slices_dict_llms_to_pair_only(self) -> None:
         cfg = _config()

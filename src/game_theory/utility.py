@@ -147,8 +147,8 @@ def build_utility_transform(config: dict[str, Any] | None) -> UtilityTransform:
 
         build_utility_transform(None)                                   # identity
         build_utility_transform({"type": "CRRA", "gamma": 0.5})         # risk-averse
-        build_utility_transform({"type": "FehrSchmidt", "alpha": 0.4,  # inequity-averse
-                                 "beta": 0.6})
+        build_utility_transform({"type": "FehrSchmidt", "alpha": 0.6,  # inequity-averse
+                                 "beta": 0.4})
     """
     if not config:
         return IdentityTransform()

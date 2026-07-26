@@ -92,7 +92,7 @@
       "matrix": {
         "combination1": [
           "weight1",
-          "weight1"
+          "weight4"
         ],
         "combination2": [
           "weight3",
@@ -104,7 +104,7 @@
         ],
         "combination4": [
           "weight4",
-          "weight4"
+          "weight1"
         ]
       }
     },

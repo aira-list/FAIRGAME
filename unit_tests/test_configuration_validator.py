@@ -367,5 +367,76 @@ class TestPayoffMatrixTransformation(unittest.TestCase):
         self.assertEqual(result["payoffMatrix"]["matrix"], before["payoffMatrix"]["matrix"])
 
 
+class TestCombinationKeyReferences(unittest.TestCase):
+    """``stopGameWhen`` / explicit ``equilibria`` entries must name real
+    combinations — a typo silently disabled the stop rule (games ran the
+    full horizon) or zeroed the equilibrium_rate."""
+
+    def setUp(self) -> None:
+        self.validator = ConfigValidator()
+
+    def test_unknown_stop_condition_rejected(self) -> None:
+        config = _base_config()
+        config["stopGameWhen"] = ["c_1"]  # typo: real keys are c1/c2
+        with self.assertRaises(ValueError) as ctx:
+            self.validator.validate_config_structure(config)
+        self.assertIn("stopGameWhen", str(ctx.exception))
+        self.assertIn("c_1", str(ctx.exception))
+
+    def test_unknown_explicit_equilibrium_rejected(self) -> None:
+        config = _base_config()
+        config["equilibria"] = ["c1", "combination9"]
+        with self.assertRaises(ValueError) as ctx:
+            self.validator.validate_config_structure(config)
+        self.assertIn("equilibria", str(ctx.exception))
+
+    def test_known_keys_accepted(self) -> None:
+        config = _base_config()
+        config["stopGameWhen"] = ["c1", "c2"]
+        config["equilibria"] = ["c2"]
+        result = self.validator.validate_config_structure(config)
+        self.assertEqual(result["stopGameWhen"], ["c1", "c2"])
+
+    def test_auto_equilibria_not_affected(self) -> None:
+        config = _base_config()
+        config["equilibria"] = "auto"
+        result = self.validator.validate_config_structure(config)
+        self.assertIsInstance(result["equilibria"], list)
+
+
+class TestOpponentProbScaleNudge(unittest.TestCase):
+    """opponentPersonalityProb is rendered verbatim into '...{value}%', so a
+    0-1-scale value is almost certainly a mixup ("0.7%" instead of "70%").
+    Accepted for backwards compatibility, but must warn loudly."""
+
+    def setUp(self) -> None:
+        self.validator = ConfigValidator()
+
+    def test_fractional_prob_warns(self) -> None:
+        config = _base_config()
+        config["allAgentPermutations"] = False
+        config["agents"]["opponentPersonalityProb"] = [0.7, 0.7]
+        with self.assertLogs("src.io_managers.configuration_validator", level="WARNING") as logs:
+            self.validator.validate_config_structure(config)
+        self.assertTrue(any("0.7" in line and "%" in line for line in logs.output))
+
+    def test_percent_probs_do_not_warn(self) -> None:
+        import logging
+
+        config = _base_config()
+        config["allAgentPermutations"] = False
+        config["agents"]["opponentPersonalityProb"] = [0, 70]
+        logger = logging.getLogger("src.io_managers.configuration_validator")
+        records: list[logging.LogRecord] = []
+        handler = logging.Handler()
+        handler.emit = records.append  # type: ignore[assignment]
+        logger.addHandler(handler)
+        try:
+            self.validator.validate_config_structure(config)
+        finally:
+            logger.removeHandler(handler)
+        self.assertFalse([r for r in records if r.levelno >= logging.WARNING])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -5,11 +5,20 @@ The factory used to fold this into ``compute_all_game_configurations`` /
 clear: given a config dict and a language, produce one row per game-to-be-
 constructed, with one column per agent-position-by-attribute.
 
-Symmetric dedup behaviour: when every agent shares an LLM, personality
-and opponent-prior axes are expanded with
-``itertools.combinations_with_replacement`` (so (cooperative, selfish)
-and (selfish, cooperative) collapse). When LLMs differ per agent, the
-full Cartesian product is taken because agent identity matters.
+Symmetric dedup behaviour: when every agent shares an LLM, the game is
+position-symmetric (payoff matrix invariant under permuting the agents)
+and real communication is off, personality and opponent-prior axes are
+expanded with ``itertools.combinations_with_replacement`` (so
+(cooperative, selfish) and (selfish, cooperative) collapse). Otherwise —
+per-agent LLMs, an asymmetric matrix such as Battle of the Sexes, or a
+live message channel (the second speaker conditions on the first's
+same-round message) — agent position matters and the full Cartesian
+product is taken.
+
+Pool values are deduplicated before expansion: a pool like
+``["neutral", "neutral"]`` describes one condition, not two, and
+repeating it would silently run (and statistically over-weight)
+duplicate games.
 """
 
 from __future__ import annotations
@@ -73,6 +82,56 @@ class PermutationExpander:
             return False
         return len(set(llms)) == 1
 
+    @staticmethod
+    def _positions_interchangeable(full_config: Any) -> bool:
+        """Whether swapping agent positions provably leaves the game unchanged.
+
+        Position matters when real communication is on (messages are produced
+        sequentially in agent order) or when the payoff matrix is not
+        invariant under permuting the agents. A missing matrix keeps the
+        legacy collapse; a matrix present but not in the canonical
+        ``{combo: [strategy_keys]}`` / ``{combo: [weight_keys]}`` shape can't
+        be proven symmetric, so it is treated as position-sensitive.
+        """
+        if not isinstance(full_config, dict):
+            return True
+        if full_config.get("agentsCommunicate"):
+            return False
+        pm = full_config.get("payoffMatrix")
+        if not pm:
+            return True
+
+        combinations = pm.get("combinations") or {}
+        weight_matrix = pm.get("matrix") or {}
+        weights = pm.get("weights") or {}
+        payoff_by_profile: dict[tuple[str, ...], tuple[float, ...]] = {}
+        for combo, strategy_keys in combinations.items():
+            weight_keys = weight_matrix.get(combo)
+            if (
+                not isinstance(strategy_keys, (list, tuple))
+                or not all(isinstance(s, str) for s in strategy_keys)
+                or not isinstance(weight_keys, (list, tuple))
+                or len(weight_keys) != len(strategy_keys)
+            ):
+                return False  # non-canonical shape: cannot prove symmetry
+            try:
+                payoff_by_profile[tuple(strategy_keys)] = tuple(
+                    float(weights[k]) for k in weight_keys
+                )
+            except (KeyError, TypeError, ValueError):
+                return False
+        if not payoff_by_profile:
+            return True
+
+        for profile, payoffs in payoff_by_profile.items():
+            n = len(profile)
+            for perm in itertools.permutations(range(n)):
+                permuted_profile = tuple(profile[i] for i in perm)
+                permuted_payoffs = tuple(payoffs[i] for i in perm)
+                if payoff_by_profile.get(permuted_profile) != permuted_payoffs:
+                    return False
+        return True
+
     def _all_permutations(
         self, language: str, config_agents: dict[str, Any], full_config: Any
     ) -> pd.DataFrame:
@@ -85,20 +144,28 @@ class PermutationExpander:
         # prior separately with ``combinations_with_replacement`` and then
         # crossing them dropped genuinely distinct joint assignments (e.g.
         # agent1=(coop,0.5), agent2=(selfish,0) could not be represented).
+        # dict.fromkeys: dedupe while preserving pool order. Repeated pool
+        # values (e.g. every agent "neutral") describe one condition each —
+        # expanding them verbatim multiplied identical games.
         per_agent_attrs = list(
-            itertools.product(
-                config_agents["personalities"][language],
-                config_agents["opponentPersonalityProb"],
+            dict.fromkeys(
+                itertools.product(
+                    config_agents["personalities"][language],
+                    config_agents["opponentPersonalityProb"],
+                )
             )
         )
 
-        same_llm = self._uses_same_llm_for_all(full_config, config_agents["names"])
-        if same_llm:
-            # Agents share an LLM, so agent identity is interchangeable:
-            # collapse order-equivalent joint assignments.
+        interchangeable = self._uses_same_llm_for_all(
+            full_config, config_agents["names"]
+        ) and self._positions_interchangeable(full_config)
+        if interchangeable:
+            # Same LLM in a position-symmetric game: collapse order-equivalent
+            # joint assignments.
             attr_perms = list(itertools.combinations_with_replacement(per_agent_attrs, n_agents))
         else:
-            # Distinct LLMs → agent identity matters → full ordered product.
+            # Position matters (distinct LLMs, asymmetric payoffs, or a live
+            # message channel) → full ordered product.
             attr_perms = list(itertools.product(per_agent_attrs, repeat=n_agents))
 
         rows = []
