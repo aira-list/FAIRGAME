@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, ValidationError, model_validator
 
 # Upper bound on batch iterations so the engine fan-out can't be unbounded.
 MAX_RUN_ITERATIONS = 100
@@ -75,13 +75,15 @@ class VariationEntry(BaseModel):
     """One axis value in a configuration group.
 
     ``axis`` names the engine field that this variation overrides at run
-    time (currently only ``"payoffMatrix"`` is allowed). ``value`` is the
-    full replacement value for that field. ``name`` is the human-readable
-    label appended to the group's name to form the resolved display
-    name (``"<group> · <variant>"``).
+    time (currently only ``"payoffMatrix"`` is allowed — the Literal makes
+    an unknown axis fail as a 422 at the boundary instead of a 500 when
+    ``configurations_lib`` resolves it). ``value`` is the full replacement
+    value for that field. ``name`` is the human-readable label appended to
+    the group's name to form the resolved display name
+    (``"<group> · <variant>"``).
     """
 
-    axis: str
+    axis: Literal["payoffMatrix"]
     name: str
     value: Any
 
@@ -109,15 +111,29 @@ class ImportBundle(BaseModel):
     templates: list[dict[str, Any]] = Field(default_factory=list)
     runs: list[dict[str, Any]] = Field(default_factory=list)
 
+    @model_validator(mode="after")
+    def _validate_variations(self) -> ImportBundle:
+        """The configuration travels as a raw dict, so its group variations
+        would bypass :class:`VariationEntry` — validate them here so a bad
+        axis fails as 422 at the boundary instead of a 500 at resolve time."""
+        for entry in self.configuration.get("variations") or []:
+            try:
+                VariationEntry.model_validate(entry)
+            except ValidationError as exc:
+                # Re-raise as ValueError — the sanctioned way to fail a
+                # validator, which pydantic folds into the outer 422.
+                raise ValueError(str(exc)) from exc
+        return self
+
 
 class RunConfigurationsBody(_RejectsRetiredDemo):
     """Batch payload for the Experiment page.
 
     The configuration owns its own seed, seedCount, agents, payoffs and
     rounds — anything that isn't ``iterations`` belongs there, not here.
-    Each iteration calls the engine with a fresh seed offset
-    (``configuration.seed + iteration_index``) so independent
-    iterations actually differ when the engine consumes randomness.
+    Each iteration beyond the first folds its index into the configuration's
+    seed(s) via ``combine_seed`` so independent iterations actually differ
+    when the engine consumes randomness (see ``run_variant_iteration``).
     """
 
     configuration_ids: list[str]

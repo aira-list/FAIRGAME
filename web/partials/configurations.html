@@ -802,6 +802,20 @@
           </div>
 
           <div class="fg-section">
+            <h3>Payoff direction</h3>
+            <p class="text-sm font-medium mb-2">These numbers are:</p>
+            <label class="flex items-center gap-2 text-sm mb-1.5">
+              <input type="radio" name="payoffdir" value="reward" x-model="builder.payoffDirection"/>
+              <span><strong>Rewards</strong> — higher is better.</span>
+            </label>
+            <label class="flex items-center gap-2 text-sm">
+              <input type="radio" name="payoffdir" value="penalty" x-model="builder.payoffDirection"/>
+              <span><strong>Penalties</strong> — lower is better.</span>
+            </label>
+            <p class="fg-help mt-1">With penalties the engine treats lower numbers as better when computing Nash equilibria (<code>auto</code>), best-response regret and welfare efficiency; the prompt still shows the raw numbers. One setting for the whole configuration — payoff variants share it.</p>
+          </div>
+
+          <div class="fg-section">
             <h3>Strategies</h3>
             <p class="fg-help mb-2" x-show="isLLMMode()">Each strategy has a <strong>key</strong> (used internally, language-neutral) and a <strong>display label per language</strong> — the label is what the agent reads in the prompt, so translate it for every language you run.</p>
             <p class="fg-help mb-2" x-show="!isLLMMode()" x-cloak>Each strategy has a <strong>key</strong> (used internally) and a single display <strong>label</strong> — baselines have no prompt, so one language-neutral label is enough (it's only used in results).</p>

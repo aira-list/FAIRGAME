@@ -105,6 +105,15 @@ class TestTranslatorIsLLMOnly(unittest.TestCase):
         tr.translate("Choisis {A} ou {B}", "it", source_lang_code="fr")
         self.assertIn("written in French", _FakeTranslator.last_prompt)
 
+    def test_cn_vn_aliases_resolve_to_real_language_names(self) -> None:
+        # FAIRGAME uses "cn"/"vn" (not BCP 47); langcodes alone would render
+        # them as "Unknown language [cn]" in the translation prompt.
+        tr = TemplateTranslator("fake-translate")
+        tr.translate("Choose {A} or {B}", "cn", source_lang_code="vn")
+        self.assertIn("translation in Chinese", _FakeTranslator.last_prompt)
+        self.assertIn("written in Vietnamese", _FakeTranslator.last_prompt)
+        self.assertNotIn("Unknown language", _FakeTranslator.last_prompt)
+
     def test_translate_has_no_cosine_threshold_argument(self) -> None:
         sig = inspect.signature(TemplateTranslator.translate)
         self.assertNotIn("cosine_threshold", sig.parameters)

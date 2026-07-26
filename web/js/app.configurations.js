@@ -65,6 +65,9 @@ window.__fgConfigurations = {
         utilityParams: { gamma: 0.5, offset: 1.0, alpha: 0.4, beta: 0.6 },
         // Payoff matrix scratchpad
         matrix: defaultBuilderMatrix(),
+        // 'reward' (higher is better) | 'penalty' (lower is better). One
+        // setting for the whole configuration — payoff variants share it.
+        payoffDirection: 'reward',
         stopGameWhenCsv: '',
         // Personality input mode
         personalityMode: 'per_agent',         // 'per_agent' | 'pool'
@@ -606,13 +609,21 @@ window.__fgConfigurations = {
       },
 
       removePayoffVariant(idx) {
+        // Commit the open variant's in-progress grid edits first (like
+        // switch/add do) — otherwise removing a *different* variant would
+        // silently discard them when the grid is re-imported below.
+        this._captureActiveVariantFromGrid();
+        const active = this.configsPage.activeVariantIdx ?? 0;
         this.configsPage.variants.splice(idx, 1);
         if (this.configsPage.variants.length === 0) {
           this.configsPage.activeVariantIdx = null;
         } else {
-          // Keep the active index in range.
+          // Removing an index below the active one shifts it down by one so
+          // the same variant stays active; removing the active one falls
+          // back to its neighbour (same position, clamped to the new end).
+          const next = idx < active ? active - 1 : active;
           this.configsPage.activeVariantIdx = Math.min(
-            this.configsPage.activeVariantIdx ?? 0,
+            next,
             this.configsPage.variants.length - 1,
           );
           this.importPayoffMatrix(
@@ -952,6 +963,8 @@ window.__fgConfigurations = {
 
       _hydratePayoffMatrix(cfg) {
         const c = this.builder.cfg;
+        // Direction of the numbers: 'penalty' means lower is better.
+        this.builder.payoffDirection = cfg.payoffDirection === 'penalty' ? 'penalty' : 'reward';
         if (cfg.payoffMatrix) {
           this.importPayoffMatrix(cfg.payoffMatrix, c.languages[0]);
         } else {
@@ -969,6 +982,11 @@ window.__fgConfigurations = {
         const keySource = stratsByLang[lang] || Object.values(stratsByLang)[0] || {};
         const stratKeys = Object.keys(keySource);
         if (stratKeys.length === 0) return;
+        // Pristine copy of the imported block: buildPayoffMatrixForBuild
+        // re-emits its weight-key wiring verbatim (or updates its values in
+        // place) so the template's {weightN} placeholders keep meaning what
+        // they meant. A fresh draft has no ``original`` (defaultBuilderMatrix).
+        this.builder.matrix.original = JSON.parse(JSON.stringify(pm));
         this.builder.matrix.strategies = stratKeys.map(k => {
           const labels = {};
           for (const [lc, dict] of Object.entries(stratsByLang)) labels[lc] = (dict || {})[k] || '';
@@ -1016,42 +1034,186 @@ window.__fgConfigurations = {
       buildPayoffMatrixForBuild(langs) {
         // Convert the editor scratchpad into the engine's
         // weights/strategies/combinations/matrix shape.
+        //
+        // Weight keys are IDENTITY, not compression: templates reference
+        // {weightN} placeholders, so re-interning keys by value order (the
+        // old behaviour) silently re-wired which payoff each placeholder
+        // showed — prompts stated inverted payoffs while scoring was fine.
         const sm = this.builder.matrix;
-        const labels = {};
-        for (const lang of langs) {
-          labels[lang] = {};
-          // Per-language strategy label, falling back to the key when blank.
-          for (const s of sm.strategies) {
-            labels[lang][s.key] = ((s.labels && s.labels[lang]) || '').trim() || s.key;
-          }
+        // Editing an imported matrix whose strategy/cell layout is intact:
+        // preserve its wiring (round-trips verbatim when nothing changed).
+        if (sm.original && this._matrixWiringMatches(sm.original)) {
+          return this._payoffMatrixFromOriginal(sm.original, langs);
         }
-        // Distinct payoff values become weight keys.
+        const labels = this._matrixLabelsForBuild(langs);
+        // New configuration: the canonical 2x2 symmetric layout gets the
+        // documented weight1..weight4 schema every shipped template assumes.
+        const canonical = this._canonicalSymmetric2x2();
+        if (canonical) {
+          return {
+            weights: canonical.weights,
+            strategies: labels,
+            combinations: canonical.combinations,
+            matrix: canonical.matrix,
+          };
+        }
+        // Anything else: one weight key per (combination, slot). Equal values
+        // in different roles deliberately do NOT share a key.
         const weights = {};
-        const wkeyByValue = {};
-        let wcount = 1;
-        function intern(value) {
-          const numeric = Number(value);
-          const sig = numeric.toFixed(4);
-          if (wkeyByValue[sig] === undefined) {
-            const wk = 'weight' + (wcount++);
-            wkeyByValue[sig] = wk;
-            weights[wk] = numeric;
-          }
-          return wkeyByValue[sig];
-        }
         const combinations = {};
         const matrix = {};
         let ccount = 1;
+        let wcount = 1;
         for (const r of sm.strategies) {
           for (const c of sm.strategies) {
             const cell = sm.cells[r.key + '|' + c.key];
             if (!cell) continue;
             const ck = 'combination' + (ccount++);
             combinations[ck] = [r.key, c.key];
-            matrix[ck] = cell.map(intern);
+            matrix[ck] = cell.map(value => {
+              const wk = 'weight' + (wcount++);
+              weights[wk] = Number(value);
+              return wk;
+            });
           }
         }
         return { weights, strategies: labels, combinations, matrix };
+      },
+
+      // Per-language strategy labels, falling back to the key when blank.
+      _matrixLabelsForBuild(langs) {
+        const labels = {};
+        for (const lang of langs) {
+          labels[lang] = {};
+          for (const s of this.builder.matrix.strategies) {
+            labels[lang][s.key] = ((s.labels && s.labels[lang]) || '').trim() || s.key;
+          }
+        }
+        return labels;
+      },
+
+      // True when the grid still matches the imported block's wiring: every
+      // combination maps onto an existing grid cell of the same arity (with
+      // resolvable weight keys), and every grid cell is covered by a
+      // combination. Renamed/added/removed strategies or cells fall back to
+      // the fresh-allocation paths in buildPayoffMatrixForBuild.
+      _matrixWiringMatches(pm) {
+        const sm = this.builder.matrix;
+        const stratKeys = new Set(sm.strategies.map(s => s.key));
+        const combos = Object.entries(pm.combinations || {});
+        if (combos.length === 0) return false;
+        const covered = new Set();
+        for (const [ck, pair] of combos) {
+          const wkeys = (pm.matrix || {})[ck];
+          if (!Array.isArray(pair) || !Array.isArray(wkeys)) return false;
+          if (!pair.every(k => stratKeys.has(k))) return false;
+          if (wkeys.some(wk => (pm.weights || {})[wk] === undefined)) return false;
+          const cell = sm.cells[pair.join('|')];
+          if (!cell || cell.length !== wkeys.length) return false;
+          covered.add(pair.join('|'));
+        }
+        for (const r of sm.strategies) {
+          for (const c of sm.strategies) {
+            const key = r.key + '|' + c.key;
+            if (sm.cells[key] && !covered.has(key)) return false;
+          }
+        }
+        return true;
+      },
+
+      // Re-emit the imported weights/combinations/matrix. Unchanged grids
+      // round-trip byte-identically; edited cells update their weight's value
+      // in place, and a shared weight key whose slots now disagree keeps the
+      // unchanged slots (fresh weightN keys are minted for the changed ones).
+      _payoffMatrixFromOriginal(pm, langs) {
+        const sm = this.builder.matrix;
+        const weights = JSON.parse(JSON.stringify(pm.weights));
+        const combinations = JSON.parse(JSON.stringify(pm.combinations));
+        const matrix = JSON.parse(JSON.stringify(pm.matrix));
+        // Group every (combination, slot) by the weight key wiring it.
+        const slotsByKey = {};
+        for (const [ck, pair] of Object.entries(combinations)) {
+          const cell = sm.cells[pair.join('|')];
+          matrix[ck].forEach((wk, i) => {
+            (slotsByKey[wk] = slotsByKey[wk] || []).push({ ck, i, value: Number(cell[i]) });
+          });
+        }
+        const nextKey = () => {
+          let n = 1;
+          while (weights['weight' + n] !== undefined) n++;
+          return 'weight' + n;
+        };
+        for (const [wk, slots] of Object.entries(slotsByKey)) {
+          const values = new Set(slots.map(s => s.value));
+          if (values.size === 1) {
+            // All the key's slots agree — update the shared value in place
+            // (a no-op when nothing changed).
+            weights[wk] = slots[0].value;
+            continue;
+          }
+          // Slots diverged: the ones still at the original value keep the key
+          // (first slot's value when none kept it); the rest get one fresh
+          // key per distinct new value.
+          const original = Number(pm.weights[wk]);
+          const keepValue = values.has(original) ? original : slots[0].value;
+          weights[wk] = keepValue;
+          const freshByValue = {};
+          for (const s of slots) {
+            if (s.value === keepValue) continue;
+            if (freshByValue[s.value] === undefined) {
+              const fresh = nextKey();
+              freshByValue[s.value] = fresh;
+              weights[fresh] = s.value;
+            }
+            matrix[s.ck][s.i] = freshByValue[s.value];
+          }
+        }
+        // Preserve the imported per-language labels verbatim and overlay only
+        // the languages the form edits — syncLanguageFields prunes the grid's
+        // labels to the selected languages, so a multilingual seed's other
+        // labels must survive from the original.
+        const strategies = JSON.parse(JSON.stringify(pm.strategies || {}));
+        const edited = this._matrixLabelsForBuild(langs);
+        for (const lang of langs) strategies[lang] = edited[lang];
+        return { weights, strategies, combinations, matrix };
+      },
+
+      // The canonical documented 2x2 layout: cell(1,1) and cell(2,2) are
+      // equal pairs and the off-diagonal cells mirror each other. Returns the
+      // weight1..weight4 schema (weight1=cell(1,1), weight3/weight2 =
+      // cell(1,2)'s two slots, weight4=cell(2,2)), or null when the grid
+      // isn't that shape.
+      _canonicalSymmetric2x2() {
+        const sm = this.builder.matrix;
+        if (sm.strategies.length !== 2) return null;
+        const [s1, s2] = sm.strategies.map(s => s.key);
+        const c11 = sm.cells[s1 + '|' + s1];
+        const c12 = sm.cells[s1 + '|' + s2];
+        const c21 = sm.cells[s2 + '|' + s1];
+        const c22 = sm.cells[s2 + '|' + s2];
+        if (![c11, c12, c21, c22].every(c => Array.isArray(c) && c.length === 2)) return null;
+        if (Number(c11[0]) !== Number(c11[1]) || Number(c22[0]) !== Number(c22[1])) return null;
+        if (Number(c12[0]) !== Number(c21[1]) || Number(c12[1]) !== Number(c21[0])) return null;
+        return {
+          weights: {
+            weight1: Number(c11[0]),
+            weight2: Number(c12[1]),
+            weight3: Number(c12[0]),
+            weight4: Number(c22[0]),
+          },
+          combinations: {
+            combination1: [s1, s1],
+            combination2: [s1, s2],
+            combination3: [s2, s1],
+            combination4: [s2, s2],
+          },
+          matrix: {
+            combination1: ['weight1', 'weight1'],
+            combination2: ['weight3', 'weight2'],
+            combination3: ['weight2', 'weight3'],
+            combination4: ['weight4', 'weight4'],
+          },
+        };
       },
 
       // Serialize the current form state into an engine config. Orchestrates
@@ -1082,6 +1244,10 @@ window.__fgConfigurations = {
         if (Object.keys(this.builder.matrix.cells).length > 0) {
           cfg.payoffMatrix = this.buildPayoffMatrixForBuild(langs);
         }
+        // Whether the numbers are rewards or penalties. Per-configuration
+        // (payoff variants share it), so it stays top-level; explicit
+        // 'reward' keeps the stored config self-describing.
+        cfg.payoffDirection = this.builder.payoffDirection === 'penalty' ? 'penalty' : 'reward';
 
         this._serializeTournament(cfg);
         this._serializeTrust(cfg);

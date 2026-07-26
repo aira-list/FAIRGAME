@@ -866,18 +866,19 @@ def _c_belief_agreement(rows, n, names):
 
 
 def _c_equilibrium_rate(rows):
+    # Two complementary shares rather than a single-value bar: a lone label
+    # is (rightly) dropped by worth_plotting, which used to erase the whole
+    # Equilibrium section for one-shot runs. ``flat_ok`` because an exact
+    # 50/50 split is a finding, not a flat non-chart.
+    rate = mean_of([as_float(r.get("equilibrium_rate")) for r in rows])
     return chart_spec(
         "equilibrium_rate",
         "bar",
         "Equilibrium play rate",
         description="Share of all rounds where the joint play was a Nash equilibrium of the stage game.",
-        labels=["equilibrium rate"],
-        datasets=[
-            {
-                "label": "rate",
-                "data": [mean_of([as_float(r.get("equilibrium_rate")) for r in rows])],
-            }
-        ],
+        labels=["at equilibrium", "off equilibrium"],
+        datasets=[{"label": "share of rounds", "data": [rate, round(1 - rate, 6)]}],
+        flat_ok=True,
     )
 
 

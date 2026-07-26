@@ -17,6 +17,7 @@ from typing import Any
 
 from fastapi import HTTPException
 
+from src.utils.rng import combine_seed
 from web_api.configurations_lib import ResolvedVariant, is_group, iter_resolved_variants
 from web_api.engine import get_engine
 from web_api.run_history import save_run
@@ -182,13 +183,21 @@ def run_variant_iteration(
 
     Shared by ``run-batch`` and its streaming twin. Deep copy per iteration:
     the engine and ``save_run`` both retain ``cfg``; a shallow copy would
-    share nested payoffMatrix/agents across iterations' saved metadata. The
-    iteration index offsets the seed so independent iterations consume
-    different randomness.
+    share nested payoffMatrix/agents across iterations' saved metadata.
+
+    Iteration 0 runs the configuration exactly as stored; every later
+    iteration folds its index into the seed axis with ``combine_seed`` so
+    independent iterations consume different randomness. Folding (rather than
+    ``seed + it``) keeps the iteration axis from colliding with the
+    ``seedCount`` sweep's ``base + i`` children, and an explicit ``seeds``
+    list is re-derived per iteration instead of being ignored.
     """
     cfg = copy.deepcopy(variant.config)
-    if iterations > 1 and cfg.get("seed") is not None:
-        cfg["seed"] = int(cfg["seed"]) + it
+    if it > 0:
+        if cfg.get("seeds"):
+            cfg["seeds"] = [combine_seed(int(s), it) for s in cfg["seeds"]]
+        elif cfg.get("seed") is not None:
+            cfg["seed"] = combine_seed(int(cfg["seed"]), it)
     rows = get_engine().create_and_run_games(cfg, progress_cb=progress_cb)
     run_id = new_id()
     save_run(run_id, cfg, rows, configuration_id=cid)

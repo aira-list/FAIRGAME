@@ -218,6 +218,25 @@ def restore_template(template_id: str) -> dict[str, Any]:
     with edit_store("templates") as templates:
         for t in templates:
             if t["id"] == template_id:
+                # Restoring must not break the (game_type, variation, language)
+                # uniqueness that update_template enforces — a non-archived
+                # twin may have been created while this one sat in the archive.
+                collision = find_template(
+                    templates,
+                    t["game_type_id"],
+                    t["variation"],
+                    t["language"],
+                    exclude_id=template_id,
+                )
+                if collision is not None:
+                    raise HTTPException(
+                        status_code=409,
+                        detail=(
+                            f"A template already exists for game_type={t['game_type_id']!r} "
+                            f"variation={t['variation']!r} language={t['language']!r}. "
+                            f"Archive or delete it before restoring this one."
+                        ),
+                    )
                 t["archived"] = False
                 t.pop("archived_at", None)
                 return t
@@ -244,8 +263,8 @@ def translate_template_into_languages(
 
     Each successful translation becomes a *new* template under the same
     game_type and variation, with ``source_template_id`` linking back to the
-    original. Skips a target if a template with the same (game_type, variation,
-    language) already exists.
+    original. Skips a target if a non-archived template with the same
+    (game_type, variation, language) already exists.
     """
     templates = load_store("templates")
     source = next((t for t in templates if t["id"] == template_id), None)
@@ -262,13 +281,10 @@ def translate_template_into_languages(
         if target == source["language"]:
             skipped.append(f"{target} (same as source)")
             continue
-        already = any(
-            t["game_type_id"] == source["game_type_id"]
-            and t["variation"] == source["variation"]
-            and t["language"] == target
-            for t in templates
-        )
-        if already:
+        # Archived templates don't block a re-translate — only a live one
+        # occupies the (game_type, variation, language) triple.
+        already = find_template(templates, source["game_type_id"], source["variation"], target)
+        if already is not None:
             skipped.append(f"{target} (already exists for this variation)")
             continue
         try:
@@ -296,13 +312,10 @@ def translate_template_into_languages(
         with edit_store("templates") as current:
             still_new = []
             for tpl in created:
-                dupe = any(
-                    t["game_type_id"] == tpl["game_type_id"]
-                    and t["variation"] == tpl["variation"]
-                    and t["language"] == tpl["language"]
-                    for t in current
+                dupe = find_template(
+                    current, tpl["game_type_id"], tpl["variation"], tpl["language"]
                 )
-                if dupe:
+                if dupe is not None:
                     skipped.append(f"{tpl['language']} (already exists for this variation)")
                 else:
                     current.append(tpl)
@@ -366,9 +379,12 @@ def update_configuration(config_id: str, body: ConfigurationBody) -> dict[str, A
         _check_collisions(items, candidate, exclude_id=config_id)
         for item in items:
             if item["id"] == config_id:
+                # Capture before clear() — reading it *after* would always
+                # find nothing and stamp a fresh timestamp on every update.
+                created_at = item.get("created_at")
                 item.clear()
                 item.update(candidate)
-                item["created_at"] = item.get("created_at") or now_iso()
+                item["created_at"] = created_at or now_iso()
                 return item
     raise HTTPException(status_code=404, detail=f"Configuration {config_id!r} not found.")
 
