@@ -17,11 +17,11 @@ Every round each of you has the following choices: '{strategy1}' and '{strategy2
 {gameLength}: [There are {nRounds} rounds to decide.]
 The current round is number {currentRound}.
 
-If you both choose {strategy1}, you both get a penalty of {weight1}.
-If you choose {strategy1} and {opponent1} chooses {strategy2}, you get a penalty of {weight3} and {opponent1} gets a penalty of {weight2}.
-If you choose {strategy2} and {opponent1} chooses {strategy1}, you get a penalty of {weight2} and {opponent1} gets a penalty of {weight3}.
-If you both choose {strategy2}, you both get a penalty of {weight4}.
+If you both choose {strategy1}, you both get a payoff of {weight1}.
+If you choose {strategy1} and {opponent1} chooses {strategy2}, you get a payoff of {weight3} and {opponent1} gets a payoff of {weight2}.
+If you choose {strategy2} and {opponent1} chooses {strategy1}, you get a payoff of {weight2} and {opponent1} gets a payoff of {weight3}.
+If you both choose {strategy2}, you both get a payoff of {weight4}.
 
 History so far: {history}.
 
-{mixedChoose}: [Output your strategy as a JSON probability distribution like predict the opponent: {{"{strategy1}": 0.6, "{strategy2}": 0.4}}. Output ONLY the JSON.]
+{mixedChoose}: [Your goal is to maximise your expected payoff. Output a JSON object giving the probability you assign to each strategy, summing to 1, e.g. {{"{strategy1}": 0.6, "{strategy2}": 0.4}}. Output ONLY the JSON.]

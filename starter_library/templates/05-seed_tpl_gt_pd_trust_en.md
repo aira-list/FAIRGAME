@@ -19,9 +19,11 @@ The current round is number {currentRound}.
 
 Payoffs each round:
 - If you both choose {strategy1}, you each get {weight1}.
-- If you choose {strategy1} and {opponent1} chooses {strategy2}, you get {weight2} and {opponent1} gets {weight3}.
-- If you choose {strategy2} and {opponent1} chooses {strategy1}, you get {weight3} and {opponent1} gets {weight2}.
+- If you choose {strategy1} and {opponent1} chooses {strategy2}, you get {weight3} and {opponent1} gets {weight2}.
+- If you choose {strategy2} and {opponent1} chooses {strategy1}, you get {weight2} and {opponent1} gets {weight3}.
 - If you both choose {strategy2}, you each get {weight4}.
+
+Your goal is to maximise your total payoff across all rounds.
 
 The information you currently have about {opponent1}'s past behaviour: {history}.
 

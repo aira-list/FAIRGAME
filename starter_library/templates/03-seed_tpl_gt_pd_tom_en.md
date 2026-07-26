@@ -22,13 +22,14 @@ Every round each of you has the following choices: '{strategy1}' and '{strategy2
 {gameLength}: [There are {nRounds} rounds to decide.]
 The current round is number {currentRound}.
 
-If you both choose {strategy1}, you both get a penalty of {weight1}.
-If you choose {strategy1} and {opponent1} chooses {strategy2}, you get a penalty of {weight3} and {opponent1} gets a penalty of {weight2}.
-If you choose {strategy2} and {opponent1} chooses {strategy1}, you get a penalty of {weight2} and {opponent1} gets a penalty of {weight3}.
-If you both choose {strategy2}, you both get a penalty of {weight4}.
+If you both choose {strategy1}, you both get a payoff of {weight1}.
+If you choose {strategy1} and {opponent1} chooses {strategy2}, you get a payoff of {weight3} and {opponent1} gets a payoff of {weight2}.
+If you choose {strategy2} and {opponent1} chooses {strategy1}, you get a payoff of {weight2} and {opponent1} gets a payoff of {weight3}.
+If you both choose {strategy2}, you both get a payoff of {weight4}.
 
-Your goal is to minimize your penalty.
+Your goal is to maximise your payoff.
 History so far: {history}.
 
 {believe}: [Before choosing, predict what {opponent1} will do this round. Reply ONLY with a JSON object mapping each strategy label to a probability that sums to 1, e.g. {{"{strategy1}": 0.6, "{strategy2}": 0.4}}. Output ONLY the JSON.]
+{believe2}: [Now predict what {opponent1} believes YOU will do this round. Reply ONLY with a JSON object mapping each of YOUR strategy labels to the probability {opponent1} assigns to it, summing to 1, e.g. {{"{strategy1}": 0.6, "{strategy2}": 0.4}}. Output ONLY the JSON.]
 {choose}: [Choose between {strategy1} and {strategy2}. Output ONLY the choice.]

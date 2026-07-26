@@ -21,8 +21,9 @@ Every round each of you has the following choices: '{strategy1}' and '{strategy2
 {gameLength}: [There are {nRounds} rounds to decide.]
 The current round is number {currentRound}.
 
-If you both choose the same option, you get a reward of {weight1} and {opponent1} gets a reward of {weight2}.
-If you choose differently, you get a reward of {weight2} and {opponent1} gets a reward of {weight1}.
+If you both choose the same option, agent1 gets a reward of {weight1} and agent2 gets a reward of {weight2}.
+If you choose different options, agent1 gets a reward of {weight2} and agent2 gets a reward of {weight1}.
+One of you wins exactly what the other loses: agent1 wants to match, agent2 wants to mismatch.
 
 Your goal is to maximise your reward.
 History so far: {history}.
