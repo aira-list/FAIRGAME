@@ -1,0 +1,125 @@
+{
+  "id": "5a1cfeb2f0d2",
+  "name": "Battle of the Sexes \u2014 multilingual (EN+FR) \u00b7 GPT-4o",
+  "timestamp": "2026-07-26T21:46:34",
+  "configuration_id": "seed_cfg_battle",
+  "config": {
+    "nRounds": 10,
+    "nRoundsIsKnown": true,
+    "allAgentPermutations": true,
+    "agents": {
+      "names": [
+        "Agent1",
+        "Agent2"
+      ],
+      "personalities": {
+        "en": [
+          "cooperative",
+          "selfish"
+        ],
+        "fr": [
+          "coop\u00e9ratif",
+          "\u00e9go\u00efste"
+        ],
+        "ar": [
+          "\u0645\u062a\u0639\u0627\u0648\u0646",
+          "\u0623\u0646\u0627\u0646\u064a"
+        ],
+        "cn": [
+          "\u5408\u4f5c\u578b\u7684",
+          "\u81ea\u79c1\u578b\u7684"
+        ],
+        "vn": [
+          "m\u1ed9t ng\u01b0\u1eddi h\u1ee3p t\u00e1c",
+          "m\u1ed9t ng\u01b0\u1eddi \u00edch k\u1ef7"
+        ]
+      },
+      "opponentPersonalityProb": [
+        0
+      ]
+    },
+    "payoffMatrix": {
+      "weights": {
+        "weight1": 10,
+        "weight2": 0,
+        "weight3": 0,
+        "weight4": 7
+      },
+      "strategies": {
+        "en": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        },
+        "fr": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        },
+        "ar": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        },
+        "cn": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        },
+        "vn": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        }
+      },
+      "combinations": {
+        "combination1": [
+          "strategy1",
+          "strategy1"
+        ],
+        "combination2": [
+          "strategy1",
+          "strategy2"
+        ],
+        "combination3": [
+          "strategy2",
+          "strategy1"
+        ],
+        "combination4": [
+          "strategy2",
+          "strategy2"
+        ]
+      },
+      "matrix": {
+        "combination1": [
+          "weight1",
+          "weight4"
+        ],
+        "combination2": [
+          "weight3",
+          "weight2"
+        ],
+        "combination3": [
+          "weight2",
+          "weight3"
+        ],
+        "combination4": [
+          "weight4",
+          "weight1"
+        ]
+      }
+    },
+    "stopGameWhen": [],
+    "agentsCommunicate": false,
+    "reputationApplies": false,
+    "llms": [
+      "GPT-4o",
+      "GPT-4o"
+    ],
+    "name": "Battle of the Sexes \u2014 multilingual (EN+FR) \u00b7 GPT-4o",
+    "languages": [
+      "en",
+      "fr"
+    ],
+    "promptTemplate": {
+      "en": "Agent1 and Agent2 have different preferences for a night out.\nAgent1 likes {strategy1} and Agent2 likes {strategy2}.\n\nYou are {currentPlayerName} and the other is {opponent1}.\n{intro}: [You are {personality}.]\n{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability}% of being {opponentPersonality}.]\nAt each round each of you has the following choices: '{strategy1}' and '{strategy2}'.\n{gameLength}: [There are {nRounds} rounds to decide.]\nThe current round is number {currentRound}.\n\nIf you both choose {strategy1}, Agent1 gets a reward of {weight1} and Agent2 gets a reward of {weight4}.\nIf you choose differently, you both get a reward of {weight2}.\nIf you both choose {strategy2}, Agent2 gets a reward of {weight1} and Agent1 gets a reward of {weight4}.\n\nYour goal is to maximize your reward by making the best strategies based on the provided information.\nThis is the history of the choices made so far: {history}.\nChoose between {strategy1} and {strategy2}.\nOutput ONLY the choice.",
+      "fr": "Agent1 et Agent2 ont des pr\u00e9f\u00e9rences diff\u00e9rentes pour une soir\u00e9e.\nAgent1 pr\u00e9f\u00e8re {strategy1} et Agent2 pr\u00e9f\u00e8re {strategy2}.\n\nVous \u00eates {currentPlayerName} et l'autre est {opponent1}.\n{intro}: [Vous \u00eates {personality}.]\n{opponentIntro}: [{opponent1} a une probabilit\u00e9 de {opponentPersonalityProbability}% d'\u00eatre {opponentPersonality}.]\n\u00c0 chaque tour, chacun de vous a les choix suivants : '{strategy1}' et '{strategy2}'.\n{gameLength}: [Il y a {nRounds} tours pour d\u00e9cider.]\nLe tour actuel est le num\u00e9ro {currentRound}.\n\nSi vous choisissez tous les deux {strategy1}, Agent1 re\u00e7oit une r\u00e9compense de {weight1} et Agent2 re\u00e7oit une r\u00e9compense de {weight4}.\nSi vous choisissez diff\u00e9remment, vous recevez chacun une r\u00e9compense de {weight2}.\nSi vous choisissez tous les deux {strategy2}, Agent2 re\u00e7oit une r\u00e9compense de {weight1} et Agent1 re\u00e7oit une r\u00e9compense de {weight4}.\n\nVotre objectif est de maximiser votre r\u00e9compense en choisissant les meilleures strat\u00e9gies en fonction des informations fournies.\nVoici l'historique des choix faits jusqu'\u00e0 pr\u00e9sent : {history}.\nChoisissez entre {strategy1} et {strategy2}.\nAffichez UNIQUEMENT le choix."
+    }
+  },
+  "n_rows": 8
+}

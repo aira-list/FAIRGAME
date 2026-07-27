@@ -1,0 +1,425 @@
+[
+  {
+    "game_id": "game_0",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 10,
+    "agents_communicate": true,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA"
+    ],
+    "agent1_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0
+    ],
+    "agent1_messages": [
+      "I propose we both choose OptionA each round for a reliable 6 points each - this gives us both 60 points total, much better than the risk of mutual defection.",
+      "Let's stick with OptionA - we both got 6 points last round and can reach 60 total by maintaining this cooperation.",
+      "I appreciate our cooperation so far - let's continue with OptionA for another mutual 6 points this round.",
+      "Let's keep choosing OptionA together - we're on track for 60 points and both benefiting from this reliable cooperation.",
+      "Let's continue with OptionA - we're halfway there with 24 points each and this cooperation is working perfectly.",
+      "Let's maintain our strong cooperation with OptionA - we're halfway to 60 points each and this strategy is working perfectly for both of us.",
+      "Let's both stick with OptionA - we're at 36 points each with 4 rounds left, and cooperation will get us to 60 total.",
+      "Let's finish strong with OptionA - just 3 rounds left and we're almost at our 60-point goal together.",
+      "Let's both choose OptionA one more time - we're at 48 points each and just need 12 more points to reach our 60-point goal together.",
+      "Let's both choose OptionA one final time - we're at 54 points each and can reach our 60-point goal together."
+    ],
+    "agent1_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ],
+    "agent1_regret_mean": 4.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "cooperative",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA"
+    ],
+    "agent2_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0
+    ],
+    "agent2_messages": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "agent2_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ],
+    "agent2_regret_mean": 4.0,
+    "welfare_mean_sum": 12.0,
+    "welfare_mean_min": 6.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_1",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 3,
+    "agents_communicate": true,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      0.0,
+      0.0,
+      2.0
+    ],
+    "agent1_messages": [
+      "Let's cooperate and both choose OptionA each round for a guaranteed 6 payoff each - that gives us 60 total over 10 rounds, much better than the risk of mutual defection.",
+      "I need to address what happened in round 1 while maintaining a cooperative approach for the remaining 9 rounds.\n\nI proposed cooperation for mutual benefit, but agent2 defected and chose OptionB, earning 10 while I earned 0. Now I need to decide: should I retaliate, or continue trying to establish cooperation?\n\nGiven that I'm described as cooperative and we have 9 rounds left, the best long-term strategy is to try to rebuild trust and cooperation, even though I was betrayed. However, I should also protect myself somewhat.\n\nHere's my message:\n\nI cooperated in good faith last round, but you chose OptionB\u2014I hope that was a mistake because mutual OptionA would give us both 54 more points combined than mutual OptionB over the remaining 9 rounds.",
+      "I appreciate your cooperation attempts, but I need to protect myself\u2014I'll choose OptionB this round unless you commit to OptionA for the remaining 8 rounds."
+    ],
+    "agent1_regret_per_round": [
+      2.0,
+      2.0,
+      0.0
+    ],
+    "agent1_regret_mean": 1.3333333333333333,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionB",
+      "OptionB",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      10.0,
+      10.0,
+      2.0
+    ],
+    "agent2_messages": [
+      null,
+      null,
+      null
+    ],
+    "agent2_regret_per_round": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "agent2_regret_mean": 0.0,
+    "welfare_mean_sum": 8.0,
+    "welfare_mean_min": 0.6666666666666666,
+    "welfare_mean_gini": 0.3333333333333333,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_2",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 3,
+    "agents_communicate": true,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "selfish",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionB",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      6.0,
+      10.0,
+      2.0
+    ],
+    "agent1_messages": [
+      "I'll choose to coordinate on the mutually beneficial outcome since we're at the beginning of a repeated game.\n\nLet's both play OptionA each round - we'll each get 6 points repeatedly for 60 total, much better than the mutual defection outcome.",
+      "I appreciate you cooperating last round - let's keep both playing OptionA for mutual benefit, as getting 6 each round beats any other outcome over 10 rounds.",
+      "I appreciate your cooperation - let's both return to OptionA so we can each get 6 points per round for the remaining 8 rounds instead of risking further conflict."
+    ],
+    "agent1_regret_per_round": [
+      4.0,
+      0.0,
+      0.0
+    ],
+    "agent1_regret_mean": 1.3333333333333333,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "cooperative",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      6.0,
+      0.0,
+      2.0
+    ],
+    "agent2_messages": [
+      null,
+      null,
+      null
+    ],
+    "agent2_regret_per_round": [
+      4.0,
+      2.0,
+      0.0
+    ],
+    "agent2_regret_mean": 2.0,
+    "welfare_mean_sum": 8.666666666666666,
+    "welfare_mean_min": 2.6666666666666665,
+    "welfare_mean_gini": 0.16666666666666666,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_3",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 1,
+    "agents_communicate": true,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "selfish",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionB"
+    ],
+    "agent1_scores": [
+      2.0
+    ],
+    "agent1_messages": [
+      "I'll choose to cooperate and propose mutual coordination, since we're facing a repeated game where cooperation could benefit both of us.\n\nLet's both play OptionA each round and each get 6 - that way we both do well."
+    ],
+    "agent1_regret_per_round": [
+      0.0
+    ],
+    "agent1_regret_mean": 0.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionB"
+    ],
+    "agent2_scores": [
+      2.0
+    ],
+    "agent2_messages": [
+      null
+    ],
+    "agent2_regret_per_round": [
+      0.0
+    ],
+    "agent2_regret_mean": 0.0,
+    "welfare_mean_sum": 4.0,
+    "welfare_mean_min": 2.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  }
+]

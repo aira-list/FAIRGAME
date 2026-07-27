@@ -1,0 +1,566 @@
+[
+  {
+    "game_id": "game_0",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 10,
+    "agents_communicate": false,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA"
+    ],
+    "agent1_scores": [
+      3.0,
+      3.0,
+      3.0,
+      3.0,
+      3.0,
+      3.0,
+      3.0,
+      3.0,
+      3.0,
+      3.0
+    ],
+    "agent1_messages": [],
+    "agent1_regret_per_round": [
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0
+    ],
+    "agent1_regret_mean": 2.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "cooperative",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA"
+    ],
+    "agent2_scores": [
+      3.0,
+      3.0,
+      3.0,
+      3.0,
+      3.0,
+      3.0,
+      3.0,
+      3.0,
+      3.0,
+      3.0
+    ],
+    "agent2_messages": [],
+    "agent2_regret_per_round": [
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0
+    ],
+    "agent2_regret_mean": 2.0,
+    "equilibria": [
+      "combination2",
+      "combination3"
+    ],
+    "equilibrium_per_round": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "equilibrium_rate": 0.0,
+    "first_equilibrium_round": NaN,
+    "welfare_mean_sum": 6.0,
+    "welfare_mean_min": 3.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": 1.0,
+    "welfare_per_round": [
+      {
+        "sum": 6.0,
+        "mean": 3.0,
+        "min": 3.0,
+        "max": 3.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 6.0,
+        "mean": 3.0,
+        "min": 3.0,
+        "max": 3.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 6.0,
+        "mean": 3.0,
+        "min": 3.0,
+        "max": 3.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 6.0,
+        "mean": 3.0,
+        "min": 3.0,
+        "max": 3.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 6.0,
+        "mean": 3.0,
+        "min": 3.0,
+        "max": 3.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 6.0,
+        "mean": 3.0,
+        "min": 3.0,
+        "max": 3.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 6.0,
+        "mean": 3.0,
+        "min": 3.0,
+        "max": 3.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 6.0,
+        "mean": 3.0,
+        "min": 3.0,
+        "max": 3.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 6.0,
+        "mean": 3.0,
+        "min": 3.0,
+        "max": 3.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 6.0,
+        "mean": 3.0,
+        "min": 3.0,
+        "max": 3.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_1",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 10,
+    "agents_communicate": false,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionB",
+      "OptionB",
+      "OptionA",
+      "OptionB",
+      "OptionA",
+      "OptionB",
+      "OptionA",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      1.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0
+    ],
+    "agent1_messages": [],
+    "agent1_regret_per_round": [
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0
+    ],
+    "agent1_regret_mean": 0.5,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      5.0,
+      5.0,
+      0.0,
+      0.0,
+      5.0,
+      0.0,
+      5.0,
+      0.0,
+      5.0,
+      0.0
+    ],
+    "agent2_messages": [],
+    "agent2_regret_per_round": [
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0
+    ],
+    "agent2_regret_mean": 0.5,
+    "equilibria": [
+      "combination2",
+      "combination3"
+    ],
+    "equilibrium_per_round": [
+      true,
+      true,
+      false,
+      false,
+      true,
+      false,
+      true,
+      false,
+      true,
+      false
+    ],
+    "equilibrium_rate": 0.5,
+    "first_equilibrium_round": 1.0,
+    "welfare_mean_sum": 3.0,
+    "welfare_mean_min": 0.5,
+    "welfare_mean_gini": 0.16666666666666663,
+    "welfare_efficiency": 0.5,
+    "welfare_per_round": [
+      {
+        "sum": 6.0,
+        "mean": 3.0,
+        "min": 1.0,
+        "max": 5.0,
+        "gini": 0.33333333333333326
+      },
+      {
+        "sum": 6.0,
+        "mean": 3.0,
+        "min": 1.0,
+        "max": 5.0,
+        "gini": 0.33333333333333326
+      },
+      {
+        "sum": 0.0,
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 0.0,
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 6.0,
+        "mean": 3.0,
+        "min": 1.0,
+        "max": 5.0,
+        "gini": 0.33333333333333326
+      },
+      {
+        "sum": 0.0,
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 6.0,
+        "mean": 3.0,
+        "min": 1.0,
+        "max": 5.0,
+        "gini": 0.33333333333333326
+      },
+      {
+        "sum": 0.0,
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 6.0,
+        "mean": 3.0,
+        "min": 1.0,
+        "max": 5.0,
+        "gini": 0.33333333333333326
+      },
+      {
+        "sum": 0.0,
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_2",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 10,
+    "agents_communicate": false,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Haiku 4.5",
+    "agent1_personality": "selfish",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "agent1_messages": [],
+    "agent1_regret_per_round": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "agent1_regret_mean": 1.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Haiku 4.5",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "agent2_messages": [],
+    "agent2_regret_per_round": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "agent2_regret_mean": 1.0,
+    "equilibria": [
+      "combination2",
+      "combination3"
+    ],
+    "equilibrium_per_round": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "equilibrium_rate": 0.0,
+    "first_equilibrium_round": NaN,
+    "welfare_mean_sum": 0.0,
+    "welfare_mean_min": 0.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": 0.0,
+    "welfare_per_round": [
+      {
+        "sum": 0.0,
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 0.0,
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 0.0,
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 0.0,
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 0.0,
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 0.0,
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 0.0,
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 0.0,
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 0.0,
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 0.0,
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "gini": 0.0
+      }
+    ]
+  }
+]

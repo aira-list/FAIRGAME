@@ -1,0 +1,140 @@
+{
+  "id": "044844e4990f",
+  "name": "PD \u2014 interaction graph (asymmetric visibility) \u00b7 Claude Haiku 4.5",
+  "timestamp": "2026-07-26T21:53:00",
+  "configuration_id": "seed_cfg_pd_interaction",
+  "config": {
+    "nRounds": 10,
+    "nRoundsIsKnown": true,
+    "allAgentPermutations": true,
+    "agents": {
+      "names": [
+        "agent1",
+        "agent2"
+      ],
+      "personalities": {
+        "en": [
+          "cooperative",
+          "selfish"
+        ],
+        "fr": [
+          "coop\u00e9ratif",
+          "\u00e9go\u00efste"
+        ],
+        "ar": [
+          "\u0645\u062a\u0639\u0627\u0648\u0646",
+          "\u0623\u0646\u0627\u0646\u064a"
+        ],
+        "cn": [
+          "\u5408\u4f5c\u578b\u7684",
+          "\u81ea\u79c1\u578b\u7684"
+        ],
+        "vn": [
+          "m\u1ed9t ng\u01b0\u1eddi h\u1ee3p t\u00e1c",
+          "m\u1ed9t ng\u01b0\u1eddi \u00edch k\u1ef7"
+        ]
+      },
+      "opponentPersonalityProb": [
+        0
+      ]
+    },
+    "payoffMatrix": {
+      "weights": {
+        "weight1": 6,
+        "weight2": 10,
+        "weight3": 0,
+        "weight4": 2
+      },
+      "strategies": {
+        "en": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        },
+        "fr": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        },
+        "ar": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        },
+        "cn": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        },
+        "vn": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        }
+      },
+      "combinations": {
+        "combination1": [
+          "strategy1",
+          "strategy1"
+        ],
+        "combination2": [
+          "strategy1",
+          "strategy2"
+        ],
+        "combination3": [
+          "strategy2",
+          "strategy1"
+        ],
+        "combination4": [
+          "strategy2",
+          "strategy2"
+        ]
+      },
+      "matrix": {
+        "combination1": [
+          "weight1",
+          "weight1"
+        ],
+        "combination2": [
+          "weight3",
+          "weight2"
+        ],
+        "combination3": [
+          "weight2",
+          "weight3"
+        ],
+        "combination4": [
+          "weight4",
+          "weight4"
+        ]
+      }
+    },
+    "stopGameWhen": [
+      "combination4"
+    ],
+    "agentsCommunicate": true,
+    "llms": [
+      "Claude Haiku 4.5",
+      "Claude Haiku 4.5"
+    ],
+    "interaction": {
+      "directed": true,
+      "default": "none",
+      "edges": [
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "level": "talk"
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "level": "see"
+        }
+      ]
+    },
+    "name": "PD \u2014 interaction graph (asymmetric visibility) \u00b7 Claude Haiku 4.5",
+    "languages": [
+      "en"
+    ],
+    "promptTemplate": {
+      "en": "You are {currentPlayerName} and your opponent is {opponent1}.\n{intro}: [You are {personality}.]\n{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.]\n\nYou and {opponent1} repeatedly face the same choice. Before each round you may exchange one short message with {opponent1}, then you both choose privately and simultaneously.\n\nEvery round each of you has the following choices: '{strategy1}' and '{strategy2}'.\n{gameLength}: [There are {nRounds} rounds to decide.]\nThe current round is number {currentRound}.\n\nIf you both choose {strategy1}, you both get a payoff of {weight1}.\nIf you choose {strategy1} and {opponent1} chooses {strategy2}, you get a payoff of {weight3} and {opponent1} gets a payoff of {weight2}.\nIf you choose {strategy2} and {opponent1} chooses {strategy1}, you get a payoff of {weight2} and {opponent1} gets a payoff of {weight3}.\nIf you both choose {strategy2}, you both get a payoff of {weight4}.\n\nYour goal is to maximize your payoff by making the best choices based on the provided information.\nThis is the history of the choices made and messages exchanged so far: {history}.\n{communicate}: [Send one short message to {opponent1} before this round's choice. It is up to you whether to coordinate, persuade, bluff, or stay silent. Output ONLY the message text, at most one sentence.]\n{choose}: [Choose between {strategy1} and {strategy2}. Output ONLY the choice.]\n"
+    }
+  },
+  "n_rows": 4
+}

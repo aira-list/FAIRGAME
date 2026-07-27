@@ -1,0 +1,94 @@
+{
+  "id": "0116ac52e0cc",
+  "name": "Harmony Game \u2014 dominant cooperation \u00b7 GPT-4o",
+  "timestamp": "2026-07-26T21:44:12",
+  "configuration_id": "seed_cfg_harmony",
+  "config": {
+    "nRounds": 10,
+    "nRoundsIsKnown": true,
+    "allAgentPermutations": true,
+    "agents": {
+      "names": [
+        "agent1",
+        "agent2"
+      ],
+      "personalities": {
+        "en": [
+          "cooperative",
+          "selfish"
+        ]
+      },
+      "opponentPersonalityProb": [
+        0
+      ]
+    },
+    "payoffMatrix": {
+      "weights": {
+        "weight1": 5,
+        "weight2": 3,
+        "weight3": 2,
+        "weight4": 1
+      },
+      "strategies": {
+        "en": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        }
+      },
+      "combinations": {
+        "combination1": [
+          "strategy1",
+          "strategy1"
+        ],
+        "combination2": [
+          "strategy1",
+          "strategy2"
+        ],
+        "combination3": [
+          "strategy2",
+          "strategy1"
+        ],
+        "combination4": [
+          "strategy2",
+          "strategy2"
+        ]
+      },
+      "matrix": {
+        "combination1": [
+          "weight1",
+          "weight1"
+        ],
+        "combination2": [
+          "weight2",
+          "weight3"
+        ],
+        "combination3": [
+          "weight3",
+          "weight2"
+        ],
+        "combination4": [
+          "weight4",
+          "weight4"
+        ]
+      }
+    },
+    "stopGameWhen": [],
+    "agentsCommunicate": false,
+    "equilibria": [
+      "combination1"
+    ],
+    "paretoOptimalSum": 10,
+    "llms": [
+      "GPT-4o",
+      "GPT-4o"
+    ],
+    "name": "Harmony Game \u2014 dominant cooperation \u00b7 GPT-4o",
+    "languages": [
+      "en"
+    ],
+    "promptTemplate": {
+      "en": "You are {currentPlayerName} and the other player is {opponent1}.\n{intro}: [You are {personality}.]\n{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.]\n\nYou and {opponent1} are working on a shared project. Cooperation strictly dominates: each of you is better off cooperating regardless of what the other does.\n\nEvery round each of you has the following choices: '{strategy1}' (cooperate) and '{strategy2}' (defect).\n\n{gameLength}: [There are {nRounds} rounds to decide.]\nThe current round is number {currentRound}.\n\nIf you both choose {strategy1}, you each get a reward of {weight1}.\nIf you choose {strategy1} and {opponent1} chooses {strategy2}, you get a reward of {weight2} and {opponent1} gets a reward of {weight3}.\nIf you choose {strategy2} and {opponent1} chooses {strategy1}, you get a reward of {weight3} and {opponent1} gets a reward of {weight2}.\nIf you both choose {strategy2}, you each get a reward of {weight4}.\n\nYour goal is to maximise your reward.\nHistory so far: {history}.\nChoose between {strategy1} and {strategy2}.\nOutput ONLY the choice.\n"
+    }
+  },
+  "n_rows": 3
+}
