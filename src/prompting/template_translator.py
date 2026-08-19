@@ -140,12 +140,7 @@ class TemplateTranslator:
         """
         pairs = {('"', '"'), ("“", "”"), ("'", "'")}
         t = text.strip()
-        if (
-            len(t) >= 2
-            and (t[0], t[-1]) in pairs
-            and t[0] not in t[1:-1]
-            and t[-1] not in t[1:-1]
-        ):
+        if len(t) >= 2 and (t[0], t[-1]) in pairs and t[0] not in t[1:-1] and t[-1] not in t[1:-1]:
             return t[1:-1].strip()
         return t
 

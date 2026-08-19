@@ -254,9 +254,7 @@ def test_top_messages_unifies_strategy_label_messages():
     ]
     c = _chart_by_id(build_dashboard(cfg, rows), "top_messages")
     assert set(c["labels"]) == {"OptionA", "OptionB"}  # Opzione* folded in
-    totals = {
-        lbl: sum(ds["data"][i] for ds in c["datasets"]) for i, lbl in enumerate(c["labels"])
-    }
+    totals = {lbl: sum(ds["data"][i] for ds in c["datasets"]) for i, lbl in enumerate(c["labels"])}
     assert totals == {"OptionB": 3, "OptionA": 3}
 
 

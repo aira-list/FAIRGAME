@@ -38,9 +38,7 @@ class PayoffMatrixTransformer:
             # [strategy_key, weight_key] pair. A canonical-form matrix that
             # merely lost its ``matrix`` block used to land here, get its
             # strategy strings sliced into characters, and "validate".
-            if not all(
-                isinstance(pair, (list, tuple)) and len(pair) == 2 for pair in pairs
-            ):
+            if not all(isinstance(pair, (list, tuple)) and len(pair) == 2 for pair in pairs):
                 raise KeyError(
                     f"payoffMatrix.combinations[{comb_key!r}] is not in the "
                     "pre-transform [strategy, weight] pair shape; if the matrix "

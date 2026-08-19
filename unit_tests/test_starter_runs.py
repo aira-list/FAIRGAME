@@ -19,7 +19,9 @@ class TestStarterRunSeeding(unittest.TestCase):
     def test_seeds_into_empty_runs_dir(self) -> None:
         with isolated_storage_dirs(data=False) as dirs:
             seed_starter_runs()
-            shipped = {p.name for p in STARTER_RUNS_DIR.iterdir() if (p / "metadata.json").is_file()}
+            shipped = {
+                p.name for p in STARTER_RUNS_DIR.iterdir() if (p / "metadata.json").is_file()
+            }
             copied = {p.name for p in dirs["runs"].iterdir()}
             self.assertEqual(copied, shipped)
             # Listed + loadable through the normal read path.

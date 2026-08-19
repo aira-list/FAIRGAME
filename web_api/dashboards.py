@@ -162,9 +162,7 @@ def worth_plotting(chart: dict[str, Any] | None) -> bool:
     if not chart:
         return False
     datasets = chart.get("datasets") or []
-    values = [
-        v for ds in datasets for v in (ds.get("data") or []) if isinstance(v, (int, float))
-    ]
+    values = [v for ds in datasets for v in (ds.get("data") or []) if isinstance(v, (int, float))]
     if not values:
         return False
     if chart.get("kind") == "bar" and len(chart.get("labels") or []) < 2:
@@ -175,7 +173,9 @@ def worth_plotting(chart: dict[str, Any] | None) -> bool:
         return False
     if chart.get("kind") == "radar" and len(datasets) >= 2:
         signatures = {
-            tuple(round(v, 6) if isinstance(v, (int, float)) else None for v in ds.get("data") or [])
+            tuple(
+                round(v, 6) if isinstance(v, (int, float)) else None for v in ds.get("data") or []
+            )
             for ds in datasets
         }
         if len(signatures) == 1:
@@ -520,9 +520,7 @@ def canonical_personality_map(config: dict[str, Any]) -> dict[str, dict[str, str
         return {}
     canon_list = pers[canon_lang]
     return {
-        str(lang): {
-            str(p): str(canon_list[i]) for i, p in enumerate(lst) if i < len(canon_list)
-        }
+        str(lang): {str(p): str(canon_list[i]) for i, p in enumerate(lst) if i < len(canon_list)}
         for lang, lst in pers.items()
         if isinstance(lst, list)
     }
@@ -988,7 +986,11 @@ def build_dashboard(config: dict[str, Any], rows: list[dict[str, Any]]) -> dict[
     # (section title, [charts]) — each section is emitted only if it has charts.
     plan: list[tuple] = []
 
-    overview = [_c_outcome_mix(config, rows, n), _c_score_by_agent(rows, n, names), _c_welfare(rows)]
+    overview = [
+        _c_outcome_mix(config, rows, n),
+        _c_score_by_agent(rows, n, names),
+        _c_welfare(rows),
+    ]
     if ctx.has_regret:
         overview.append(_c_regret_by_agent(rows, n, names))
     radar = _c_behavior_radar(config, rows, n, names)

@@ -247,9 +247,7 @@ class TestSeedTemplatesMatchTheirMatrices(unittest.TestCase):
         # action, w2 the volunteer's payoff, w3 the free-rider's, w1 the
         # nobody-volunteered payoff.
         self.assertIn("'{strategy2}' (volunteer)", body)
-        self.assertRegex(
-            body, r"chose \{strategy2\} receives a payoff of \{weight2\}"
-        )
+        self.assertRegex(body, r"chose \{strategy2\} receives a payoff of \{weight2\}")
         self.assertRegex(body, r"chose \{strategy1\} receives a payoff of \{weight3\}")
         self.assertRegex(
             body, r"no one chooses \{strategy2\}, all players receive a payoff of \{weight1\}"

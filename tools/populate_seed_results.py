@@ -140,7 +140,9 @@ def main() -> int:
     # ---- Estimate pass (always printed; --estimate stops after it) --------
     total_games = 0
     total_calls = 0
-    print(f"{len(items)} configuration(s) x {len(models)} model(s) x {args.iterations} iteration(s)")
+    print(
+        f"{len(items)} configuration(s) x {len(models)} model(s) x {args.iterations} iteration(s)"
+    )
     for item in items:
         for variant in variants_by_item[item["id"]]:
             cfg = variant.config

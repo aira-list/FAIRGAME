@@ -111,9 +111,7 @@ class TestPermutationRowRngDecorrelation(unittest.TestCase):
 
         first = FairGameFactory().create_and_run_games(self._cfg())
         second = FairGameFactory().create_and_run_games(self._cfg())
-        self.assertEqual(
-            self._strategy_streams(first), self._strategy_streams(second)
-        )
+        self.assertEqual(self._strategy_streams(first), self._strategy_streams(second))
 
 
 class TestPermutationJointAxis(unittest.TestCase):
