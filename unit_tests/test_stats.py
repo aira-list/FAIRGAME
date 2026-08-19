@@ -290,22 +290,28 @@ class TestStatsMutmutCoverage(unittest.TestCase):
         )
         return df_a, df_b
 
-    def test_mannwhitney_statistic_is_finite_for_normal_inputs(self) -> None:
-        # The U statistic must be a real number, not None — assigning
-        # the float() cast keeps regressions from silently dropping it.
+    def test_mannwhitney_u_counts_dominated_pairs(self) -> None:
+        # Every value in a is below every value in b, so U (computed on a) is
+        # the count of pairs where a > b: exactly 0 of the 8*8 = 64 pairs.
+        # A None or NaN statistic fails here; so does a U computed on b (64.0).
         df_a = pd.DataFrame({"x": [1, 2, 3, 4, 5, 6, 7, 8]})
         df_b = pd.DataFrame({"x": [10, 11, 12, 13, 14, 15, 16, 17]})
         result = compare_metric(df_a, df_b, "x")
-        self.assertIsNotNone(result.mannwhitney_u)
-        self.assertIsNotNone(result.mannwhitney_p)
+        self.assertEqual(result.mannwhitney_u, 0.0)
+        # Complete separation of two 8-sample groups is significant.
+        self.assertLess(result.mannwhitney_p, 0.001)
 
-    def test_mannwhitney_p_adjusted_is_filled_in(self) -> None:
-        # mannwhitney_p_adjusted must carry the corrected p — never None
-        # for inputs whose raw mannwhitney_p is itself a real number.
+    def test_mannwhitney_bonferroni_multiplies_by_the_metric_count(self) -> None:
+        # Bonferroni over 2 metrics: adjusted = min(1, raw * 2). Asserting the
+        # arithmetic catches a correction that is skipped (adjusted == raw),
+        # applied with the wrong n, or left uncapped above 1.0.
         df_a, df_b = self._heterogeneous_inputs()
         out = compare_metrics(df_a, df_b, ["strong", "mild"], correction="bonferroni")
-        for adj in out["mannwhitney_p_adjusted"]:
-            self.assertIsNotNone(adj)
+        for raw, adj in zip(out["mannwhitney_p"], out["mannwhitney_p_adjusted"], strict=True):
+            self.assertAlmostEqual(adj, min(1.0, raw * 2), places=12)
+        # The weak metric is pushed to the 1.0 cap, the strong one is not.
+        self.assertEqual(list(out["mannwhitney_p_adjusted"])[1], 1.0)
+        self.assertLess(list(out["mannwhitney_p_adjusted"])[0], 0.001)
 
     def test_correction_column_carries_method_name(self) -> None:
         df_a, df_b = self._heterogeneous_inputs()

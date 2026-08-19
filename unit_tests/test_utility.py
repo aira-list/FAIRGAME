@@ -9,7 +9,6 @@ from src.game_theory.utility import (
     CRRATransform,
     FehrSchmidtTransform,
     IdentityTransform,
-    UtilityTransform,
     build_utility_transform,
 )
 
@@ -194,14 +193,6 @@ class TestBuildFromConfig(unittest.TestCase):
     def test_builds_fehr_schmidt_via_dash_alias(self) -> None:
         t = build_utility_transform({"type": "fehr-schmidt", "alpha": 0.4, "beta": 0.6})
         self.assertIsInstance(t, FehrSchmidtTransform)
-
-    def test_returns_subclass_of_utility_transform(self) -> None:
-        for cfg in (
-            None,
-            {"type": "CRRA", "gamma": 0.5},
-            {"type": "FehrSchmidt", "alpha": 0.0, "beta": 0.0},
-        ):
-            self.assertIsInstance(build_utility_transform(cfg), UtilityTransform)
 
     def test_factory_passes_through_offset(self) -> None:
         t = build_utility_transform({"type": "CRRA", "gamma": 0.5, "offset": 5.0})

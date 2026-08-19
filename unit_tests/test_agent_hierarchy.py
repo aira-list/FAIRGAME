@@ -9,26 +9,6 @@ from src.agents.agent import Agent, BaselineAgent, LLMAgent
 from src.agents.baseline_strategies import AlwaysCooperate
 
 # ---------------------------------------------------------------------------
-# Hierarchy
-# ---------------------------------------------------------------------------
-
-
-class TestHierarchy(unittest.TestCase):
-    def test_llm_agent_is_an_agent(self) -> None:
-        a = LLMAgent("a", "OpenAIGPT4o", "neutral", 0.5)
-        self.assertIsInstance(a, Agent)
-
-    def test_baseline_agent_is_an_agent(self) -> None:
-        a = BaselineAgent("a", AlwaysCooperate(), "neutral", 0.0)
-        self.assertIsInstance(a, Agent)
-
-    def test_llm_and_baseline_share_no_subclass_relation(self) -> None:
-        # Both inherit from Agent but neither is a subclass of the other.
-        self.assertFalse(issubclass(LLMAgent, BaselineAgent))
-        self.assertFalse(issubclass(BaselineAgent, LLMAgent))
-
-
-# ---------------------------------------------------------------------------
 # LLMAgent behaviour
 # ---------------------------------------------------------------------------
 

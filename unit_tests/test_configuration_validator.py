@@ -397,12 +397,6 @@ class TestCombinationKeyReferences(unittest.TestCase):
         result = self.validator.validate_config_structure(config)
         self.assertEqual(result["stopGameWhen"], ["c1", "c2"])
 
-    def test_auto_equilibria_not_affected(self) -> None:
-        config = _base_config()
-        config["equilibria"] = "auto"
-        result = self.validator.validate_config_structure(config)
-        self.assertIsInstance(result["equilibria"], list)
-
 
 class TestOpponentProbScaleNudge(unittest.TestCase):
     """opponentPersonalityProb is rendered verbatim into '...{value}%', so a

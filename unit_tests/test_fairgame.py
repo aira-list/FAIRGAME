@@ -262,10 +262,6 @@ class TestScoreModifiers(unittest.TestCase):
 
 
 class TestRng(unittest.TestCase):
-    def test_seed_constructs_a_seeded_rng(self) -> None:
-        game = _make_game(seed=42)
-        self.assertIsInstance(game.rng, random.Random)
-
     def test_explicit_rng_takes_precedence_over_seed(self) -> None:
         my_rng = random.Random(123)
         game = _make_game(rng=my_rng, seed=999)

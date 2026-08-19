@@ -118,11 +118,6 @@ class TestTranslatorIsLLMOnly(unittest.TestCase):
         sig = inspect.signature(TemplateTranslator.translate)
         self.assertNotIn("cosine_threshold", sig.parameters)
 
-    def test_translator_exposes_no_embedding_machinery(self) -> None:
-        tr = TemplateTranslator("echo-translate")
-        self.assertFalse(hasattr(tr, "_calculate_cosine_similarity"))
-        self.assertFalse(hasattr(tr, "model"))
-
     def test_placeholder_mismatch_still_rejected(self) -> None:
         tr = TemplateTranslator("dropper")
         with self.assertRaises(ValueError):

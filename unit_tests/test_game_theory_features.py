@@ -101,25 +101,44 @@ class TestTournament(unittest.TestCase):
 
 
 class TestUtilityTransformAppliedEndToEnd(unittest.TestCase):
-    def test_fehr_schmidt_reduces_inequity(self) -> None:
+    """The configured utility transform must reach the scores the engine
+    records, not merely be constructed.
+
+    These use the alwaysC-vs-alwaysD tournament pair because it is the only
+    deterministic fixture with an *unequal* outcome: Cooperate vs Defect pays
+    weight3=0 to the cooperator and weight2=10 to the defector. Fehr-Schmidt
+    is the identity on equal payoffs, so a mutual-cooperation fixture (which
+    is what the fake LLM produces) cannot observe inequity aversion at all.
+    """
+
+    def _pair_scores(self, transform: dict | None = None) -> dict[str, float]:
         factory = _factory()
-        config = factory.load_config("prisoner_dilemma_mixed.json")
-        config = {
-            **config,
-            "utilityTransform": {"type": "FehrSchmidt", "alpha": 0.5, "beta": 0.5},
-        }
+        config = factory.load_config("prisoner_dilemma_tournament.json")
+        if transform is not None:
+            config = {**config, "utilityTransform": transform}
         results = factory.create_and_run_games(config)
-        # Compute mean across rounds for each agent.
-        history = results["game_0"]["history"]
-        scores = {entry["agent"]: [] for entry in next(iter(history.values()))}
-        for entries in history.values():
-            for e in entries:
-                scores[e["agent"]].append(e["score"])
-        # Fehr-Schmidt should never make the *gap* larger than the raw gap;
-        # we only assert the run completes and produces real numbers.
-        for s in scores.values():
-            for v in s:
-                self.assertIsInstance(v, float)
+        pairs = {tuple(g["description"]["agents"].keys()): g for g in results.values()}
+        round_1 = pairs[("alwaysC", "alwaysD")]["history"]["round_1"]
+        return {e["agent"]: e["score"] for e in round_1}
+
+    def test_raw_payoffs_are_unequal_without_a_transform(self) -> None:
+        # Baseline the two cases below are measured against.
+        self.assertEqual(self._pair_scores(), {"alwaysC": 0.0, "alwaysD": 10.0})
+
+    def test_fehr_schmidt_charges_envy_to_loser_and_guilt_to_winner(self) -> None:
+        # alpha=beta=0.5 on payoffs (0, 10), n=2:
+        #   cooperator: 0 - 0.5*(10-0)/(n-1) = -5.0   (envy)
+        #   defector:  10 - 0.5*(10-0)/(n-1) =  5.0   (guilt)
+        # Leaving the transform unwired, or making it a no-op, yields the raw
+        # (0.0, 10.0); dividing by n instead of n-1 yields (-2.5, 7.5).
+        scores = self._pair_scores({"type": "FehrSchmidt", "alpha": 0.5, "beta": 0.5})
+        self.assertEqual(scores, {"alwaysC": -5.0, "alwaysD": 5.0})
+
+    def test_pure_envy_penalises_only_the_underdog(self) -> None:
+        # alpha=1, beta=0: the cooperator carries the whole gap, the defector
+        # carries none. Swapping alpha and beta would score (0.0, 0.0).
+        scores = self._pair_scores({"type": "FehrSchmidt", "alpha": 1.0, "beta": 0.0})
+        self.assertEqual(scores, {"alwaysC": -10.0, "alwaysD": 10.0})
 
 
 class TestMultiSeed(unittest.TestCase):

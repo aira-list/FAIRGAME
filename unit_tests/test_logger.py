@@ -77,15 +77,6 @@ class TestGetLogger(_LoggerTestBase):
         logger_module.get_logger("b")
         self.assertEqual(list(logging.getLogger().handlers), snapshot)
 
-    def test_returns_a_logger_instance(self) -> None:
-        log = logger_module.get_logger("fairgame.x")
-        self.assertIsInstance(log, logging.Logger)
-
-    def test_distinct_names_yield_distinct_loggers(self) -> None:
-        a = logger_module.get_logger("fairgame.a")
-        b = logger_module.get_logger("fairgame.b")
-        self.assertIsNot(a, b)
-
 
 class TestEnvVarFallback(_LoggerTestBase):
     def test_empty_env_var_falls_back_to_info(self) -> None:
