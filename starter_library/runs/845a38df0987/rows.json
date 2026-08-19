@@ -1,0 +1,338 @@
+[
+  {
+    "game_id": "game_0",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 10,
+    "agents_communicate": false,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "GPT-4o",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA"
+    ],
+    "agent1_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0
+    ],
+    "agent1_messages": [
+      "179, 151, 116, 0f4, 22d, 28a, 356, 0a6, 196, 17c",
+      "0b4, 28b, 149, 309, 0d3, 238, 35f, 1e0, 0d0, 2be",
+      "041, 3c9, 264, 30c, 345, 144, 3e5, 265, 1a4, 122",
+      "0ff, 1c3, 14f, 113, 14c, 22e, 071, 0ac, 31d, 1aa",
+      "2f5, 119, 18f, 342, 23c, 107, 198, 16f, 048, 167",
+      "1b9, 311, 38a, 302, 2e4, 3dc, 30f, 05b, 305, 36e",
+      "214, 3e5, 03a, 0fa, 298, 0d1, 21e, 203, 089, 0a7",
+      "1ef, 38e, 074, 2b2, 12c, 399, 252, 16e, 2e1, 39b",
+      "0c9, 35a, 31b, 386, 118, 0bc, 1f4, 2b0, 3e2, 1c2",
+      "126, 2eb, 3cb, 04d, 2d0, 3b0, 39c, 329, 02d, 011"
+    ],
+    "agent1_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ],
+    "agent1_regret_mean": 4.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "GPT-4o",
+    "agent2_personality": "cooperative",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA"
+    ],
+    "agent2_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0
+    ],
+    "agent2_messages": [
+      "1ce, 1d2, 183, 23f, 1c0, 35f, 106, 3d0, 00d, 117",
+      "06a, 24e, 177, 085, 02f, 1ba, 289, 2d5, 33b, 1cd",
+      "108, 0e3, 1eb, 249, 031, 38b, 039, 32c, 18d, 221",
+      "34c, 1a4, 3e3, 32a, 26f, 2f0, 15e, 082, 2a3, 03e",
+      "011, 21b, 22c, 257, 077, 0cd, 1f8, 350, 22d, 314",
+      "2ff, 3af, 143, 125, 3c9, 0a6, 372, 20a, 047, 1ba",
+      "2f6, 26a, 34b, 189, 341, 3dd, 35e, 367, 130, 04e",
+      "120, 283, 0d5, 304, 1b0, 0df, 271, 3e7, 2af, 0fa",
+      "252, 087, 21a, 053, 390, 135, 341, 3e4, 2e0, 0be",
+      "249, 393, 2e1, 050, 246, 3c2, 23f, 2a3, 1de, 363"
+    ],
+    "agent2_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ],
+    "agent2_regret_mean": 4.0,
+    "welfare_mean_sum": 12.0,
+    "welfare_mean_min": 6.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_1",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 3,
+    "agents_communicate": false,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "GPT-4o",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      0.0,
+      0.0,
+      2.0
+    ],
+    "agent1_messages": [
+      "103, 361, 3d8, 05b, 144, 19c, 04c, 301, 375, 107",
+      "1b0, 1b1, 22a, 147, 007, 367, 18b, 1e1, 1f5, 154",
+      "12f, 3c2, 35f, 154, 016, 082, 1bb, 385, 335, 266"
+    ],
+    "agent1_regret_per_round": [
+      2.0,
+      2.0,
+      0.0
+    ],
+    "agent1_regret_mean": 1.3333333333333333,
+    "agent2_name": "agent2",
+    "agent2_llm": "GPT-4o",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionB",
+      "OptionB",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      10.0,
+      10.0,
+      2.0
+    ],
+    "agent2_messages": [
+      "320, 070, 1e4, 01c, 1d8, 3b0, 084, 1e8, 185, 1e0",
+      "22c, 119, 0be, 02a, 1c2, 00f, 305, 20b, 36f, 003",
+      "032, 1a6, 1c9, 1f5, 323, 352, 03e, 334, 0e8, 0ea"
+    ],
+    "agent2_regret_per_round": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "agent2_regret_mean": 0.0,
+    "welfare_mean_sum": 8.0,
+    "welfare_mean_min": 0.6666666666666666,
+    "welfare_mean_gini": 0.3333333333333333,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_2",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 1,
+    "agents_communicate": false,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "GPT-4o",
+    "agent1_personality": "selfish",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionB"
+    ],
+    "agent1_scores": [
+      2.0
+    ],
+    "agent1_messages": [
+      "08b, 0ce, 022, 16b, 0c2, 17b, 172, 11f, 110, 152"
+    ],
+    "agent1_regret_per_round": [
+      0.0
+    ],
+    "agent1_regret_mean": 0.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "GPT-4o",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionB"
+    ],
+    "agent2_scores": [
+      2.0
+    ],
+    "agent2_messages": [
+      "15d, 32e, 0db, 0b1, 252, 3a6, 2e0, 285, 001, 2da"
+    ],
+    "agent2_regret_per_round": [
+      0.0
+    ],
+    "agent2_regret_mean": 0.0,
+    "welfare_mean_sum": 4.0,
+    "welfare_mean_min": 2.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  }
+]

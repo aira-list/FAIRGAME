@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FAIRGAME · Multi-agent game-theoretic studio</title>
+  <link rel="icon" type="image/png" href="/img/favicon.png" />
+
+  <!-- Typography: distinctive display + refined UI + mono for data/code. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+
+  <!-- Pre-built, self-hosted Tailwind stylesheet (replaces the old runtime
+       cdn.tailwindcss.com JIT script, which could not be pinned with SRI).
+       The brand re-skin (blue → indigo) and webfont families are baked into
+       this build via web/tailwind.config.js. Rebuild after changing markup:
+       `cd web && npm install && npm run build:css`. -->
+  <link rel="stylesheet" href="/css/tailwind.css" />
+  <!-- Pinned to exact versions with Subresource Integrity so a CDN compromise
+       (or a moved floating tag) cannot execute arbitrary JS. -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"
+          integrity="sha384-X9kJyAubVxnP0hcA+AMMs21U445qsnqhnUF8EBlEpP3a42Kh/JwWjlv2ZcvGfphb"
+          crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
+          integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
+          crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+
+<body class="text-slate-800" x-data="fairgame()" x-cloak>
+  <div class="flex min-h-screen">
+
+    <!-- ============= SIDEBAR ============= -->
+    <aside class="fg-shell w-64 shrink-0 px-4 py-6 flex flex-col">
+      <div class="px-2 mb-5">
+        <img src="/img/logo3.png" alt="FAIRGAME" class="w-40 h-auto object-contain" />
+        <span class="fg-wordmark-sub block mt-1.5">Game-theory studio</span>
+      </div>
+
+      <!-- Basic / Advanced complexity toggle — prominent so it's never missed -->
+      <div class="px-2 mb-6">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Mode</span>
+          <span class="text-[10px] text-slate-500"
+                x-text="advanced ? 'all features' : 'essentials only'"></span>
+        </div>
+        <div class="inline-flex w-full rounded-lg bg-black/25 p-1 text-sm font-semibold shadow-inner">
+          <button type="button" class="flex-1 px-3 py-1.5 rounded-md transition"
+                  :class="!advanced ? 'bg-white text-slate-900 shadow' : 'text-slate-300 hover:text-white'"
+                  @click="setUiMode('basic')"
+                  title="Show only the essentials needed to run an experiment">Basic</button>
+          <button type="button" class="flex-1 px-3 py-1.5 rounded-md transition"
+                  :class="advanced ? 'bg-white text-slate-900 shadow' : 'text-slate-300 hover:text-white'"
+                  @click="setUiMode('advanced')"
+                  title="Reveal beliefs, theory-of-mind, game-theory treatments, reproducibility, and the JSON view">Advanced</button>
+        </div>
+      </div>
+
+      <div class="nav-section-label">Workspace</div>
+      <nav class="flex flex-col gap-1">
+        <template x-for="page in pages" :key="page.id">
+          <a class="nav-link"
+             :class="{ 'active': activePage === page.id }"
+             @click.prevent="navTo(page.id)">
+            <span x-html="page.icon"></span>
+            <span x-text="page.label"></span>
+          </a>
+        </template>
+        <a x-show="communityUrl" :href="communityUrl" target="_blank" rel="noopener"
+           class="nav-link" title="Browse published FAIRGAME experiments">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"/></svg>
+          <span>Community website ↗</span>
+        </a>
+      </nav>
+    </aside>
+
+
+    <!-- ============= MAIN ============= -->
+    <main class="flex-1 px-8 py-8 max-w-6xl mx-auto w-full">
+      <!-- INCLUDE: partials/home.html -->
+      <!-- INCLUDE: partials/templates.html -->
+      <!-- INCLUDE: partials/configurations.html -->
+      <!-- INCLUDE: partials/experiment.html -->
+      <!-- INCLUDE: partials/results.html -->
+    </main>
+  </div>
+
+  <!-- ============= GUIDED SETUP WIZARD ============= -->
+  <div x-show="wizard.open" x-cloak
+       class="fixed inset-0 bg-black/40 flex items-center justify-center z-[70] p-4"
+       @keydown.escape.window="wizard.open = false">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-auto" @click.outside="wizard.open = false">
+      <!-- Header + progress -->
+      <div class="px-6 pt-5 pb-3 border-b border-slate-200">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-bold">Guided setup</h2>
+          <button class="text-slate-400 hover:text-slate-700 text-xl leading-none" @click="wizard.open = false" title="Close">✕</button>
+        </div>
+        <div class="flex gap-1.5 mt-3">
+          <template x-for="n in wizard.total" :key="n">
+            <div class="h-1.5 flex-1 rounded-full"
+                 :class="n <= wizard.step ? 'bg-blue-600' : 'bg-slate-200'"></div>
+          </template>
+        </div>
+        <p class="text-xs text-slate-500 mt-1.5" x-text="`Step ${wizard.step} of ${wizard.total}`"></p>
+      </div>
+
+      <div class="px-6 py-5">
+        <!-- Step 1: Basics -->
+        <div x-show="wizard.step === 1">
+          <h3 class="font-semibold mb-1">What are you setting up?</h3>
+          <p class="fg-help mb-4">Name it, and choose whether the players are LLMs (needs a prompt template) or simple baseline strategies (runs offline, no API key).</p>
+          <label class="fg-label">Configuration name</label>
+          <input type="text" x-model="configsPage.draft.name" class="fg-input mb-4" placeholder="e.g. My first Prisoner's Dilemma"/>
+          <label class="fg-label">Players</label>
+          <div class="grid grid-cols-2 gap-3">
+            <button type="button" class="p-3 rounded-lg border text-left transition"
+                    :class="isLLMMode() ? 'border-blue-500 bg-blue-50' : 'border-slate-300 hover:bg-slate-50'"
+                    @click="setRunType('llm')">
+              <div class="font-semibold text-sm">🧠 LLM agents</div>
+              <div class="fg-help">Real models reason over a prompt. Needs a provider API key.</div>
+            </button>
+            <button type="button" class="p-3 rounded-lg border text-left transition"
+                    :class="!isLLMMode() ? 'border-blue-500 bg-blue-50' : 'border-slate-300 hover:bg-slate-50'"
+                    @click="setRunType('baseline')">
+              <div class="font-semibold text-sm">🤖 Baselines only</div>
+              <div class="fg-help">Algorithmic strategies (TitForTat, …). No key, no template.</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Game -->
+        <div x-show="wizard.step === 2">
+          <h3 class="font-semibold mb-1">Which game?</h3>
+          <p class="fg-help mb-4">Pick the game<span x-show="isLLMMode()">, its prompt variant, and the language(s) to run in</span>.</p>
+          <label class="fg-label">Game</label>
+          <select x-model="configsPage.draft.game_type_id" @change="configsPage.draft.variation=''; pruneSelectedLanguages()" class="fg-input mb-4">
+            <option value="">— pick a game —</option>
+            <template x-for="gt in gameTypes" :key="gt.id"><option :value="gt.id" x-text="gt.name"></option></template>
+          </select>
+          <template x-if="isLLMMode()">
+            <div>
+              <label class="fg-label">Variant</label>
+              <select x-model="configsPage.draft.variation" @change="pruneSelectedLanguages()" class="fg-input mb-4" :disabled="!configsPage.draft.game_type_id">
+                <option value="">— pick a variant —</option>
+                <template x-for="v in variationsForGameType(configsPage.draft.game_type_id)" :key="v"><option :value="v" x-text="v"></option></template>
+              </select>
+              <label class="fg-label">Language(s)</label>
+              <p x-show="configsPage.draft.game_type_id && configsPage.draft.variation && availableLanguages().length === 0" class="fg-help text-amber-700">No template for this game+variant yet — add one on the Templates page.</p>
+              <div class="grid grid-cols-3 gap-1.5 max-h-40 overflow-auto">
+                <template x-for="lang in availableLanguages()" :key="lang.code">
+                  <label class="flex items-center gap-2 text-sm py-0.5 cursor-pointer">
+                    <input type="checkbox" :value="lang.code" x-model="builder.cfg.languages" @change="syncLanguageFields()"/>
+                    <span x-text="lang.flag"></span><span x-text="lang.code"></span>
+                  </label>
+                </template>
+              </div>
+            </div>
+          </template>
+          <p x-show="!isLLMMode()" class="fg-help">Baselines don't read a prompt, so no template or language is needed — the game is defined by its payoff matrix (default values are used; tweak later in Advanced mode if you like).</p>
+        </div>
+
+        <!-- Step 3: Agents -->
+        <div x-show="wizard.step === 3">
+          <h3 class="font-semibold mb-1">Who's playing?</h3>
+          <p class="fg-help mb-4">Set each agent's model<span x-show="isLLMMode()"> and (optionally) a personality</span>.</p>
+          <template x-for="(agent, i) in builder.agents" :key="i">
+            <div class="border border-slate-200 rounded-md p-3 mb-2">
+              <div class="flex gap-2 items-end">
+                <div class="flex-1">
+                  <label class="fg-label">Name</label>
+                  <input type="text" :value="agent.name" @input="renameAgent(agent, $event.target.value)" class="fg-input"/>
+                </div>
+                <div class="flex-1">
+                  <label class="fg-label" x-text="isLLMMode() ? 'Model / baseline' : 'Baseline strategy'"></label>
+                  <select :value="modelSelectValue(agent.llm)" @change="setAgentModel(agent, $event.target.value)" class="fg-input">
+                    <template x-if="agent.llm && isLLMMode() && !llms.includes(agent.llm) && !isBaselineAgent(agent) && !isCustomModel(agent.llm)">
+                      <optgroup label="Current"><option :value="agent.llm" x-text="agent.llm"></option></optgroup>
+                    </template>
+                    <template x-if="isLLMMode()">
+                      <optgroup label="LLMs">
+                        <template x-for="m in llms" :key="m"><option :value="m" x-text="m"></option></template>
+                      </optgroup>
+                    </template>
+                    <optgroup label="Baselines">
+                      <template x-for="b in baselines" :key="b"><option :value="'baseline:'+b" x-text="'baseline:'+b"></option></template>
+                    </optgroup>
+                    <optgroup label="Other" x-show="isLLMMode()">
+                      <option value="__custom__">✏️ Custom (any LiteLLM model)…</option>
+                    </optgroup>
+                  </select>
+                  <input x-show="isCustomModel(agent.llm)" x-cloak type="text" class="fg-input mt-1"
+                         :value="customModelText(agent.llm)"
+                         @input="setCustomModelText(agent, $event.target.value)"
+                         placeholder="e.g. gemini/gemini-1.5-pro, ollama/llama3"/>
+                </div>
+                <button class="text-rose-600 hover:text-rose-800 pb-2" x-show="builder.agents.length > 1" @click="builder.agents.splice(i,1)" title="Remove">✕</button>
+              </div>
+              <div class="mt-2" x-show="isLLMMode() && !isBaselineAgent(agent)">
+                <label class="fg-label">Personality <span class="text-slate-400 font-normal">(optional)</span></label>
+                <input type="text" class="fg-input" x-model="agent.personalities[wizardFirstLang()]" placeholder="e.g. cooperative (defaults to neutral)"/>
+              </div>
+            </div>
+          </template>
+          <button class="px-3 py-1.5 rounded-md border border-slate-300 text-sm hover:bg-slate-50" @click="addAgent()">+ Add agent</button>
+        </div>
+
+        <!-- Step 4: Review -->
+        <div x-show="wizard.step === 4">
+          <h3 class="font-semibold mb-1">Review &amp; create</h3>
+          <p class="fg-help mb-4">We'll save this configuration and take you to the Experiment page to run it.</p>
+          <dl class="text-sm border border-slate-200 rounded-md divide-y divide-slate-200">
+            <div class="flex gap-3 px-3 py-2"><dt class="w-28 flex-none text-slate-500">Name</dt><dd x-text="configsPage.draft.name || '—'"></dd></div>
+            <div class="flex gap-3 px-3 py-2"><dt class="w-28 flex-none text-slate-500">Players</dt><dd x-text="isLLMMode() ? 'LLM agents' : 'Baselines only'"></dd></div>
+            <div class="flex gap-3 px-3 py-2"><dt class="w-28 flex-none text-slate-500">Game</dt><dd x-text="gameTypeName(configsPage.draft.game_type_id) + (isLLMMode() ? ' / ' + (configsPage.draft.variation||'—') : '')"></dd></div>
+            <div class="flex gap-3 px-3 py-2" x-show="isLLMMode()"><dt class="w-28 flex-none text-slate-500">Languages</dt><dd x-text="(builder.cfg.languages||[]).join(', ') || '—'"></dd></div>
+            <div class="flex gap-3 px-3 py-2"><dt class="w-28 flex-none text-slate-500">Agents</dt><dd x-text="builder.agents.map(a => a.name + ' (' + a.llm + ')').join(', ')"></dd></div>
+          </dl>
+        </div>
+      </div>
+
+      <!-- Footer nav -->
+      <div class="px-6 py-4 border-t border-slate-200 flex items-center gap-3">
+        <button class="px-4 py-2 rounded-md border border-slate-300 text-sm" x-show="wizard.step > 1" @click="wizardBack()">← Back</button>
+        <span class="text-xs text-amber-700" x-show="wizardStepError()" x-text="wizardStepError()"></span>
+        <div class="ml-auto flex gap-2">
+          <button class="px-4 py-2 rounded-md border border-slate-300 text-sm" @click="wizard.open = false">Cancel</button>
+          <button class="px-5 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                  x-show="wizard.step < wizard.total" :disabled="!!wizardStepError()" @click="wizardNext()">Next →</button>
+          <button class="px-5 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+                  x-show="wizard.step === wizard.total" @click="wizardFinish()">✓ Create &amp; run</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- app.shared.js declares cross-module helper functions and must load
+       first. Page modules define window.__fg* state+method bundles; app.js
+       merges them into the Alpine component, so it loads last. -->
+  <script src="/js/app.shared.js"></script>
+  <script src="/js/app.templates.js"></script>
+  <script src="/js/app.configurations.js"></script>
+  <script src="/js/app.experiment.js"></script>
+  <script src="/js/app.results.js"></script>
+  <script src="/js/app.js"></script>
+
+</body>
+</html>

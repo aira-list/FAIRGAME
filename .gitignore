@@ -1,18 +1,53 @@
-# environments
+# ---- Python ------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+*.egg-info/
+build/
+dist/
+
+# ---- Node (frontend build tooling) -------------------------------------
+# The built web/css/tailwind.css IS committed so the app serves it with no
+# build step; only the local install dir is ignored.
+node_modules/
+
+# ---- Virtual environments ----------------------------------------------
 **/*env*/
 **/*env*/**
 **/*env
 
-# VSCode settings
-.vscode
-.vscode.*
-.vscode/*
+# ---- Secrets — never commit these --------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
 
-# macOS
+# ---- Tooling caches ----------------------------------------------------
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# ---- Editor / OS -------------------------------------------------------
+.vscode/
+.idea/
 .DS_Store
 
-# byte-compiled / optimized / DLL files
-__pycache__/
-
-# playground files
+# ---- Runtime outputs & scratch -----------------------------------------
+results/
 __playground/
+Screenshot*.png
+# Progress heartbeat written by ad-hoc batch runners — ephemeral, not a deliverable.
+ground_truth/batch_progress.md
+
+# ---- Ad-hoc data dumps -------------------------------------------------
+duplicates.csv
+merged.csv
+data/
+
+# ---- Locally downloaded/extracted external repos (e.g. GitHub ZIPs) ----
+*-main/
+*.zip

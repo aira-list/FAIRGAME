@@ -1,0 +1,338 @@
+[
+  {
+    "game_id": "game_0",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 10,
+    "agents_communicate": false,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Sonnet 4.6",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA"
+    ],
+    "agent1_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0
+    ],
+    "agent1_messages": [
+      "29d, 203, 266, 1aa, 2c7, 280, 143, 348, 3d9, 2e8",
+      "03f, 119, 393, 22e, 22f, 2a2, 30d, 3c6, 074, 1e1",
+      "22d, 1ff, 0a9, 38b, 299, 32b, 0e7, 354, 14e, 357",
+      "0a1, 1f3, 3c5, 26e, 296, 0f5, 0ea, 052, 093, 006",
+      "26f, 201, 058, 36c, 351, 35b, 1f4, 14d, 231, 261",
+      "1f4, 300, 039, 12d, 0b5, 3da, 3bf, 16d, 33c, 23c",
+      "2ac, 3b9, 210, 199, 2dd, 118, 2ad, 048, 24a, 1b7",
+      "298, 13c, 04e, 29f, 2fb, 13e, 3df, 25e, 0a2, 0f0",
+      "25b, 0c1, 14b, 043, 3e3, 38b, 081, 1ba, 030, 14a",
+      "00d, 343, 045, 07e, 0ac, 0f8, 16f, 38e, 189, 3db"
+    ],
+    "agent1_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ],
+    "agent1_regret_mean": 4.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Sonnet 4.6",
+    "agent2_personality": "cooperative",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA"
+    ],
+    "agent2_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0
+    ],
+    "agent2_messages": [
+      "236, 044, 119, 06f, 074, 186, 2a8, 161, 032, 192",
+      "1c8, 0ba, 38e, 33d, 18f, 24e, 1b2, 2bb, 16a, 1d5",
+      "0f5, 0f0, 3af, 349, 16a, 1d5, 0b7, 082, 264, 3e6",
+      "1b0, 3de, 2a8, 254, 3d3, 13f, 187, 2cb, 2c2, 390",
+      "05b, 32f, 08d, 110, 1c4, 0b5, 284, 3b4, 277, 09b",
+      "15f, 378, 1a0, 07f, 34f, 0ab, 27b, 2c3, 301, 25d",
+      "0e1, 069, 3e7, 016, 208, 3cc, 352, 0ae, 35e, 3d7",
+      "1d6, 1ed, 11a, 075, 0f4, 3c7, 0be, 38b, 057, 08f",
+      "1fa, 186, 1b5, 25d, 01c, 127, 10e, 2a0, 1a5, 31c",
+      "250, 069, 249, 2da, 1d4, 06a, 1b5, 01c, 270, 329"
+    ],
+    "agent2_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ],
+    "agent2_regret_mean": 4.0,
+    "welfare_mean_sum": 12.0,
+    "welfare_mean_min": 6.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_1",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 2,
+    "agents_communicate": false,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Sonnet 4.6",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      0.0,
+      2.0
+    ],
+    "agent1_messages": [
+      "122, 07d, 0b3, 15d, 27c, 1c9, 194, 333, 09a, 39d",
+      "038, 22d, 2aa, 0dd, 392, 1cd, 3aa, 185, 0a2, 22b"
+    ],
+    "agent1_regret_per_round": [
+      2.0,
+      0.0
+    ],
+    "agent1_regret_mean": 1.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Sonnet 4.6",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionB",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      10.0,
+      2.0
+    ],
+    "agent2_messages": [
+      "3da, 05a, 162, 3d4, 385, 180, 0f8, 0c1, 3e4, 35a",
+      "31c, 2b4, 09e, 042, 364, 1eb, 08c, 1b8, 3c3, 2db"
+    ],
+    "agent2_regret_per_round": [
+      0.0,
+      0.0
+    ],
+    "agent2_regret_mean": 0.0,
+    "welfare_mean_sum": 7.0,
+    "welfare_mean_min": 1.0,
+    "welfare_mean_gini": 0.25,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_2",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 2,
+    "agents_communicate": false,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Sonnet 4.6",
+    "agent1_personality": "selfish",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      0.0,
+      2.0
+    ],
+    "agent1_messages": [
+      "3a8, 0f0, 13a, 29d, 1fe, 398, 308, 2b1, 199, 289",
+      "27b, 040, 03c, 13b, 279, 20a, 3c9, 0bd, 35c, 188"
+    ],
+    "agent1_regret_per_round": [
+      2.0,
+      0.0
+    ],
+    "agent1_regret_mean": 1.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Sonnet 4.6",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionB",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      10.0,
+      2.0
+    ],
+    "agent2_messages": [
+      "346, 1f7, 346, 33b, 3cf, 315, 336, 1aa, 1f8, 0d0",
+      "137, 08b, 00f, 3b3, 0b1, 2f7, 2f0, 10e, 0f1, 06a"
+    ],
+    "agent2_regret_per_round": [
+      0.0,
+      0.0
+    ],
+    "agent2_regret_mean": 0.0,
+    "welfare_mean_sum": 7.0,
+    "welfare_mean_min": 1.0,
+    "welfare_mean_gini": 0.25,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  }
+]

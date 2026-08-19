@@ -1,0 +1,318 @@
+/* ============================================================
+   FAIRGAME — design system
+   Premium, commercial product styling. Light canvas, ink-navy
+   shell, disciplined indigo brand, distinctive typography.
+   Most of the app re-skins through these tokens + .fg-* classes.
+   ============================================================ */
+
+:root {
+  /* Brand (indigo) */
+  --brand-50:  #eef1ff;
+  --brand-100: #e0e7ff;
+  --brand-200: #c7d2fe;
+  --brand-300: #a5b4fc;
+  --brand-400: #818cf8;
+  --brand-500: #6366f1;
+  --brand-600: #4f46e5;
+  --brand-700: #4338ca;
+  --brand-800: #3730a3;
+  --brand-900: #312e81;
+
+  /* Ink / neutrals */
+  --ink-950: #0b1020;   /* shell background */
+  --ink-900: #0f152b;
+  --ink-800: #161d38;
+  --ink-700: #1f2747;
+  --ink-600: #2c365e;
+
+  --slate-900: #0f172a;
+  --slate-800: #1e293b;
+  --slate-700: #334155;
+  --slate-600: #475569;
+  --slate-500: #64748b;
+  --slate-400: #94a3b8;
+  --slate-300: #cbd5e1;
+  --slate-200: #e2e8f0;
+  --slate-100: #f1f5f9;
+
+  /* Surfaces — the canvas sits a clear step below the white cards and
+     borders are visible, so components separate instead of melting into
+     one light field. */
+  --canvas:   #e9ecf5;
+  --surface:  #ffffff;
+  --surface-2:#f3f5fa;
+  --border:   #d7dcea;
+  --border-strong: #bec5da;
+
+  --text:        #16182b;
+  --text-muted:  #5b627a;
+  --text-soft:   #858ba0;
+
+  /* Typography */
+  --font-display: "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Elevation */
+  --shadow-xs: 0 1px 2px rgba(16, 19, 38, 0.05);
+  --shadow-sm: 0 1px 3px rgba(16, 19, 38, 0.06), 0 1px 2px rgba(16, 19, 38, 0.04);
+  --shadow-md: 0 10px 24px -8px rgba(16, 19, 38, 0.12), 0 4px 8px -4px rgba(16, 19, 38, 0.06);
+  --shadow-lg: 0 24px 48px -16px rgba(16, 19, 38, 0.22), 0 8px 16px -8px rgba(16, 19, 38, 0.10);
+
+  --radius:    14px;
+  --radius-sm: 10px;
+  --radius-lg: 20px;
+}
+
+[x-cloak] { display: none !important; }
+
+/* ---------- Base ---------- */
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: var(--font-sans);
+  background-color: var(--canvas);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.011em;
+  /* subtle atmospheric depth so the canvas isn't a flat fill */
+  background-image:
+    radial-gradient(900px 500px at 100% -5%, rgba(99, 102, 241, 0.09), transparent 60%),
+    radial-gradient(700px 420px at -10% 110%, rgba(79, 70, 229, 0.07), transparent 60%);
+  background-attachment: fixed;
+}
+
+/* Default hairline color for every border utility (border, border-b,
+   divide-*) — one lever that separates all the light components at once.
+   Later in the cascade than Tailwind's preflight, so it wins. */
+*, ::before, ::after { border-color: var(--border); }
+
+h1, h2, h3, h4, h5 { font-family: var(--font-display); letter-spacing: -0.02em; }
+code, pre, kbd, samp { font-family: var(--font-mono); }
+code { font-size: 0.86em; }
+
+::selection { background: var(--brand-200); color: var(--brand-900); }
+
+/* refined scrollbars */
+* { scrollbar-width: thin; scrollbar-color: var(--slate-300) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }
+*::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
+
+/* ---------- Sidebar / shell ---------- */
+.fg-shell {
+  background: linear-gradient(195deg, var(--ink-900) 0%, var(--ink-950) 60%, #080b18 100%);
+  position: relative;
+}
+.fg-shell::after { /* hairline separator with a faint brand glow */
+  content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
+  background: linear-gradient(to bottom, transparent, rgba(129,140,248,0.35), transparent);
+}
+.fg-wordmark-sub { font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: #7c84a8; font-weight: 600; }
+
+.nav-section-label {
+  font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase;
+  color: #5b6488; font-weight: 700; padding: 0 0.9rem; margin-bottom: 0.4rem;
+}
+.nav-link {
+  position: relative;
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.55rem 0.9rem; border-radius: 10px;
+  color: #aab1d0; cursor: pointer; font-size: 0.9rem; font-weight: 500;
+  transition: background .15s ease, color .15s ease;
+}
+.nav-link svg { width: 18px; height: 18px; flex: none; opacity: 0.85; }
+.nav-link:hover { background: rgba(255,255,255,0.05); color: #eef0ff; }
+.nav-link.active { background: rgba(99,102,241,0.16); color: #fff; }
+.nav-link.active svg { opacity: 1; }
+.nav-link.active::before {
+  content: ""; position: absolute; left: -4px; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 18px; border-radius: 999px;
+  background: linear-gradient(var(--brand-300), var(--brand-500));
+}
+
+/* ---------- Hero ---------- */
+.fg-hero {
+  position: relative; overflow: hidden;
+  background:
+    radial-gradient(120% 140% at 85% -20%, rgba(129,140,248,0.45), transparent 55%),
+    linear-gradient(135deg, #141a35 0%, #1b2350 45%, #0e1430 100%);
+  border: 1px solid rgba(129,140,248,0.18);
+}
+.fg-hero::before { /* fine grid texture */
+  content: ""; position: absolute; inset: 0; opacity: 0.5;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 38px 38px;
+  -webkit-mask-image: radial-gradient(110% 90% at 80% 0%, #000 30%, transparent 75%);
+          mask-image: radial-gradient(110% 90% at 80% 0%, #000 30%, transparent 75%);
+}
+.fg-hero > * { position: relative; }
+.fg-eyebrow {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--brand-200);
+  background: rgba(129,140,248,0.14); border: 1px solid rgba(129,140,248,0.28);
+  padding: 0.28rem 0.7rem; border-radius: 999px;
+}
+
+/* ---------- Cards ---------- */
+.fg-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .18s ease, border-color .18s ease, transform .18s ease;
+}
+.fg-card:hover { box-shadow: var(--shadow-md); border-color: var(--border-strong); }
+
+/* Contrast boost: the light utility tints used for inner panels (code
+   previews, table headers, nested boxes) sit a full step below the white
+   card so nested components read as distinct surfaces. These load after
+   tailwind.css, so they win at equal specificity. */
+.bg-slate-50  { background-color: var(--surface-2); }
+.bg-slate-100 { background-color: #e7eaf3; }
+.border-slate-200 { border-color: var(--border-strong); }
+.border-slate-300 { border-color: #aeb6cd; }
+
+/* interactive nav cards (home) lift a touch */
+.fg-card-action { cursor: pointer; }
+.fg-card-action:hover { transform: translateY(-2px); }
+.fg-card-action .fg-card-icon {
+  width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center;
+  background: var(--brand-50); color: var(--brand-600); border: 1px solid var(--brand-100);
+}
+.fg-card-action:hover .fg-card-icon { background: var(--brand-600); color: #fff; border-color: var(--brand-600); }
+.fg-card-action svg { width: 20px; height: 20px; }
+
+/* ---------- Forms ---------- */
+.fg-input, select.fg-input, textarea.fg-input {
+  width: 100%; padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+  font-size: 0.9rem; font-family: inherit; background: var(--surface); color: var(--text);
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.fg-input::placeholder { color: var(--slate-400); }
+.fg-input:hover { border-color: var(--slate-400); }
+.fg-input:focus {
+  outline: none; border-color: var(--brand-500);
+  box-shadow: 0 0 0 4px rgba(99,102,241,0.14);
+}
+.fg-label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.3rem; letter-spacing: -0.005em; }
+.fg-help { font-size: 0.76rem; color: var(--text-muted); margin-top: 0.25rem; line-height: 1.4; }
+
+/* ---------- Tabs ---------- */
+.fg-tab {
+  padding: 0.45rem 0.95rem; border-radius: 999px; cursor: pointer;
+  font-size: 0.85rem; font-weight: 600; color: var(--slate-600);
+  border: 1px solid transparent; transition: all .15s ease;
+}
+.fg-tab:hover { background: var(--slate-100); color: var(--slate-900); }
+.fg-tab.active {
+  background: var(--surface); color: var(--brand-700);
+  border-color: var(--brand-200); box-shadow: var(--shadow-xs);
+}
+
+/* ---------- Pills / tags ---------- */
+.fg-pill {
+  display: inline-flex; align-items: center; padding: 0.2rem 0.62rem; border-radius: 999px;
+  font-size: 0.72rem; font-weight: 600; margin-right: 0.3rem; border: 1px solid transparent;
+  letter-spacing: 0.005em;
+}
+.fg-pill-blue   { background: var(--brand-50);  color: var(--brand-700); border-color: var(--brand-100); }
+.fg-pill-violet { background: #f5f3ff; color: #6d28d9; border-color: #e4dcff; }
+
+/* ---------- Sections ---------- */
+.fg-section { margin-bottom: 1.5rem; }
+.fg-section h3 {
+  font-family: var(--font-display);
+  font-size: 0.82rem; font-weight: 700; color: var(--slate-900);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  margin-bottom: 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border);
+}
+
+/* ---------- Buttons: polish the inline Tailwind ones globally ---------- */
+button { font-family: inherit; }
+button[class*="bg-blue-600"] {
+  border-radius: var(--radius-sm) !important;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(79,70,229,0.25), 0 6px 16px -8px rgba(79,70,229,0.6);
+  transition: transform .12s ease, box-shadow .15s ease, background-color .15s ease;
+}
+button[class*="bg-blue-600"]:hover:not(:disabled) { transform: translateY(-1px); }
+button[class*="bg-blue-600"]:active:not(:disabled) { transform: translateY(0); }
+
+/* ---------- Channel zones (agent-facing vs analysis-only) ---------- */
+.fg-zone {
+  position: relative; background: var(--surface);
+  border: 1px solid var(--border); border-left-width: 3px;
+  border-radius: var(--radius); padding: 1.2rem 1.3rem 1.15rem;
+}
+.fg-zone + .fg-zone { margin-top: 1rem; }
+.fg-zone-eyebrow {
+  font-family: var(--font-display); font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; display: block; margin-bottom: 0.15rem;
+}
+.fg-zone-agent    { border-left-color: var(--brand-500); }
+.fg-zone-agent    .fg-zone-eyebrow { color: var(--brand-700); }
+.fg-zone-route    { border-left-color: var(--brand-300);
+                    background: linear-gradient(180deg, #fbfbff, var(--surface) 60%); }
+.fg-zone-route    .fg-zone-eyebrow { color: var(--brand-600); }
+.fg-zone-analysis { border-left-color: var(--slate-400); background: var(--surface-2); }
+.fg-zone-analysis .fg-zone-eyebrow { color: var(--slate-600); }
+.fg-zone-sub {
+  font-family: var(--font-display); font-size: 0.74rem; font-weight: 700;
+  letter-spacing: 0.04em; color: var(--slate-700); text-transform: uppercase;
+  margin: 0.2rem 0 0.6rem; padding-top: 0.3rem;
+}
+
+/* live "where does this act" badge */
+.fg-channel-badge {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  font-size: 0.66rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  padding: 0.18rem 0.55rem; border-radius: 999px; border: 1px solid; white-space: nowrap;
+}
+.fg-channel-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.fg-channel-prompt   { background: var(--brand-50);  color: var(--brand-700); border-color: var(--brand-200); }
+.fg-channel-both     { background: #fff7ed; color: #b45309; border-color: #fde7c7; }
+.fg-channel-analysis { background: var(--slate-100); color: var(--slate-600); border-color: var(--slate-200); }
+
+/* generic code/pre blocks reading nicer */
+pre { line-height: 1.5; }
+
+/* details summary marker refinement */
+details > summary { list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary { position: relative; padding-left: 1.4rem; }
+details > summary::before {
+  content: "›"; position: absolute; left: 0.35rem; top: -0.05rem;
+  font-family: var(--font-mono); color: var(--brand-500); transition: transform .15s ease;
+  display: inline-block; font-size: 1.05rem; font-weight: 700;
+}
+details[open] > summary::before { transform: rotate(90deg); }
+
+/* ---------- Help tooltip (the little "?" next to jargon) ---------- */
+.fg-tip {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 15px; height: 15px; margin-left: 0.3rem; vertical-align: middle;
+  border-radius: 999px; border: 1px solid var(--border-strong, #cbd2e0);
+  background: var(--surface, #fff); color: var(--slate-500, #64748b);
+  font-size: 10px; font-weight: 700; line-height: 1; cursor: help;
+  position: relative; user-select: none;
+}
+.fg-tip:hover, .fg-tip:focus { color: var(--brand-600); border-color: var(--brand-300, #a5b4fc); outline: none; }
+.fg-tip > .fg-tip-body {
+  position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%);
+  width: max-content; max-width: 260px; z-index: 60;
+  background: #1e293b; color: #f1f5f9; text-align: left;
+  font-size: 0.72rem; font-weight: 400; line-height: 1.4; letter-spacing: 0;
+  padding: 0.5rem 0.6rem; border-radius: 0.4rem; box-shadow: 0 6px 20px rgba(0,0,0,.22);
+  opacity: 0; visibility: hidden; transition: opacity .12s ease;
+  white-space: normal; pointer-events: none;
+}
+.fg-tip > .fg-tip-body::after {
+  content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  border: 5px solid transparent; border-top-color: #1e293b;
+}
+.fg-tip:hover > .fg-tip-body, .fg-tip:focus > .fg-tip-body { opacity: 1; visibility: visible; }

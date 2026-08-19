@@ -1,0 +1,470 @@
+[
+  {
+    "game_id": "game_0",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 10,
+    "agents_communicate": true,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Sonnet 4.6",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA"
+    ],
+    "agent1_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0
+    ],
+    "agent1_messages": [
+      "Let's both choose OptionA so we each get 6 \u2014 it's the best mutual outcome!",
+      "Great, we both chose OptionA last round and got 6 each \u2014 let's keep doing that!",
+      "Let's keep the streak going with OptionA \u2014 we're both doing great!",
+      "Let's keep our winning streak alive with OptionA again!",
+      "Let's keep our successful cooperation going with OptionA for round 5!",
+      "Let's keep our winning streak going with OptionA for round 6!",
+      "Let's keep our winning streak going with OptionA for round 7!",
+      "Let's keep our winning streak going with OptionA for round 8!",
+      "Let's keep our winning streak going with OptionA for round 9!",
+      "Let's finish strong with OptionA for our final round!"
+    ],
+    "agent1_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ],
+    "agent1_regret_mean": 4.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Sonnet 4.6",
+    "agent2_personality": "cooperative",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA"
+    ],
+    "agent2_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0
+    ],
+    "agent2_messages": [
+      "I agree, let's both choose OptionA for the best mutual outcome!",
+      "Let's keep cooperating with OptionA for another round!",
+      "Let's continue our successful cooperation with OptionA!",
+      "Let's keep cooperating with OptionA for another great round!",
+      "Let's continue our successful streak with OptionA!",
+      "Let's keep our successful cooperation going with OptionA for round 6!",
+      "Let's keep our successful cooperation going with OptionA for round 7!",
+      "Let's keep our successful cooperation going with OptionA for round 8!",
+      "Let's keep our successful cooperation going with OptionA for round 9!",
+      "Let's finish our perfect cooperation streak with OptionA for the final round!"
+    ],
+    "agent2_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ],
+    "agent2_regret_mean": 4.0,
+    "welfare_mean_sum": 12.0,
+    "welfare_mean_min": 6.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_1",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 1,
+    "agents_communicate": true,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Sonnet 4.6",
+    "agent1_personality": "cooperative",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionB"
+    ],
+    "agent1_scores": [
+      2.0
+    ],
+    "agent1_messages": [
+      "Let's both choose OptionA so we each get 6 \u2014 it's the best mutual outcome!"
+    ],
+    "agent1_regret_per_round": [
+      0.0
+    ],
+    "agent1_regret_mean": 0.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Sonnet 4.6",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionB"
+    ],
+    "agent2_scores": [
+      2.0
+    ],
+    "agent2_messages": [
+      "I agree, let's both choose OptionA for the mutual benefit!\n\n[Choice: OptionB]"
+    ],
+    "agent2_regret_per_round": [
+      0.0
+    ],
+    "agent2_regret_mean": 0.0,
+    "welfare_mean_sum": 4.0,
+    "welfare_mean_min": 2.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_2",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 8,
+    "agents_communicate": true,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Sonnet 4.6",
+    "agent1_personality": "selfish",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionB",
+      "OptionB"
+    ],
+    "agent1_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      10.0,
+      2.0
+    ],
+    "agent1_messages": [
+      "Let's both choose OptionA for mutual benefit \u2014 I'll be choosing OptionA this round.",
+      "Great, we both benefited last round! Let's keep the mutual cooperation going \u2014 I'll choose OptionA again.",
+      "Cooperation has been working great for both of us \u2014 I'll choose OptionA again this round!",
+      "Let's keep the cooperation going \u2014 I'll choose OptionA again this round!",
+      "Let's keep the cooperation going \u2014 I'll choose OptionA again this round!",
+      "Let's keep the cooperation going \u2014 I'll choose OptionA again this round!",
+      "Let's keep the cooperation going \u2014 I'll choose OptionA again this round!",
+      "I'm sorry for last round \u2014 let's get back to mutual cooperation with OptionA this round!"
+    ],
+    "agent1_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      0.0,
+      0.0
+    ],
+    "agent1_regret_mean": 3.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Sonnet 4.6",
+    "agent2_personality": "cooperative",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionA",
+      "OptionB"
+    ],
+    "agent2_scores": [
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      6.0,
+      0.0,
+      2.0
+    ],
+    "agent2_messages": [
+      "I'll choose OptionA as well \u2014 mutual cooperation gives us both the best consistent outcome!",
+      "Cooperation worked perfectly last round \u2014 I'll choose OptionA again!",
+      "Cooperation is working great \u2014 I'll choose OptionA again this round!",
+      "Cooperation is working perfectly for us both \u2014 I'll choose OptionA again this round!",
+      "Cooperation has been excellent for us both \u2014 I'll choose OptionA again this round!",
+      "Cooperation has been great for us both \u2014 I'll choose OptionA again this round!",
+      "Cooperation has been working perfectly for us both \u2014 I'll choose OptionA again this round!",
+      "I noticed you defected last round despite saying you'd cooperate \u2014 I'll be choosing OptionB this round to protect myself."
+    ],
+    "agent2_regret_per_round": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      2.0,
+      0.0
+    ],
+    "agent2_regret_mean": 3.25,
+    "welfare_mean_sum": 10.75,
+    "welfare_mean_min": 4.75,
+    "welfare_mean_gini": 0.0625,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 12.0,
+        "mean": 6.0,
+        "min": 6.0,
+        "max": 6.0,
+        "gini": 0.0
+      },
+      {
+        "sum": 10.0,
+        "mean": 5.0,
+        "min": 0.0,
+        "max": 10.0,
+        "gini": 0.5
+      },
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  },
+  {
+    "game_id": "game_3",
+    "language": "en",
+    "n_rounds_is_known": true,
+    "max_rounds": 10,
+    "played_rounds": 1,
+    "agents_communicate": true,
+    "elicit_beliefs": false,
+    "tom_order": 1,
+    "agent1_name": "agent1",
+    "agent1_llm": "Claude Sonnet 4.6",
+    "agent1_personality": "selfish",
+    "agent1_knows_opponent_with_prob": 0.0,
+    "agent1_strategies": [
+      "OptionB"
+    ],
+    "agent1_scores": [
+      2.0
+    ],
+    "agent1_messages": [
+      "Let's both choose OptionA for mutual benefit!"
+    ],
+    "agent1_regret_per_round": [
+      0.0
+    ],
+    "agent1_regret_mean": 0.0,
+    "agent2_name": "agent2",
+    "agent2_llm": "Claude Sonnet 4.6",
+    "agent2_personality": "selfish",
+    "agent2_knows_opponent_with_prob": 0.0,
+    "agent2_strategies": [
+      "OptionB"
+    ],
+    "agent2_scores": [
+      2.0
+    ],
+    "agent2_messages": [
+      "I agree, let's both choose OptionA!\n\n[Choice: OptionB]"
+    ],
+    "agent2_regret_per_round": [
+      0.0
+    ],
+    "agent2_regret_mean": 0.0,
+    "welfare_mean_sum": 4.0,
+    "welfare_mean_min": 2.0,
+    "welfare_mean_gini": 0.0,
+    "welfare_efficiency": null,
+    "welfare_per_round": [
+      {
+        "sum": 4.0,
+        "mean": 2.0,
+        "min": 2.0,
+        "max": 2.0,
+        "gini": 0.0
+      }
+    ]
+  }
+]

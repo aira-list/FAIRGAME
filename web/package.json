@@ -1,0 +1,13 @@
+{
+  "name": "fairgame-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Build tooling for the FAIRGAME SPA stylesheet (Tailwind).",
+  "scripts": {
+    "build:css": "tailwindcss -c ./tailwind.config.js -i ./tailwind.input.css -o ./css/tailwind.css --minify",
+    "watch:css": "tailwindcss -c ./tailwind.config.js -i ./tailwind.input.css -o ./css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.17"
+  }
+}

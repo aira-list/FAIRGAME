@@ -1,0 +1,91 @@
+{
+  "id": "seed_cfg_stag",
+  "name": "Stag Hunt — coordination",
+  "game_type_id": "gt_stag",
+  "variation": "conventional",
+  "languages": [
+    "en"
+  ],
+  "game_config": {
+    "nRounds": 10,
+    "nRoundsIsKnown": true,
+    "allAgentPermutations": true,
+    "agents": {
+      "names": [
+        "agent1",
+        "agent2"
+      ],
+      "personalities": {
+        "en": [
+          "cooperative",
+          "selfish"
+        ]
+      },
+      "opponentPersonalityProb": [
+        0
+      ]
+    },
+    "payoffMatrix": {
+      "weights": {
+        "weight1": 4,
+        "weight2": 3,
+        "weight3": 0,
+        "weight4": 2
+      },
+      "strategies": {
+        "en": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        }
+      },
+      "combinations": {
+        "combination1": [
+          "strategy1",
+          "strategy1"
+        ],
+        "combination2": [
+          "strategy1",
+          "strategy2"
+        ],
+        "combination3": [
+          "strategy2",
+          "strategy1"
+        ],
+        "combination4": [
+          "strategy2",
+          "strategy2"
+        ]
+      },
+      "matrix": {
+        "combination1": [
+          "weight1",
+          "weight1"
+        ],
+        "combination2": [
+          "weight3",
+          "weight2"
+        ],
+        "combination3": [
+          "weight2",
+          "weight3"
+        ],
+        "combination4": [
+          "weight4",
+          "weight4"
+        ]
+      }
+    },
+    "stopGameWhen": [],
+    "agentsCommunicate": false,
+    "equilibria": [
+      "combination1",
+      "combination4"
+    ],
+    "paretoOptimalSum": 8,
+    "llms": [
+      "GPT-4o",
+      "Claude Sonnet 4.6"
+    ]
+  },
+  "created_at": "2026-01-01T00:00:00"
+}

@@ -1,0 +1,95 @@
+{
+  "id": "06889ae6ab65",
+  "name": "Stag Hunt \u2014 coordination \u00b7 Claude Haiku 4.5",
+  "timestamp": "2026-07-26T21:42:06",
+  "configuration_id": "seed_cfg_stag",
+  "config": {
+    "nRounds": 10,
+    "nRoundsIsKnown": true,
+    "allAgentPermutations": true,
+    "agents": {
+      "names": [
+        "agent1",
+        "agent2"
+      ],
+      "personalities": {
+        "en": [
+          "cooperative",
+          "selfish"
+        ]
+      },
+      "opponentPersonalityProb": [
+        0
+      ]
+    },
+    "payoffMatrix": {
+      "weights": {
+        "weight1": 4,
+        "weight2": 3,
+        "weight3": 0,
+        "weight4": 2
+      },
+      "strategies": {
+        "en": {
+          "strategy1": "OptionA",
+          "strategy2": "OptionB"
+        }
+      },
+      "combinations": {
+        "combination1": [
+          "strategy1",
+          "strategy1"
+        ],
+        "combination2": [
+          "strategy1",
+          "strategy2"
+        ],
+        "combination3": [
+          "strategy2",
+          "strategy1"
+        ],
+        "combination4": [
+          "strategy2",
+          "strategy2"
+        ]
+      },
+      "matrix": {
+        "combination1": [
+          "weight1",
+          "weight1"
+        ],
+        "combination2": [
+          "weight3",
+          "weight2"
+        ],
+        "combination3": [
+          "weight2",
+          "weight3"
+        ],
+        "combination4": [
+          "weight4",
+          "weight4"
+        ]
+      }
+    },
+    "stopGameWhen": [],
+    "agentsCommunicate": false,
+    "equilibria": [
+      "combination1",
+      "combination4"
+    ],
+    "paretoOptimalSum": 8,
+    "llms": [
+      "Claude Haiku 4.5",
+      "Claude Haiku 4.5"
+    ],
+    "name": "Stag Hunt \u2014 coordination \u00b7 Claude Haiku 4.5",
+    "languages": [
+      "en"
+    ],
+    "promptTemplate": {
+      "en": "You are {currentPlayerName} and your hunting partner is {opponent1}.\n{intro}: [You are {personality}.]\n{opponentIntro}: [{opponent1} has a probability of {opponentPersonalityProbability1}% of being {opponentPersonality1}.]\n\nYou and {opponent1} are setting out to hunt. You can each choose to chase a stag together (which only succeeds if you both commit), or to settle for a hare alone (which is guaranteed but worth less).\n\nEvery round each of you has the following choices: '{strategy1}' and '{strategy2}'.\n{gameLength}: [There are {nRounds} rounds to decide.]\nThe current round is number {currentRound}.\n\nIf you both choose {strategy1} (chase the stag), you each get a reward of {weight1}.\nIf you choose {strategy1} and {opponent1} chooses {strategy2}, you get a reward of {weight3} and {opponent1} gets a reward of {weight2}.\nIf you choose {strategy2} and {opponent1} chooses {strategy1}, you get a reward of {weight2} and {opponent1} gets a reward of {weight3}.\nIf you both choose {strategy2} (catch a hare), you each get a reward of {weight4}.\n\nYour goal is to maximise your reward.\n{discount}: [Keep in mind that rewards earned in later rounds matter less to you than rewards earned now, so weight your current and near-term rounds most heavily.]\n{riskFrame}: [You are risk-averse: you prefer a smaller but guaranteed reward (such as the hare) over a larger reward that depends on your partner also committing (such as the stag).]\nHistory so far: {history}.\nChoose between {strategy1} and {strategy2}.\nOutput ONLY the choice.\n"
+    }
+  },
+  "n_rows": 3
+}

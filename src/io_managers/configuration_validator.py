@@ -1,124 +1,562 @@
+from typing import Literal
+
+from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from src.io_managers.payoff_matrix_transformer import PayoffMatrixTransformer
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+
+class TypesConfig(BaseModel):
+    """Optional Bayesian-game type system.
+
+    Each agent draws a private type from ``labels`` according to ``probs``.
+    ``commonKnowledge`` controls whether the *distribution* (not the realised
+    type) is shared across agents in their prompts.
+    """
+
+    labels: list[str]
+    probs: list[float] | None = None  # uniform if omitted
+    commonKnowledge: bool = False
+
+    @model_validator(mode="after")
+    def validate_types(self) -> "TypesConfig":
+        if not self.labels:
+            raise ValueError("agents.types.labels must be non-empty.")
+        if self.probs is not None:
+            if len(self.probs) != len(self.labels):
+                raise ValueError("agents.types.probs must have the same length as labels.")
+            if any(p < 0 for p in self.probs):
+                raise ValueError("agents.types.probs must be non-negative.")
+            total = sum(self.probs)
+            if total <= 0:
+                raise ValueError("agents.types.probs must sum to a positive value.")
+        return self
+
+
+class AgentsConfig(BaseModel):
+    names: list[str]
+    personalities: dict[str, list[str]]
+    opponentPersonalityProb: list[float] | None = None  # optional unless single-config mode
+    allAgentPermutations: bool | None = False  # injected from top-level
+    types: TypesConfig | None = None
+
+    @model_validator(mode="after")
+    def validate_agents(self) -> "AgentsConfig":
+        num_agents = len(self.names)
+
+        if num_agents < 2:
+            raise ValueError("There must be at least 2 agents.")
+
+        # When ``allAgentPermutations`` is true the personality entries are a
+        # *pool* to permute across, so they don't have to align 1:1 with the
+        # agent count. The strict check is enforced in ConfigModel's
+        # validator once the parent flag is known.
+        for lang, plist in self.personalities.items():
+            if not plist:
+                raise ValueError(f"Personality list for '{lang}' must be non-empty.")
+
+        return self
+
+
+class ConfigModel(BaseModel):
+    name: str
+    nRounds: int
+    nRoundsIsKnown: bool
+    payoffMatrix: dict
+    allAgentPermutations: bool = False
+    agents: AgentsConfig
+
+    # LLM config: either single llm or per-agent llms (list or dict)
+    llm: str | None = None
+    llms: list[str] | dict[str, str] | None = None
+
+    languages: list[str]
+    stopGameWhen: list[str] = Field(default_factory=list)
+    agentsCommunicate: bool
+    promptTemplate: dict[str, str] | None = None
+    templateFilename: str | None = None
+
+    # Fake communication settings
+    fakeCommunication: bool | None = False
+    fakeMessageCount: int | None = 1
+    fakeMessageBase: str | None = "dec"  # "dec" or "hex"
+    # fakeSeed removed: we no longer use deterministic seeding
+
+    messageFormat: Literal["dec", "hex", "text"] | None = None
+    """Expected shape of the *real* communication channel. ``"dec"``/``"hex"``
+    force numeric-sequence extraction from replies (language-independent),
+    ``"text"`` passes replies through verbatim, ``None`` = legacy English
+    prompt-text sniffing (see ``src.game.game_round._extract_numeric_message``)."""
+
+    # ---- Theory-of-Mind settings ------------------------------------
+    elicitBeliefs: bool = False
+    """When true, GameRound runs an extra ``believe`` phase that asks each
+    agent to predict its opponent's strategy distribution."""
+
+    tomOrder: Literal[0, 1, 2] = 1
+    """ToM order injected into prompts:
+
+    * 0 — opponent personality / prior is suppressed.
+    * 1 — opponent personality / prior is shown (default; legacy behaviour).
+    * 2 — additionally inject a ``{secondOrder}:[...]`` block, signalling
+          that the opponent is also reasoning about the agent.
+    """
+
+    typesAreCommonKnowledge: bool = False
+    """If types are configured and this flag is set, each agent's prompt is
+    told the prior distribution over the *opponent's* type. The realised
+    type stays private."""
+
+    # ---- Game-theoretic extensions --------------------------------------
+    discountFactor: float = 1.0
+    """Per-round δ multiplier applied to attributed payoffs. Must be in (0, 1]."""
+
+    discountMode: str = "score"
+    """Where the discount acts. ``"score"`` (default, legacy) applies δ only
+    when attributing payoffs — invisible to the agent. ``"prompt"`` instead
+    describes the discount to the agent in the prompt (a ``{discount}`` block)
+    so it shapes the LLM's *choices*, and does NOT touch the score (avoids
+    counting the same preference as both treatment and measurement).
+    ``"both"`` does prompt framing AND score attribution."""
+
+    riskMode: str = "score"
+    """Where a risk preference (CRRA utility transform) acts. ``"score"``
+    (default) transforms attributed payoffs only. ``"prompt"`` instead
+    describes risk aversion to the agent (a ``{riskFrame}`` block) so it
+    shapes the LLM's choices, leaving the score untransformed. ``"both"``
+    does both. Only meaningful when ``utilityTransform`` is CRRA; prompt-side
+    fairness (Fehr-Schmidt) is not yet supported and falls back to score."""
+
+    continuationProbability: float | None = None
+    """If set, after the first round each subsequent round is played only
+    with this probability — supports indefinite-horizon games."""
+
+    equilibria: list[str] | str = []
+    """Combination keys (e.g. ``"combination4"``) declared to be equilibria,
+    OR the literal string ``"auto"`` to compute pure-strategy Nash
+    equilibria via nashpy at validation time."""
+
+    payoffDirection: Literal["reward", "penalty"] = "reward"
+    """How the payoff-matrix weights are to be read analytically.
+
+    ``"reward"`` (default): higher is better — equilibria, best-response
+    regret and welfare efficiency treat the weights as utilities to maximise.
+    ``"penalty"``: lower is better — the analytic layer minimises instead.
+    Prompts always render the raw weight numbers either way; the template
+    prose must state the matching goal ("maximise your payoff" / "minimise
+    your penalty")."""
+
+    paretoOptimalSum: float | None = None
+    """Sum of payoffs at the Pareto-optimal outcome. When provided, the
+    welfare analysis emits an efficiency ratio."""
+
+    utilityTransform: dict[str, object] | None = None
+    """``{"type": "CRRA"|"FehrSchmidt"|"identity", ...}`` — mapping from raw
+    payoffs to agent utilities (see :mod:`src.game_theory.utility`)."""
+
+    mixedStrategies: bool = False
+    """If true, the agent is asked for a probability distribution over
+    strategies and the engine samples from it."""
+
+    reputationWindow: int | None = None
+    """When set (>=1), per-opponent ``{coopRateN}`` and ``{reputationN}``
+    placeholders average only the most recent N rounds. Strategy1 is
+    treated as 'cooperate' by convention."""
+
+    reputationApplies: bool = True
+    """When False, the rolling-cooperation-rate placeholders are filled
+    with ``n/a`` / ``unknown`` regardless of history. Set this to False
+    for asymmetric coordination games (Battle of the Sexes), zero-sum
+    games, and any scenario where strategy1 doesn't mean 'cooperate'."""
+
+    seed: int | None = None
+    """Master seed for deterministic replay. ``None`` = nondeterministic."""
+
+    seedCount: int | None = None
+    """When set (and >1), the experiment is repeated this many times with
+    distinct child seeds; results are aggregated with confidence intervals."""
+
+    seeds: list[int] | None = None
+    """Explicit list of seeds; takes precedence over ``seedCount``."""
+
+    payoffVariantName: str | None = None
+    """Set by the run pipeline when this game came from one entry of a
+    configuration group's ``variations`` list. Surfaces as the
+    ``payoff_variant_name`` column in the per-game DataFrame so the
+    Results page can compute sensitivity-to-payoff (the radar plot's
+    S_P axis) for free."""
+
+    # ---- Tournaments ----------------------------------------------------
+    tournament: dict[str, object] | None = None
+    """``{"enabled": true, "mode": "round_robin", "symmetric": true}`` —
+    when enabled and the agent pool has more than two members, run all
+    pairwise games instead of one big multi-agent game."""
+
+    # ---- Baselines ------------------------------------------------------
+    baselineSemantics: dict[str, str] | None = None
+    """``{"cooperate": "strategy1", "defect": "strategy2"}`` — tells the
+    canonical strategy library which strategy keys to read as
+    cooperation/defection."""
+
+    # ---- Trust / costly monitoring --------------------------------------
+    trust: dict[str, object] | None = None
+    """``{"enabled": true, "lookCost": 0.25, "historyScope": "full"}`` —
+    enables a per-round monitoring decision (LOOK/NO_LOOK). Paying to LOOK
+    reveals the opponent's history at the cost of ``lookCost`` points;
+    NO_LOOK acts on trust with no information. See :class:`src.communication.trust.TrustConfig`."""
+
+    # ---- Agent interaction graph ----------------------------------------
+    interaction: dict[str, object] | None = None
+    """``{"directed": true, "default": "none"|"see"|"talk",
+    "edges": [{"from": "a1", "to": "a2", "level": "talk"}]}`` — an explicit
+    directed visibility + communication topology. An edge ``A -> B`` means
+    B perceives A: ``see`` exposes A's plays to B, ``talk`` also delivers
+    A's messages. Absent → the implicit complete graph (every agent
+    perceives every other). See :class:`src.communication.interaction.InteractionGraph`."""
+
+    @model_validator(mode="after")
+    def _validate_game_theory_extensions(self) -> "ConfigModel":
+        if not (0.0 < self.discountFactor <= 1.0):
+            raise ValueError("discountFactor must lie in (0, 1].")
+        # A plain-string ``equilibria`` other than "auto" used to slip through
+        # and get list()-split into single characters downstream, silently
+        # zeroing the equilibrium_rate metric. Fail loudly here instead.
+        if isinstance(self.equilibria, str) and self.equilibria != "auto":
+            raise ValueError(
+                "equilibria must be a list of combination keys or the literal "
+                f"string 'auto'; got the string {self.equilibria!r}."
+            )
+        _modes = {"score", "prompt", "both"}
+        if self.discountMode not in _modes:
+            raise ValueError(f"discountMode must be one of {sorted(_modes)}.")
+        if self.riskMode not in _modes:
+            raise ValueError(f"riskMode must be one of {sorted(_modes)}.")
+        if self.continuationProbability is not None and not (
+            0.0 < self.continuationProbability <= 1.0
+        ):
+            raise ValueError("continuationProbability must lie in (0, 1] when set.")
+        if self.seedCount is not None and self.seedCount < 1:
+            raise ValueError("seedCount must be >= 1.")
+        if self.seeds is not None and not all(isinstance(s, int) for s in self.seeds):
+            raise ValueError("seeds must be a list of integers.")
+        # Trust / interaction blocks: delegate to the domain constructors so
+        # the validation rules exist in exactly one place (src.communication.trust /
+        # src.communication.interaction) — this layer just surfaces their errors at
+        # config-validation time instead of deep in game construction.
+        from src.communication.trust import TrustConfig
+
+        if self.trust is not None:
+            if not isinstance(self.trust, dict):
+                raise ValueError("trust must be an object.")
+            TrustConfig.from_config({"trust": self.trust})
+        if self.interaction is not None:
+            from src.communication.interaction import InteractionGraph
+
+            if not isinstance(self.interaction, dict):
+                raise ValueError("interaction must be an object.")
+            graph = InteractionGraph.from_config(
+                {"interaction": self.interaction}, list(self.agents.names)
+            )
+            # Real communication over a graph with no talk edge is a
+            # configuration that can't do what it says: every message would
+            # be elicited and then delivered to nobody.
+            names = list(self.agents.names)
+            if self.agentsCommunicate and not any(
+                graph.hears(b, a) for a in names for b in names if a != b
+            ):
+                logger.warning(
+                    "agentsCommunicate is true but the interaction graph has "
+                    "no 'talk' edge — no message can ever be delivered. "
+                    "Add a talk edge or disable communication."
+                )
+        return self
+
+    # ------------- MAIN VALIDATOR (just orchestration) -------------
+    @model_validator(mode="after")
+    def validate_config(self) -> "ConfigModel":
+        self._validate_prompt_source()
+        self._inject_agent_flags()
+        self._validate_opponent_probs()
+        self._validate_llm_config()
+        self._validate_languages()
+        self._validate_fake_communication()
+        return self
+
+    # ------------- SMALL HELPERS BELOW -------------
+
+    def _validate_prompt_source(self) -> None:
+        """Exactly one of promptTemplate or templateFilename must be provided."""
+        has_template_dict = bool(self.promptTemplate)
+        has_template_file = bool(self.templateFilename)
+
+        if has_template_dict == has_template_file:
+            raise ValueError(
+                "Exactly one of 'promptTemplate' or 'templateFilename' must be provided."
+            )
+
+    def _inject_agent_flags(self) -> None:
+        """Propagate allAgentPermutations into the nested agents config."""
+        self.agents.allAgentPermutations = self.allAgentPermutations
+
+    def _validate_opponent_probs(self) -> None:
+        """Validate ``opponentPersonalityProb`` and personalities length.
+
+        Permutation semantics:
+
+        * ``allAgentPermutations: false`` — both are 1:1 lists per agent.
+        * ``allAgentPermutations: true`` — both are pools the factory permutes
+          over; only required to be non-empty.
+        """
+        num_agents = len(self.agents.names)
+        probs = self.agents.opponentPersonalityProb
+
+        # The prompt renders the value verbatim into "...a probability of
+        # {value}% ...", so 0.7 reads as "0.7%" — almost certainly meant 70.
+        # Accepted (some historical configs rely on it) but flagged loudly.
+        for p in probs or []:
+            if 0 < p < 1:
+                logger.warning(
+                    "opponentPersonalityProb %s is between 0 and 1; the prompt "
+                    "renders it verbatim as '%s%%'. Use the percent scale "
+                    "(e.g. %s) — 0 hides the personality, 100 is common "
+                    "knowledge.",
+                    p,
+                    p,
+                    round(p * 100),
+                )
+
+        if self.allAgentPermutations:
+            if not probs:
+                raise ValueError(
+                    "opponentPersonalityProb must be a non-empty list (used as the "
+                    "permutation pool when allAgentPermutations=true)."
+                )
+            return
+
+        if not probs or len(probs) != num_agents:
+            raise ValueError("opponentPersonalityProb must match number of agents.")
+
+        for lang, plist in self.agents.personalities.items():
+            if len(plist) != num_agents:
+                raise ValueError(
+                    f"Personality list for '{lang}' must match number of agents "
+                    f"({num_agents}) when allAgentPermutations=false."
+                )
+
+    # ---- LLM handling ----
+    def _validate_llm_config(self) -> None:
+        """Top-level dispatcher for LLM validation."""
+        if self.llm is None and self.llms is None:
+            raise ValueError("Provide either 'llm' (single string) or 'llms' (list or dict).")
+
+        if self.llm is not None and self.llms is not None:
+            raise ValueError("Provide only one of 'llm' or 'llms', not both.")
+
+        if self.llm is not None:
+            self._validate_single_llm()
+        if self.llms is not None:
+            self._validate_llms_collection()
+
+    def _validate_single_llm(self) -> None:
+        if not isinstance(self.llm, str) or not self.llm:
+            raise ValueError("'llm' must be a non-empty string.")
+
+    def _validate_llms_collection(self) -> None:
+        num_agents = len(self.agents.names)
+
+        if isinstance(self.llms, list):
+            self._validate_llms_list(num_agents)
+        elif isinstance(self.llms, dict):
+            self._validate_llms_dict()
+        else:
+            raise ValueError(
+                "'llms' must be either a list of strings or a dict of {agent_name: string}."
+            )
+
+    def _validate_llms_list(self, num_agents: int) -> None:
+        if len(self.llms) != num_agents:
+            raise ValueError(
+                f"When 'llms' is a list, its length ({len(self.llms)}) "
+                f"must equal number of agents ({num_agents})."
+            )
+        if not all(isinstance(x, str) and x for x in self.llms):
+            raise ValueError("All entries in 'llms' list must be non-empty strings.")
+
+    def _validate_llms_dict(self) -> None:
+        agent_names_set = set(self.agents.names)
+        llm_keys_set = set(self.llms.keys())
+
+        if llm_keys_set != agent_names_set:
+            missing = agent_names_set - llm_keys_set
+            extra = llm_keys_set - agent_names_set
+            parts = []
+            if missing:
+                parts.append(f"missing keys for agents {sorted(missing)}")
+            if extra:
+                parts.append(f"unexpected keys {sorted(extra)}")
+            detail = "; ".join(parts) if parts else "mismatched keys"
+            raise ValueError(
+                f"When 'llms' is a dict, its keys must match agent names exactly: {detail}."
+            )
+
+        if not all(isinstance(v, str) and v for v in self.llms.values()):
+            raise ValueError("All values in 'llms' dict must be non-empty strings.")
+
+    # ---- Languages ----
+    def _validate_languages(self) -> None:
+        if not self.languages or not all(isinstance(lang, str) and lang for lang in self.languages):
+            raise ValueError("'languages' must be a non-empty list of strings.")
+        # Every declared language must be resolvable by the per-language
+        # lookups the factory performs; a missing key used to surface as a
+        # raw KeyError deep inside the permutation expander.
+        for lang in self.languages:
+            if lang not in self.agents.personalities:
+                raise ValueError(
+                    f"Language {lang!r} is in 'languages' but has no entry in "
+                    f"agents.personalities (found: {sorted(self.agents.personalities)})."
+                )
+            if self.promptTemplate is not None and lang not in self.promptTemplate:
+                raise ValueError(
+                    f"Language {lang!r} is in 'languages' but has no entry in "
+                    f"promptTemplate (found: {sorted(self.promptTemplate)})."
+                )
+            strategies = (self.payoffMatrix or {}).get("strategies")
+            if isinstance(strategies, dict) and strategies and lang not in strategies:
+                raise ValueError(
+                    f"Language {lang!r} is in 'languages' but has no entry in "
+                    f"payoffMatrix.strategies (found: {sorted(strategies)})."
+                )
+
+    # ---- Fake communication ----
+    def _validate_fake_communication(self) -> None:
+        if not self.fakeCommunication:
+            return
+
+        if self.fakeMessageBase not in ("dec", "hex"):
+            raise ValueError("fakeMessageBase must be either 'dec' or 'hex'.")
+
+        if self.fakeMessageCount is None or self.fakeMessageCount <= 0:
+            raise ValueError("fakeMessageCount must be a positive integer.")
+
 
 class ConfigValidator:
     """
-    Handles validation of top-level configuration data.
+    Handles validation of top-level configuration data using Pydantic v2.
     """
-
-    REQUIRED_KEYS = {
-        "name": str,
-        "nRounds": int,
-        "nRoundsIsKnown": bool,
-        "payoffMatrix": dict,
-        "allAgentPermutations": bool,
-        "agents": dict,
-        "llm": str,
-        "languages": list,
-        "stopGameWhen": list,
-        "agentsCommunicate": bool
-    }
-
-    FILENAME_KEY = 'templateFilename'
-    TEMPLATE_KEY = 'promptTemplate'
 
     def validate_config_structure(self, config_data: dict) -> dict:
         """
-        Validates that the JSON data contains all required keys with correct types.
-        Also checks if payoffMatrix is valid, and if not, tries to transform it.
+        Parses and validates config_data using Pydantic.
+        Attempts payoffMatrix transformation if initial validation fails.
         Raises:
-            KeyError: If required keys are missing.
-            TypeError: If any key is of the wrong type.
-            KeyError: If the prompt template is misconfigured.
+            TypeError: if fields are missing or invalid.
+            KeyError: if payoffMatrix is invalid even after transformation.
         """
-        # Validate top-level keys
-        self._check_keys(config_data, ConfigValidator.REQUIRED_KEYS)
+        config_model = self._parse_and_validate(config_data)
 
-        # Validate payoffMatrix structure (transform if needed)
+        # Validate or transform payoffMatrix
         try:
-            PayoffMatrixTransformer.validate_payoff_matrix(config_data["payoffMatrix"])
+            PayoffMatrixTransformer.validate_payoff_matrix(config_model.payoffMatrix)
         except KeyError:
-            # Attempt to transform payoffMatrix if missing required structure
-            config_data = PayoffMatrixTransformer.transform_payoff_input(config_data)
-            # Validate again
-            PayoffMatrixTransformer.validate_payoff_matrix(config_data["payoffMatrix"])
+            config_model = self._attempt_payoff_transform(config_data)
 
-        # Check template presence
-        if not self._template_well_formed(config_data):
-            raise KeyError(
-                "Prompt template is not defined or is defined from different sources."
+        result = config_model.model_dump()
+
+        # Expand ``equilibria: "auto"`` now that the payoff matrix is
+        # canonical. We do this here (post-validation) so we have the
+        # transformed matrix to feed nashpy.
+        if result.get("equilibria") == "auto":
+            from src.game_theory.equilibrium import compute_nash_equilibria  # local import
+
+            language = (result.get("languages") or ["en"])[0]
+            result["equilibria"] = compute_nash_equilibria(
+                result["payoffMatrix"],
+                language,
+                direction=result.get("payoffDirection", "reward"),
             )
+        else:
+            # Explicit equilibria must reference real combinations; a typo
+            # would silently zero the equilibrium_rate metric.
+            self._check_combination_refs(result, "equilibria")
 
-        # Validate agent configuration if not all permutations are used
-        if not config_data["allAgentPermutations"]:
-            if not self._check_agents_configuration(config_data["agents"]):
-                raise KeyError(
-                    "Configuration error: There must be at least 2 agents and each agent's personalities "
-                    "and the opponentPersonalityProb list must have a length equal to the number of agents."
+        # A stop condition naming a nonexistent combination never fires: the
+        # game silently runs the full horizon instead of failing here.
+        self._check_combination_refs(result, "stopGameWhen")
+
+        self._check_matrix_refs(result)
+
+        return result
+
+    @staticmethod
+    def _check_matrix_refs(result: dict) -> None:
+        """The matrix block must be internally consistent.
+
+        Every ``matrix`` row must belong to a declared combination and
+        reference only existing weight keys — a dangling reference used to
+        validate cleanly and then crash mid-game (after paid LLM calls) at
+        the first score attribution.
+        """
+        pm = result.get("payoffMatrix") or {}
+        combinations = pm.get("combinations") or {}
+        weight_matrix = pm.get("matrix") or {}
+        weights = pm.get("weights") or {}
+        if set(weight_matrix) != set(combinations):
+            only_m = sorted(set(weight_matrix) - set(combinations))
+            only_c = sorted(set(combinations) - set(weight_matrix))
+            raise ValueError(
+                "payoffMatrix.matrix and payoffMatrix.combinations must define "
+                f"the same combination keys (only in matrix: {only_m}; only in "
+                f"combinations: {only_c})."
+            )
+        for combo, wkeys in weight_matrix.items():
+            unknown = [w for w in wkeys if w not in weights]
+            if unknown:
+                raise ValueError(
+                    f"payoffMatrix.matrix[{combo!r}] references undefined weight "
+                    f"key(s) {unknown}; weights defines {sorted(weights)}."
                 )
 
-        return config_data
-
-    def _check_keys(self, data: dict, required_keys: dict) -> None:
-        """
-        Ensures 'data' has all required keys of the correct type.
-        Raises:
-            KeyError: If any required key is missing.
-            TypeError: If any required key is present but of the wrong type.
-        """
-        missing_keys = []
-        type_errors = []
-        for key, expected_type in required_keys.items():
-            if key not in data:
-                missing_keys.append(key)
-            elif not isinstance(data[key], expected_type):
-                type_errors.append((key, type(data[key]), expected_type))
-
-        if missing_keys:
-            raise KeyError(f"Missing keys: {', '.join(missing_keys)}")
-
-        if type_errors:
-            formatted_errors = ", ".join(
-                f"{key} (found: {found}, expected: {expected})"
-                for key, found, expected in type_errors
+    @staticmethod
+    def _check_combination_refs(result: dict, field: str) -> None:
+        """Every entry of ``result[field]`` must be a known combination key."""
+        entries = result.get(field) or []
+        if not isinstance(entries, (list, tuple)):
+            return
+        known = set((result.get("payoffMatrix") or {}).get("combinations") or {})
+        unknown = [e for e in entries if e not in known]
+        if unknown:
+            raise ValueError(
+                f"{field} references unknown combination key(s) {unknown}; "
+                f"the payoff matrix defines {sorted(known)}."
             )
-            raise TypeError(f"Type errors: {formatted_errors}")
 
-    def _template_well_formed(self, data: dict) -> bool:
-        """
-        Ensures we have exactly one of the two possible template definitions:
-        'promptTemplate' or 'templateFilename'.
-        """
-        # XOR condition: Exactly one of them must be present.
-        return (self.TEMPLATE_KEY in data) ^ (self.FILENAME_KEY in data)
+    def _attempt_payoff_transform(self, original_data: dict) -> ConfigModel:
+        """Try to transform and re-validate the payoffMatrix if the first attempt failed."""
+        import copy
 
-    def _check_agents_configuration(self, agents_data: dict) -> bool:
-        """
-        Validates the agent configuration:
-          - At least 2 agents are required.
-          - The 'personalities' dict must have one key per agent.
-          - Each agent's personality list must have length = total number of agents.
-          - 'opponentPersonalityProb' must have length = total number of agents.
-        """
-        num_agents = len(agents_data.get("names", []))
+        try:
+            # Transform a copy: the transformer writes the expanded matrix
+            # into its argument, and validation must not rewrite the caller's
+            # config as a side effect.
+            transformed_config = PayoffMatrixTransformer.transform_payoff_input(
+                copy.deepcopy(original_data)
+            )
+            config_model = self._parse_and_validate(transformed_config)
+            PayoffMatrixTransformer.validate_payoff_matrix(config_model.payoffMatrix)
+            return config_model
+        except TypeError:
+            # Field-level validation failure (``_parse_and_validate`` maps
+            # pydantic ValidationError -> TypeError). Preserve the type rather
+            # than mislabeling it as a KeyError.
+            raise
+        except Exception as e:
+            raise KeyError(f"payoffMatrix validation failed after transformation: {e}") from e
 
-        # Must have at least 2 agents
-        if num_agents < 2:
-            return False
-
-        # Ensure each agent has a personality list that matches the number of agents
-        personalities = agents_data.get("personalities", {})
-        for _, v in personalities.items():
-            if len(v) < 2:
-                return False
-
-        all_personalities_correct = all(
-            len(personality_list) == num_agents
-            for personality_list in personalities.values()
-        )
-
-        # Check that the opponentPersonalityProb list length matches the number of agents
-        opponent_probs = agents_data.get("opponentPersonalityProb", [])
-        opponent_probs_correct = len(opponent_probs) == num_agents if opponent_probs else False
-
-        return all_personalities_correct and opponent_probs_correct
+    def _parse_and_validate(self, data: dict) -> ConfigModel:
+        """Helper to parse the configuration dict into a validated Pydantic model."""
+        try:
+            return ConfigModel(**data)
+        except ValidationError as e:
+            raise TypeError(f"Validation error:\n{e}") from e

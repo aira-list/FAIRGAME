@@ -1,19 +1,13 @@
-import os
 from pathlib import Path
 
-from src.io_managers.file_manager import FileManager
 from src.io_managers.configuration_validator import ConfigValidator
-from src.utils.utils import get_project_root
+from src.io_managers.file_manager import FileManager
+from src.utils.utils import get_resources_dir
 
-# Get the absolute path of the current script
-script_path = os.path.abspath(__file__)
-script_dir = os.path.dirname(script_path)
+# The paper's resources/ folder now lives in the sibling
+# Fairgame_paper_evaluations project (see get_resources_dir).
+DEFAULT_RESOURCES = get_resources_dir()
 
-# Get the absolute path of the current script
-script_path = Path(__file__).resolve()
-
-project_root = get_project_root(script_path, 3)
-DEFAULT_RESOURCES = project_root / "resources"
 
 class IoManager:
     """
@@ -47,8 +41,26 @@ class IoManager:
         return self.config_validator.validate_config_structure(config_data)
 
     def load_template(self, filename: str, lang: str) -> str:
+        """Load a per-language template file.
+
+        Tries ``.txt`` first, then ``.rtf`` (some shipped templates for
+        languages with right-to-left or CJK scripts arrived in RTF). The
+        RTF reader strips formatting before returning the plain text.
         """
-        Loads the content of a template file based on a language code.
-        """
-        template_filepath = self.game_path / f"{filename}_{lang}.txt"
-        return self.file_manager.load_text_file(template_filepath)
+        stem = self.game_path / f"{filename}_{lang}"
+        # Containment guard: ``filename``/``lang`` can be attacker-controlled
+        # (e.g. an inline config's ``templateFilename`` reaches here via
+        # /api/runs). Reject anything that resolves outside game_templates/ so
+        # a traversal like "../../etc/passwd" can't read arbitrary files.
+        base = self.game_path.resolve()
+        resolved_stem = stem.resolve()
+        if base != resolved_stem and base not in resolved_stem.parents:
+            raise ValueError(f"Invalid template name {filename!r}")
+        # Append the suffix instead of ``with_suffix``: a dot in the template
+        # name (``my.game``) would otherwise have its tail replaced and probe
+        # the wrong file entirely.
+        for suffix in (".txt", ".rtf"):
+            candidate = stem.parent / (stem.name + suffix)
+            if candidate.is_file():
+                return self.file_manager.read_template_file(candidate)
+        raise FileNotFoundError(f"Template not found: {stem}.txt or {stem}.rtf")

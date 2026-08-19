@@ -1,0 +1,6 @@
+/* Input for the Tailwind build. Compiled to css/tailwind.css by
+   `npm run build:css` (see tailwind.config.js). Hand-written design-system
+   tokens and .fg-* classes live separately in css/app.css. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

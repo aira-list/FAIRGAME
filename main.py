@@ -1,19 +1,40 @@
-import sys
+"""FAIRGAME command-line runner.
+
+Runs a single game configuration either in-process ("local") or against a
+running FAIRGAME API ("api"), then writes the results CSV::
+
+    python main.py local prisoner_dilemma/prisoner_dilemma_round_known_conventional
+    python main.py api  prisoner_dilemma/prisoner_dilemma_round_known_conventional \
+        --template prisoner_dilemma --language en --out results/my_run.csv
+
+The config argument is a path under ``<resources>/config/`` (without the
+``.json`` suffix); the template defaults to the config's directory name. For
+batch experiment sweeps use :mod:`src.factory.experiment` instead — this entry point
+is deliberately a one-config runner.
+"""
+
+from __future__ import annotations
+
+import argparse
 import os
+import sys
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
+
 import requests
 from dotenv import load_dotenv
 
 from src.io_managers.file_manager import FileManager
 from src.results_processing.results_processor import ResultsProcessor
+from src.utils.utils import get_resources_dir
 
-RESOURCES_PATH = Path("resources")
+RESOURCES_PATH = get_resources_dir()
 TEMPLATES_PATH = RESOURCES_PATH / "game_templates"
 CONFIG_PATH = RESOURCES_PATH / "config"
 RESULTS_PATH = RESOURCES_PATH / "results"
 
 HEADERS = {"Content-Type": "application/json"}
+
 
 def load_env_variables() -> str:
     """
@@ -21,7 +42,7 @@ def load_env_variables() -> str:
     Defaults to a local URL if FAIRGAME_URL is not set.
     """
     load_dotenv()
-    return os.getenv("FAIRGAME_URL", "http://127.0.0.1:5003/create_and_run_games")
+    return os.getenv("FAIRGAME_URL", "http://127.0.0.1:4263/api/runs")
 
 
 class GamesRunner:
@@ -29,21 +50,28 @@ class GamesRunner:
     Orchestrates the running of games either locally or via API.
     """
 
-    def __init__(self, call_type: str, config: Dict[str, Any], templates: Dict[str, str], fairgame_url: str) -> None:
+    def __init__(
+        self, call_type: str, config: dict[str, Any], templates: dict[str, str], fairgame_url: str
+    ) -> None:
         """
         Args:
             call_type (str): Type of call ("local" or "api").
-            config (Dict[str, Any]): Game configuration dictionary.
+            config (Dict[str, Any]): Game configuration dictionary. Copied —
+                the caller's dict is never mutated.
             templates (Dict[str, str]): Mapping of language -> template text.
             fairgame_url (str): URL for the FairGame API (if using "api" call_type).
         """
         self.call_type = call_type
-        self.config = config
+        self.config = dict(config)
         self.templates = templates
         self.config["promptTemplate"] = self.templates
+        # ``templateFilename`` is mutually exclusive with ``promptTemplate``
+        # in the validator. The CLI provides the template inline, so drop
+        # any file-pointer the config might also have set.
+        self.config.pop("templateFilename", None)
         self.fairgame_url = fairgame_url
 
-    def run(self) -> Dict[str, Any]:
+    def run(self) -> dict[str, Any]:
         """
         Executes the game based on call_type ("local" or "api").
         """
@@ -54,28 +82,31 @@ class GamesRunner:
         else:
             raise ValueError("Invalid call type. Expected 'local' or 'api'.")
 
-    def _local_call(self) -> Dict[str, Any]:
+    def _local_call(self) -> dict[str, Any]:
         """
         Execute the game locally using FairGameFactory.
         """
-        from src.fairgame_factory import FairGameFactory
+        from src.factory.fairgame_factory import FairGameFactory
+
         game_factory = FairGameFactory()
         return game_factory.create_and_run_games(self.config)
 
-    def _api_call(self) -> Dict[str, Any]:
+    def _api_call(self) -> dict[str, Any]:
         """
         Execute the game by sending a POST request to the FairGame API.
+
+        ``POST /api/runs`` expects the configuration wrapped in a ``config``
+        key and returns ``{"id": ..., "rows": [...]}`` where ``rows`` are the
+        already-processed result records.
         """
-        response = requests.post(self.fairgame_url, json=self.config, headers=HEADERS)
+        # Bounded so a hung server fails loudly instead of blocking forever;
+        # generous because a run legitimately spans many LLM calls.
+        response = requests.post(
+            self.fairgame_url, json={"config": self.config}, headers=HEADERS, timeout=3600
+        )
+        response.raise_for_status()
         return response.json()
 
-def parse_call_type(argv: list) -> str:
-    """
-    Extract the call type ("local" or "api") from command-line arguments.
-    """
-    if len(argv) < 2:
-        raise ValueError("Call type argument ('local' or 'api') is required.")
-    return argv[1]
 
 def load_template_file(template_name: str, language: str) -> str:
     """
@@ -84,48 +115,76 @@ def load_template_file(template_name: str, language: str) -> str:
     template_filepath = TEMPLATES_PATH / f"{template_name}_{language}.txt"
     return FileManager.read_template_file(template_filepath)
 
-def load_config_file(config_dir: str, config_name: str) -> Dict[str, Any]:
-    """
-    Loads a JSON config file for the game.
-    """
-    config_filepath = CONFIG_PATH / config_dir / f"{config_name}.json"
+
+def load_config_file(config_ref: str) -> dict[str, Any]:
+    """Load ``<resources>/config/<config_ref>.json``."""
+    config_filepath = CONFIG_PATH / f"{config_ref}.json"
     return FileManager.read_json_file(config_filepath)
 
-def save_results(results: Dict[str, Any], config_name: str) -> None:
+
+def save_results(results: dict[str, Any], out_path: Path) -> None:
     """
     Convert results to a DataFrame and save as CSV.
-    """
-    results_processor = ResultsProcessor()
-    df = results_processor.process(results)
-    results_filepath = RESULTS_PATH / f"results_{config_name}.csv"
-    FileManager.save_results_csv(df, results_filepath)
 
-def main() -> None:
+    A local run yields raw game outcomes that still need processing; an API
+    run already returns processed records under ``rows``.
     """
-    Main entry point, showing how to use the FileManager and GamesRunner.
-    """
-    # 1. Determine the call type
-    call_type = parse_call_type(sys.argv)
+    if "rows" in results:
+        import pandas as pd
 
-    # 2. Load environment variables
+        df = pd.DataFrame(results["rows"])
+    else:
+        df = ResultsProcessor().process(results)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    FileManager.save_results_csv(df, out_path)
+
+
+def parse_args(argv: list | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "call_type",
+        choices=("local", "api"),
+        help="Run in-process (local) or against a FAIRGAME API (api).",
+    )
+    parser.add_argument(
+        "config",
+        help="Config path under <resources>/config/, without .json "
+        "(e.g. prisoner_dilemma/prisoner_dilemma_round_known_conventional).",
+    )
+    parser.add_argument(
+        "--template",
+        default=None,
+        help="Template basename under <resources>/game_templates/ "
+        "(default: the config's directory name).",
+    )
+    parser.add_argument("--language", default="en", help="Template language suffix (default: en).")
+    parser.add_argument(
+        "--out",
+        default=None,
+        type=Path,
+        help="Output CSV path (default: <resources>/results/results_<config>.csv).",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: list | None = None) -> None:
+    args = parse_args(argv)
     fairgame_url = load_env_variables()
 
-    # 3. Define input parameters (adjust as needed)
-    config_dir = "prisoner_dilemma"
-    config_name = "prisoner_dilemma_round_known_mild"
-    template_name = "prisoner_dilemma"
-    language = "en"
+    config_ref = args.config.strip("/")
+    template_name = args.template or Path(config_ref).parts[0]
+    template_content = load_template_file(template_name, args.language)
+    config = load_config_file(config_ref)
 
-    # 4. Load necessary files
-    template_content = load_template_file(template_name, language)
-    config = load_config_file(config_dir, config_name)
-
-    # 5. Create the runner and run the games
-    runner = GamesRunner(call_type, config, {language: template_content}, fairgame_url)
+    runner = GamesRunner(args.call_type, config, {args.language: template_content}, fairgame_url)
     results = runner.run()
 
-    # 6. Save results
-    save_results(results, config_name)
+    out = args.out or RESULTS_PATH / f"results_{Path(config_ref).name}.csv"
+    save_results(results, out)
+    print(f"Results written to {out}")
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
