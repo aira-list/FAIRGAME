@@ -64,8 +64,15 @@ class AgentCol:
 
     # Trust / costly monitoring
     TRUST_ACTIONS = "trust_actions"  # list
+    TRUST_COSTS = "trust_costs"  # list
     LOOK_RATE = "look_rate"
     MONITORING_COST_TOTAL = "monitoring_cost_total"
+    # FAIRGAME-Trust (Powell et al.) spellings, kept so analyses written
+    # against the fork read v2 output unchanged.
+    LOOK_COUNT = "look_count"
+    NO_LOOK_COUNT = "no_look_count"
+    LOOK_RATIO = "look_ratio"
+    TOTAL_TRUST_COST = "total_trust_cost"
 
     # Regret
     REGRET_PER_ROUND = "regret_per_round"  # list
@@ -83,6 +90,7 @@ AGENT_LIST_FIELDS = frozenset(
         AgentCol.BELIEF_BRIER_PER_ROUND,
         AgentCol.BELIEF_2ND_ORDER_PER_ROUND_BRIER,
         AgentCol.TRUST_ACTIONS,
+        AgentCol.TRUST_COSTS,
         AgentCol.REGRET_PER_ROUND,
     }
 )

@@ -187,8 +187,13 @@ class GameData:
         summary = trust_summary(actions, costs)
         return {
             prefix + AgentCol.TRUST_ACTIONS: actions,
+            prefix + AgentCol.TRUST_COSTS: costs,
             prefix + AgentCol.LOOK_RATE: summary["look_rate"],
             prefix + AgentCol.MONITORING_COST_TOTAL: summary["monitoring_cost_total"],
+            prefix + AgentCol.LOOK_COUNT: summary["look_count"],
+            prefix + AgentCol.NO_LOOK_COUNT: summary["no_look_count"],
+            prefix + AgentCol.LOOK_RATIO: summary["look_ratio"],
+            prefix + AgentCol.TOTAL_TRUST_COST: summary["total_trust_cost"],
         }
 
     # ---- Belief metrics -------------------------------------------------

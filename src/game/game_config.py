@@ -327,6 +327,9 @@ class GameConfig:
                 "enabled": True,
                 "look_cost": self.trust_config.look_cost,
                 "history_scope": self.trust_config.history_scope,
+                "history_rounds": self.trust_config.history_rounds,
+                "actions": list(self.trust_config.actions),
+                "history_fields": self.trust_config.history_fields,
             }
         if self.interaction_graph is not None and not self.interaction_graph.is_fully_connected:
             desc[DescKey.INTERACTION] = self.interaction_graph.to_dict()

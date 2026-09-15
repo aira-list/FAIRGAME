@@ -8,17 +8,33 @@ that mechanism; the round runner (:mod:`src.game.game_round`) and phase list
 (:mod:`src.game.phases`) consume it, mirroring how ``FakeCommunicationConfig``
 drives the communication phase.
 
-v1 supports a single ``historyScope`` value, ``"full"``: when an agent pays to
-``LOOK`` it sees the full prior history; otherwise it sees nothing.
+``historyScope`` decides what a paid ``LOOK`` buys:
+
+``full``
+    the whole prior history (the original v2 behaviour, and the default).
+``last_x``
+    only the most recent ``historyRounds`` rounds.
+``only_paid_to_look_last_1`` / ``paid_look_minus_1``
+    the round immediately before the current one, *plus* every round the
+    agent unlocked by paying in an earlier round. Under these scopes
+    monitoring accumulates: a ``LOOK`` in round *t* keeps round *t-1* visible
+    for the rest of the game.
+
+``historyFields`` optionally narrows each revealed entry to a subset of its
+fields (``["strategy", "score"]``, say), so paying to look need not disclose
+messages or elicited beliefs.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 LOOK = "LOOK"
 NO_LOOK = "NO_LOOK"
+
+#: Scopes under which monitoring accumulates across rounds.
+RETENTION_SCOPES = ("paid_look_minus_1", "only_paid_to_look_last_1")
 
 
 def _str2bool(value: Any) -> bool:
@@ -38,10 +54,15 @@ class TrustConfig:
 
     enabled: bool = False
     look_cost: float = 0.0
-    # Only "full" is supported in v1: a paying agent sees the whole history.
     history_scope: str = "full"
+    #: Rounds revealed under ``last_x``; ignored by the other scopes.
+    history_rounds: int = 1
+    #: Labels for the two decisions, surfaced to templates and result rows.
+    actions: list[str] = field(default_factory=lambda: [LOOK, NO_LOOK])
+    #: Entry fields a paid look reveals; ``None`` reveals the whole entry.
+    history_fields: list[str] | None = None
 
-    _SUPPORTED_SCOPES = ("full",)
+    _SUPPORTED_SCOPES = ("full", "last_x", *RETENTION_SCOPES)
 
     def __post_init__(self) -> None:
         if not self.enabled:
@@ -53,6 +74,18 @@ class TrustConfig:
                 f"trust.historyScope must be one of {self._SUPPORTED_SCOPES}; "
                 f"got {self.history_scope!r}."
             )
+        if self.history_scope == "last_x" and self.history_rounds < 1:
+            raise ValueError(
+                f"trust.historyRounds must be >= 1 under historyScope 'last_x'; "
+                f"got {self.history_rounds}."
+            )
+        if len(self.actions) != 2:
+            raise ValueError(f"trust.actions must name exactly two actions; got {self.actions!r}.")
+
+    @property
+    def retains_unlocked_history(self) -> bool:
+        """Whether a paid look keeps that round visible in later rounds."""
+        return self.history_scope in RETENTION_SCOPES
 
     @classmethod
     def from_config(cls, config: dict[str, Any]) -> TrustConfig:
@@ -60,10 +93,14 @@ class TrustConfig:
         block = config.get("trust") or {}
         if not _str2bool(block.get("enabled", False)):
             return cls(enabled=False)
+        fields_raw = block.get("historyFields")
         return cls(
             enabled=True,
             look_cost=float(block.get("lookCost", 0.0) or 0.0),
             history_scope=str(block.get("historyScope", "full")),
+            history_rounds=int(block.get("historyRounds", 1) or 1),
+            actions=list(block.get("actions") or [LOOK, NO_LOOK]),
+            history_fields=list(fields_raw) if fields_raw else None,
         )
 
     @staticmethod

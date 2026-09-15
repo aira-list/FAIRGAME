@@ -205,7 +205,14 @@ class ConfigModel(BaseModel):
     """``{"enabled": true, "lookCost": 0.25, "historyScope": "full"}`` —
     enables a per-round monitoring decision (LOOK/NO_LOOK). Paying to LOOK
     reveals the opponent's history at the cost of ``lookCost`` points;
-    NO_LOOK acts on trust with no information. See :class:`src.communication.trust.TrustConfig`."""
+    NO_LOOK acts on trust with no information.
+
+    ``historyScope`` picks what the payment buys: ``full`` (everything),
+    ``last_x`` (the most recent ``historyRounds`` rounds), or
+    ``only_paid_to_look_last_1``/``paid_look_minus_1``, under which a look
+    also *keeps* that round visible for the rest of the game.
+    ``historyFields`` narrows each revealed entry to the fields listed.
+    See :class:`src.communication.trust.TrustConfig`."""
 
     # ---- Agent interaction graph ----------------------------------------
     interaction: dict[str, object] | None = None

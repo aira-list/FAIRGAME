@@ -95,6 +95,38 @@ A legacy compact form is also accepted (each combination listed as
 `[strategy, weight]` pairs); it is transformed automatically by
 `PayoffMatrixTransformer` before validation continues.
 
+## Trust / costly monitoring
+
+Optional. Adds a monitoring decision before each strategy choice: an agent
+either pays `lookCost` to `LOOK` at the opponent's history, or `NO_LOOK`s and
+chooses on trust alone with no history at all.
+
+```json
+"trust": {
+  "enabled": true,
+  "actions": ["LOOK", "NO_LOOK"],
+  "lookCost": 0.25,
+  "historyScope": "only_paid_to_look_last_1",
+  "historyRounds": 1,
+  "historyFields": ["strategy", "score"]
+}
+```
+
+* `lookCost` — subtracted from the payoff of any agent that looks. Must be >= 0.
+* `historyScope` — what a paid look reveals:
+  * `full` (default) — the whole prior history.
+  * `last_x` — only the most recent `historyRounds` rounds.
+  * `only_paid_to_look_last_1` / `paid_look_minus_1` — the round immediately
+    before the current one, *plus* every round unlocked by paying in an
+    earlier round. Monitoring accumulates under these scopes.
+* `historyRounds` — rounds revealed under `last_x`; ignored otherwise.
+* `historyFields` — restricts each revealed entry to these fields, so paying
+  to look need not disclose messages or elicited beliefs. Omit to reveal all.
+
+Baseline (non-LLM) agents never look and never pay. Per-agent result columns:
+`look_rate`/`look_ratio`, `look_count`, `no_look_count`,
+`monitoring_cost_total`/`total_trust_cost`, `trust_actions`, `trust_costs`.
+
 ## Environment variables
 
 | Name | Default | Purpose |

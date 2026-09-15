@@ -236,13 +236,88 @@ class GameRound:
                 )
                 for source, data in base[current_key].items()
             }
-        trust_cfg = getattr(self.game, "trust_config", None)
-        if trust_cfg and getattr(trust_cfg, "enabled", False):
-            from src.communication.trust import LOOK
-
-            if phase == "trust" or self.trust_decisions.get(agent.name) != LOOK:
-                base = {}
+        base = self._apply_trust_gate(agent, base, phase)
         return self._apply_interaction_filter(agent, base)
+
+    # ---- Trust gate (costly monitoring) ---------------------------------
+
+    @staticmethod
+    def _round_number_of(round_key: str) -> int:
+        """``"round_3"`` -> ``3``."""
+        return int(round_key.split("_")[1])
+
+    def _retained_history(self, agent, view: dict) -> dict:
+        """Rounds this agent unlocked by paying to LOOK in an earlier round.
+
+        Under the accumulating scopes, a ``LOOK`` in round *t* keeps round
+        *t-1* visible for the rest of the game — monitoring builds up a
+        picture rather than renting one for a single round.
+        """
+        from src.communication.trust import LOOK
+
+        unlocked: dict[str, dict] = {}
+        for round_key, sources in view.items():
+            if sources.get(agent.name, {}).get("trust_action") != LOOK:
+                continue
+            previous = f"round_{self._round_number_of(round_key) - 1}"
+            if previous in view:
+                unlocked[previous] = view[previous]
+        return unlocked
+
+    def _look_history(self, agent, view: dict, trust_cfg) -> dict:
+        """What a paid LOOK reveals this round, per ``historyScope``."""
+        scope = getattr(trust_cfg, "history_scope", "full")
+        if scope == "full":
+            return view
+        if scope == "last_x":
+            ordered = sorted(view, key=self._round_number_of)
+            rounds = max(1, int(getattr(trust_cfg, "history_rounds", 1) or 1))
+            return {k: view[k] for k in ordered[-rounds:]}
+
+        # Accumulating scopes: what was already unlocked, plus the round
+        # immediately before this one, which is what today's payment buys.
+        visible = self._retained_history(agent, view)
+        previous = f"round_{self.round_number - 1}"
+        if self.round_number > 1 and previous in view:
+            visible[previous] = view[previous]
+        return visible
+
+    def _apply_trust_gate(self, agent, view: dict, phase: str) -> dict:
+        """Gate ``view`` on the agent's monitoring decision for this round.
+
+        The trust prompt itself shows only what earlier payments already
+        unlocked (nothing at all unless the scope accumulates); NO_LOOK shows
+        nothing; LOOK shows what :meth:`_look_history` allows.
+        """
+        from src.communication.trust import LOOK
+
+        trust_cfg = getattr(self.game, "trust_config", None)
+        if not (trust_cfg and getattr(trust_cfg, "enabled", False)):
+            return view
+
+        if phase == "trust":
+            retains = getattr(trust_cfg, "retains_unlocked_history", False)
+            visible = self._retained_history(agent, view) if retains else {}
+        elif self.trust_decisions.get(agent.name) == LOOK:
+            visible = self._look_history(agent, view, trust_cfg)
+        else:
+            visible = {}
+        return self._keep_trust_fields(visible, trust_cfg)
+
+    @staticmethod
+    def _keep_trust_fields(view: dict, trust_cfg) -> dict:
+        """Narrow each revealed entry to ``historyFields``, when configured."""
+        keep = getattr(trust_cfg, "history_fields", None)
+        if not keep or not view:
+            return view
+        allowed = set(keep)
+        return {
+            round_key: {
+                source: {k: v for k, v in data.items() if k in allowed}
+                for source, data in sources.items()
+            }
+            for round_key, sources in view.items()
+        }
 
     def _apply_interaction_filter(self, agent, view: dict) -> dict:
         """Trim ``view`` to what ``agent`` may perceive under the graph.
